@@ -1,3 +1,4 @@
+import logging
 import subprocess
 import sys
 
@@ -21,6 +22,7 @@ def resolve_target_value(target: str) -> str:
         try:
             output = subprocess.check_output(["func", "--version"], text=True)
             return output.strip()
-        except Exception:
+        except Exception as exc:
+            logging.getLogger(__name__).warning("Failed to resolve func_core_tools version: %s", exc)
             return "0.0.0"  # Return a fallback version if resolution fails
     raise ValueError(f"Unknown target: {target}")

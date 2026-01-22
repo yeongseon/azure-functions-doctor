@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 from pathlib import Path
@@ -157,7 +158,8 @@ def generic_handler(rule: Rule, path: Path) -> dict[str, str]:
                 if keyword in content:
                     found = True
                     break
-            except Exception:
+            except Exception as exc:
+                logging.getLogger(__name__).warning("Failed to read %s: %s", py_file, exc)
                 continue
 
         return {
