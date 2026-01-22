@@ -1,10 +1,10 @@
-# 🛠️ Development Guide (Hatch-based)
+# Development Guide (Hatch-based)
 
 This guide covers how to set up a local development environment, run tests, and manage code quality for **Azure Functions Doctor**, using Hatch and a Makefile for workflow automation.
 
 ---
 
-## 📦 Prerequisites
+## Prerequisites
 
 - **Python 3.9+** installed on your system
 - **Git** for version control
@@ -14,7 +14,7 @@ This guide covers how to set up a local development environment, run tests, and 
 
 ---
 
-## 🛠️ Project Structure Overview
+## Project Structure Overview
 
 ```text
 azure-functions-doctor-for-python/
@@ -54,7 +54,7 @@ azure-functions-doctor-for-python/
 
 ---
 
-## 🚀 Initial Setup
+## Initial Setup
 
 1. **Clone the repository**:
     ```bash
@@ -87,7 +87,7 @@ azure-functions-doctor-for-python/
 
 ---
 
-## 🧪 Running Tests and Quality Checks
+## Running Tests and Quality Checks
 
 ### 1. Format Code
 Use **Black** and **Ruff** via Makefile to enforce consistent styling:
@@ -134,7 +134,7 @@ make cov
 
 ---
 
-## 🎯 Development Workflow
+## Development Workflow
 
 1. **Create a feature branch**:
     ```bash
@@ -159,7 +159,7 @@ make cov
 
 ---
 
-## 📝 Makefile Targets Reference
+## Makefile Targets Reference
 
 | Target                   | Description                                                       |
 |--------------------------|-------------------------------------------------------------------|
