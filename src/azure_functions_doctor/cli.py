@@ -1,6 +1,7 @@
 import json
 import os
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Annotated, Optional
 
@@ -149,8 +150,13 @@ def doctor(
                 warning_count += 1  # unknown treated as warning
 
     if format == "json":
-        json_output = json.dumps(results, indent=2)
-        _write_output(json_output, output, "JSON")
+        metadata = {
+            "tool_version": __version__,
+            "generated_at": f"{datetime.utcnow().isoformat()}Z",
+            "target_path": str(Path(path).resolve()),
+        }
+        json_output = {"metadata": metadata, "results": results}
+        _write_output(json.dumps(json_output, indent=2), output, "JSON")
         raise typer.Exit(1 if fail_count > 0 else 0)
 
     if format == "sarif":
