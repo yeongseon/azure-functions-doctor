@@ -36,8 +36,15 @@ class Doctor:
     appropriate v1/v2 files are present in package assets.
     """
 
-    def __init__(self, path: str = ".", allow_v1: bool = False, rules_path: Optional[Path] = None) -> None:
+    def __init__(
+        self,
+        path: str = ".",
+        allow_v1: bool = False,
+        profile: Optional[str] = None,
+        rules_path: Optional[Path] = None,
+    ) -> None:
         self.project_path: Path = Path(path).resolve()
+        self.profile = profile
         self.rules_path = rules_path.resolve() if rules_path else None
         self.programming_model = self._detect_programming_model()
         # If v1 detected in nested function folders (function.json not at project root)
@@ -136,6 +143,10 @@ class Doctor:
 
     def run_all_checks(self) -> list[SectionResult]:
         rules = self.load_rules()
+        if self.profile == "minimal":
+            rules = [rule for rule in rules if rule.get("required", True)]
+        elif self.profile not in (None, "full"):
+            raise ValueError("Profile must be 'minimal' or 'full'")
         grouped: dict[str, list[Rule]] = defaultdict(list)
 
         for rule in rules:

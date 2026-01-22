@@ -41,10 +41,10 @@ def test_missing_files() -> None:
         doctor = Doctor(tmp)
         results = doctor.run_all_checks()
 
-        item_map = {item["label"]: item["status"] for section in results for item in section["items"]}
+    item_map = {item["label"]: item["status"] for section in results for item in section["items"]}
 
-        assert item_map.get("host.json") == "fail"
-        assert item_map.get("requirements.txt") == "fail"
+    assert item_map.get("host.json") == "fail"
+    assert item_map.get("requirements.txt") == "fail"
     # local.settings.json is optional; warn when missing
     assert item_map.get("local.settings.json") == "warn"
 
@@ -74,6 +74,29 @@ def test_custom_rules_path() -> None:
 
         assert len(results) == 1
         assert results[0]["items"][0]["label"] == "Custom env"
+
+
+def test_profile_minimal_filters_optional_rules() -> None:
+    """Tests that the minimal profile excludes optional rules."""
+    with tempfile.TemporaryDirectory() as tmp:
+        with open(os.path.join(tmp, "host.json"), "w") as f:
+            json.dump({"version": "2.0"}, f)
+        with open(os.path.join(tmp, "requirements.txt"), "w") as f:
+            f.write("azure-functions==1.13.0")
+
+        doctor = Doctor(tmp, profile="minimal")
+        results = doctor.run_all_checks()
+
+        item_labels = {item["label"] for section in results for item in section["items"]}
+        assert "local.settings.json" not in item_labels
+
+
+def test_invalid_profile_raises() -> None:
+    """Tests that an invalid profile raises a ValueError."""
+    with tempfile.TemporaryDirectory() as tmp:
+        doctor = Doctor(tmp, profile="unknown")
+        with pytest.raises(ValueError, match="Profile must be 'minimal' or 'full'"):
+            doctor.run_all_checks()
 
 
 def test_v2_compatibility_check() -> None:

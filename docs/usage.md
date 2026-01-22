@@ -21,12 +21,14 @@ Run diagnostics in the current or specified folder.
 | `--path` | Target directory (default: current folder) |
 | `--format json` | Output in machine-readable JSON |
 | `--verbose` | Show detailed diagnostics and hints |
+| `--profile` | Rule profile: `minimal` (required-only) or `full` (all rules) |
 | `--help` | Show usage for the CLI or subcommand |
 
 Example:
 
 ```bash
 azure-functions doctor --path ./my-func-app --format json --verbose
+azure-functions doctor --profile minimal
 ```
 
 ---

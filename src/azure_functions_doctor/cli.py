@@ -1,6 +1,7 @@
 import json
 import os
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Annotated, Optional
 
@@ -85,6 +86,7 @@ def doctor(
     debug: Annotated[bool, typer.Option(help="Enable debug logging")] = False,
     format: Annotated[str, typer.Option(help="Output format: 'table', 'json', 'sarif', or 'junit'")] = "table",
     output: Annotated[Optional[Path], typer.Option(help="Optional path to save output result")] = None,
+    profile: Annotated[Optional[str], typer.Option(help="Rule profile: 'minimal' or 'full'")] = None,
     rules: Annotated[Optional[Path], typer.Option(help="Optional path to a custom rules.json")] = None,
 ) -> None:
     """
@@ -96,6 +98,7 @@ def doctor(
         debug: Enable debug logging to stderr.
         format: Output format: 'table', 'json', 'sarif', or 'junit'.
         output: Optional file path to save output result.
+        profile: Optional rule profile ('minimal' or 'full').
         rules: Optional path to a custom rules.json.
     """
     # Validate inputs before proceeding
@@ -113,7 +116,7 @@ def doctor(
 
     start_time = time.time()
     # Allow v1 projects when invoked from CLI so we can show warning but continue
-    doctor = Doctor(path, allow_v1=True, rules_path=rules)
+    doctor = Doctor(path, allow_v1=True, profile=profile, rules_path=rules)
     resolved_path = Path(path).resolve()
 
     # Log diagnostic start
@@ -152,8 +155,13 @@ def doctor(
                 warning_count += 1  # unknown treated as warning
 
     if format == "json":
-        json_output = json.dumps(results, indent=2)
-        _write_output(json_output, output, "JSON")
+        metadata = {
+            "tool_version": __version__,
+            "generated_at": f"{datetime.utcnow().isoformat()}Z",
+            "target_path": str(Path(path).resolve()),
+        }
+        json_output = {"metadata": metadata, "results": results}
+        _write_output(json.dumps(json_output, indent=2), output, "JSON")
         raise typer.Exit(1 if fail_count > 0 else 0)
 
     if format == "sarif":
