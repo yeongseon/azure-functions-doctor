@@ -1,4 +1,4 @@
-# 🛠️ Release Process
+# Release Process
 
 This document outlines the steps to release a new version of **Azure Functions Doctor** to PyPI and update the changelog using the existing Makefile and Hatch-based workflows.
 
@@ -20,11 +20,11 @@ Each command will:
 - Commit the version bump and changelog
 - Create a Git tag (e.g., `v0.2.0`) and push to `main`
 
-> 🔄 Make sure your `main` branch is up-to-date before running these commands.
+> Make sure your `main` branch is up-to-date before running these commands.
 
 ---
 
-## 📦 Step 2: Build and Test the Package
+## Step 2: Build and Test the Package
 
 ```bash
 make build
@@ -34,12 +34,11 @@ To test the local build:
 
 ```bash
 pip install dist/azure_functions_doctor-<version>-py3-none-any.whl
-func-doctor --version
+azure-functions --version
 ```
 
----
 
-## 🚀 Step 3: Publish to PyPI
+## Step 3: Publish to PyPI
 
 ```bash
 make publish-pypi
