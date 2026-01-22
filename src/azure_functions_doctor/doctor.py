@@ -1,10 +1,14 @@
 import importlib.resources
 import json
+import time
 from collections import defaultdict
 from pathlib import Path
 from typing import Optional, TypedDict
 
 from azure_functions_doctor.handlers import Rule, generic_handler
+from azure_functions_doctor.logging_config import get_logger, log_rule_execution
+
+logger = get_logger(__name__)
 
 
 class CheckResult(TypedDict, total=False):
@@ -25,22 +29,110 @@ class SectionResult(TypedDict):
 class Doctor:
     """
     Diagnostic runner for Azure Functions apps.
-    Loads checks from rules.json and executes them against a target project path.
+
+    Loads checks from model-specific rule assets located in
+    `azure_functions_doctor.assets.rules.v1.json` and `v2.json`. Legacy
+    `rules.json` support has been removed; callers should ensure the
+    appropriate v1/v2 files are present in package assets.
     """
 
-    def __init__(self, path: str = ".", rules_path: Optional[Path] = None) -> None:
+    def __init__(self, path: str = ".", allow_v1: bool = False, rules_path: Optional[Path] = None) -> None:
         self.project_path: Path = Path(path).resolve()
         self.rules_path = rules_path.resolve() if rules_path else None
+        self.programming_model = self._detect_programming_model()
+        # If v1 detected in nested function folders (function.json not at project root)
+        # and caller did not allow v1, signal incompatibility.
+        function_json_files = list(self.project_path.rglob("function.json"))
+        nested_v1 = any(f.parent.resolve() != self.project_path for f in function_json_files)
+
+        if nested_v1 and not allow_v1:
+            raise SystemExit("v1 programming model detected - limited support")
+
+    def _detect_programming_model(self) -> str:
+        """Detect the Azure Functions programming model version.
+
+        Returns:
+            str: 'v1' if function.json files are found, 'v2' if @app decorators are found,
+                 'v2' as default if neither is clearly detected.
+        """
+        # Check for v1: function.json files
+        function_json_files = list(self.project_path.rglob("function.json"))
+        if function_json_files:
+            return "v1"
+
+        # Check for v2: @app decorators in Python files
+        if self._has_v2_decorators():
+            return "v2"
+
+        # Default to v2 (current primary support)
+        return "v2"
+
+    def _has_v2_decorators(self) -> bool:
+        """Check if the project uses v2 decorators (@app.*)."""
+        python_files = list(self.project_path.rglob("*.py"))
+
+        for py_file in python_files:
+            try:
+                with py_file.open(encoding="utf-8") as f:
+                    content = f.read()
+                    if "@app." in content:
+                        return True
+            except (OSError, UnicodeDecodeError):
+                # Skip files that can't be read
+                continue
+
+        return False
 
     def load_rules(self) -> list[Rule]:
-        rules_path = (
-            self.rules_path
-            if self.rules_path is not None
-            else importlib.resources.files("azure_functions_doctor.assets").joinpath("rules.json")
-        )
-        with rules_path.open(encoding="utf-8") as f:
-            rules: list[Rule] = json.load(f)
-        return sorted(rules, key=lambda r: r.get("check_order", 999))
+        """Load rules based on detected programming model or custom path."""
+        if self.rules_path is not None:
+            with self.rules_path.open(encoding="utf-8") as f:
+                rules: list[Rule] = json.load(f)
+            return sorted(rules, key=lambda r: r.get("check_order", 999))
+
+        if self.programming_model == "v2":
+            return self._load_v2_rules()
+        if self.programming_model == "v1":
+            return self._load_v1_rules()
+        raise RuntimeError("Unknown programming model; no rules to load")
+
+    def _load_v2_rules(self) -> list[Rule]:
+        """Load complete v2 rules set."""
+        files_obj = importlib.resources.files("azure_functions_doctor.assets")
+
+        # Load v2 rules from assets/rules/v2.json only
+        try:
+            rules_path = files_obj.joinpath("rules/v2.json")
+            with rules_path.open(encoding="utf-8") as f:
+                v2_rules = json.load(f)
+        except FileNotFoundError as e:
+            logger.error("v2.json not found")
+            raise RuntimeError("v2.json not found") from e
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON in v2.json: {e}")
+            raise RuntimeError(f"Failed to parse v2.json: {e}") from e
+
+        return sorted(list(v2_rules), key=lambda r: r.get("check_order", 999))
+
+    def _load_v1_rules(self) -> list[Rule]:
+        """Load complete v1 rules set."""
+        files_obj = importlib.resources.files("azure_functions_doctor.assets")
+
+        # Load v1 rules from assets/rules/v1.json only
+        try:
+            rules_path = files_obj.joinpath("rules/v1.json")
+            with rules_path.open(encoding="utf-8") as f:
+                v1_rules = json.load(f)
+        except FileNotFoundError as e:
+            logger.error("v1.json not found")
+            raise RuntimeError("v1.json not found") from e
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON in v1.json: {e}")
+            raise RuntimeError(f"Failed to parse v1.json: {e}") from e
+
+        return sorted(list(v1_rules), key=lambda r: r.get("check_order", 999))
+
+    # Legacy `rules.json` support removed per repository simplification.
 
     def run_all_checks(self) -> list[SectionResult]:
         rules = self.load_rules()
@@ -60,21 +152,32 @@ class Doctor:
             }
 
             for rule in checks:
+                # Time rule execution for logging
+                rule_start = time.time()
                 result = generic_handler(rule, self.project_path)
+                rule_duration_ms = (time.time() - rule_start) * 1000
 
-                # If the result is empty, skip this rule
-                value_msg = result["detail"]
-                if result["status"] != "pass" and not rule.get("required", True):
-                    value_msg += " (optional)"
+                handler_status = result.get("status", "fail")
+                log_rule_execution(rule["id"], rule["type"], handler_status, rule_duration_ms)
+
+                # Simplified canonical mapping: pass stays pass, else required -> fail, optional -> warn
+                required = rule.get("required", True)
+                if handler_status == "pass":
+                    canonical = "pass"
+                else:
+                    canonical = "fail" if required else "warn"
+
+                detail = result.get("detail", "")
+                if canonical != "pass" and not required:
+                    detail += " (optional)"
 
                 item: CheckResult = {
                     "label": rule.get("label", rule["id"]),
-                    "value": value_msg,
-                    "status": result["status"],
+                    "value": detail,
+                    "status": canonical,
                 }
 
-                # If the rule is not passing and is required, set section status to fail
-                if result["status"] != "pass" and rule.get("required", True):
+                if canonical == "fail" and required:
                     section_result["status"] = "fail"
 
                 if "hint" in rule:
