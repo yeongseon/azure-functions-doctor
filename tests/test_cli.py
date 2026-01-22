@@ -35,3 +35,20 @@ def test_cli_verbose_output() -> None:
     result = runner.invoke(app, ["diagnose", "--format", "table", "--verbose"])
     assert result.exit_code == 0
     assert "↪" in result.output  # hint indicator
+
+
+def test_cli_sarif_output() -> None:
+    """Test CLI outputs SARIF format."""
+    result = runner.invoke(app, ["diagnose", "--format", "sarif"])
+    assert result.exit_code == 0
+    data = json.loads(result.output)
+    assert data.get("version") == "2.1.0"
+    assert isinstance(data.get("runs"), list)
+
+
+def test_cli_junit_output() -> None:
+    """Test CLI outputs JUnit format."""
+    result = runner.invoke(app, ["diagnose", "--format", "junit"])
+    assert result.exit_code == 0
+    assert result.output.startswith("<?xml")
+    assert "<testsuite" in result.output

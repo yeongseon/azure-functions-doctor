@@ -17,7 +17,7 @@ console = Console()
 def diagnose(
     path: str = ".",
     verbose: bool = False,
-    format: Annotated[str, typer.Option(help="Output format: 'table' or 'json'")] = "table",
+    format: Annotated[str, typer.Option(help="Output format: 'table', 'json', 'sarif', or 'junit'")] = "table",
     output: Annotated[Optional[Path], typer.Option(help="Optional path to save JSON result")] = None,
 ) -> None:
     """
@@ -45,6 +45,75 @@ def diagnose(
             console.print(f"[green]✓ JSON output saved to:[/green] {output}")
         else:
             print(json.dumps(json_output, indent=2))
+        return
+
+    if format == "sarif":
+        import json
+
+        sarif_results = []
+        for section in results:
+            for item in section["items"]:
+                if item["status"] == "pass":
+                    continue
+                level = "error" if item["status"] == "fail" else "warning"
+                sarif_results.append(
+                    {
+                        "ruleId": item["label"],
+                        "message": {"text": item["value"]},
+                        "level": level,
+                    }
+                )
+
+        sarif_output = {
+            "version": "2.1.0",
+            "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+            "runs": [
+                {
+                    "tool": {
+                        "driver": {
+                            "name": "azure-functions-doctor",
+                            "version": __version__,
+                        }
+                    },
+                    "results": sarif_results,
+                }
+            ],
+        }
+
+        if output:
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(json.dumps(sarif_output, indent=2), encoding="utf-8")
+            console.print(f"[green]✓ SARIF output saved to:[/green] {output}")
+        else:
+            print(json.dumps(sarif_output, indent=2))
+        return
+
+    if format == "junit":
+        import xml.etree.ElementTree as ET
+
+        tests = 0
+        failures = 0
+        suite = ET.Element("testsuite", name="func-doctor", tests="0", failures="0")
+
+        for section in results:
+            for item in section["items"]:
+                tests += 1
+                case = ET.SubElement(suite, "testcase", classname=section["title"], name=item["label"])
+                if item["status"] != "pass":
+                    failures += 1
+                    failure = ET.SubElement(case, "failure", message=item["value"])
+                    failure.text = item.get("hint", "")
+
+        suite.set("tests", str(tests))
+        suite.set("failures", str(failures))
+        junit_output = ET.tostring(suite, encoding="utf-8", xml_declaration=True).decode("utf-8")
+
+        if output:
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(junit_output, encoding="utf-8")
+            console.print(f"[green]✓ JUnit output saved to:[/green] {output}")
+        else:
+            print(junit_output)
         return
 
     # Print header only for table format
