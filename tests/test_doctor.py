@@ -1,6 +1,7 @@
 import json
 import os
 import tempfile
+from pathlib import Path
 
 import pytest
 
@@ -26,9 +27,9 @@ def test_doctor_checks_pass() -> None:
 
         item_map = {item["label"]: item["status"] for section in results for item in section["items"]}
 
-    assert "Python version" in item_map
-    assert item_map.get("host.json") == "pass"
-    assert item_map.get("requirements.txt") == "pass"
+        assert "Python version" in item_map
+        assert item_map.get("host.json") == "pass"
+        assert item_map.get("requirements.txt") == "pass"
     # local.settings.json is optional; warn when missing
     assert item_map.get("local.settings.json") == "warn"
 
@@ -46,6 +47,33 @@ def test_missing_files() -> None:
     assert item_map.get("requirements.txt") == "fail"
     # local.settings.json is optional; warn when missing
     assert item_map.get("local.settings.json") == "warn"
+
+
+def test_custom_rules_path() -> None:
+    """Tests that a custom rules.json path is honored."""
+    with tempfile.TemporaryDirectory() as tmp:
+        rules = [
+            {
+                "id": "check_custom_env",
+                "category": "environment",
+                "section": "custom",
+                "label": "Custom env",
+                "description": "Checks if CUSTOM_ENV is set.",
+                "type": "env_var_exists",
+                "required": True,
+                "severity": "error",
+                "condition": {"target": "CUSTOM_ENV"},
+                "hint": "Set CUSTOM_ENV for this check.",
+                "check_order": 1,
+            }
+        ]
+        rules_path = Path(tmp) / "rules.json"
+        rules_path.write_text(json.dumps(rules), encoding="utf-8")
+
+        results = Doctor(tmp, rules_path=rules_path).run_all_checks()
+
+        assert len(results) == 1
+        assert results[0]["items"][0]["label"] == "Custom env"
 
 
 def test_profile_minimal_filters_optional_rules() -> None:
