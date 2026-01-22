@@ -3,6 +3,7 @@ import os
 import shutil
 import tempfile
 from importlib.resources import files
+from pathlib import Path
 
 from azure_functions_doctor.doctor import Doctor
 
@@ -46,3 +47,30 @@ def test_missing_files() -> None:
 
         assert item_map.get("host.json") == "fail"
         assert item_map.get("requirements.txt") == "fail"
+
+
+def test_custom_rules_path() -> None:
+    """Tests that a custom rules.json path is honored."""
+    with tempfile.TemporaryDirectory() as tmp:
+        rules = [
+            {
+                "id": "check_custom_env",
+                "category": "environment",
+                "section": "custom",
+                "label": "Custom env",
+                "description": "Checks if CUSTOM_ENV is set.",
+                "type": "env_var_exists",
+                "required": True,
+                "severity": "error",
+                "condition": {"target": "CUSTOM_ENV"},
+                "hint": "Set CUSTOM_ENV for this check.",
+                "check_order": 1,
+            }
+        ]
+        rules_path = Path(tmp) / "rules.json"
+        rules_path.write_text(json.dumps(rules), encoding="utf-8")
+
+        results = Doctor(tmp, rules_path=rules_path).run_all_checks()
+
+        assert len(results) == 1
+        assert results[0]["items"][0]["label"] == "Custom env"

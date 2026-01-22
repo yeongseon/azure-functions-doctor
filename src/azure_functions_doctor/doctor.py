@@ -2,7 +2,7 @@ import importlib.resources
 import json
 from collections import defaultdict
 from pathlib import Path
-from typing import TypedDict
+from typing import Optional, TypedDict
 
 from azure_functions_doctor.handlers import Rule, generic_handler
 
@@ -28,11 +28,16 @@ class Doctor:
     Loads checks from rules.json and executes them against a target project path.
     """
 
-    def __init__(self, path: str = ".") -> None:
+    def __init__(self, path: str = ".", rules_path: Optional[Path] = None) -> None:
         self.project_path: Path = Path(path).resolve()
+        self.rules_path = rules_path.resolve() if rules_path else None
 
     def load_rules(self) -> list[Rule]:
-        rules_path = importlib.resources.files("azure_functions_doctor.assets").joinpath("rules.json")
+        rules_path = (
+            self.rules_path
+            if self.rules_path is not None
+            else importlib.resources.files("azure_functions_doctor.assets").joinpath("rules.json")
+        )
         with rules_path.open(encoding="utf-8") as f:
             rules: list[Rule] = json.load(f)
         return sorted(rules, key=lambda r: r.get("check_order", 999))

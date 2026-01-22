@@ -19,6 +19,7 @@ def diagnose(
     verbose: bool = False,
     format: Annotated[str, typer.Option(help="Output format: 'table' or 'json'")] = "table",
     output: Annotated[Optional[Path], typer.Option(help="Optional path to save JSON result")] = None,
+    rules: Annotated[Optional[Path], typer.Option(help="Optional path to a custom rules.json")] = None,
 ) -> None:
     """
     Run diagnostics on an Azure Functions application.
@@ -29,7 +30,7 @@ def diagnose(
         format: Output format: 'table' or 'json'.
         output: Optional file path to save JSON result.
     """
-    doctor = Doctor(path)
+    doctor = Doctor(path, rules_path=rules)
     results = doctor.run_all_checks()
 
     passed = failed = 0
