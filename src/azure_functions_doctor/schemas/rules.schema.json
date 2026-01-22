@@ -39,6 +39,7 @@
           "file_exists",
           "env_var_exists",
           "package_installed",
+          "package_declared",
           "path_exists",
           "source_code_contains"
         ]
@@ -55,7 +56,10 @@
           "target": { "type": "string" },
           "operator": { "type": "string" },
           "value": {},
-          "keyword": { "type": "string" }
+          "keyword": { "type": "string" },
+          "pypi": { "type": "string" },
+          "package": { "type": "string" },
+          "file": { "type": "string" }
         },
         "anyOf": [
           { "required": ["target"] },
