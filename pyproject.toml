@@ -86,7 +86,10 @@ dev = [
 
 # CLI entry point
 [project.scripts]
-func-doctor = "azure_functions_doctor.cli:cli"
+# primary CLI entrypoint
+azure-functions = "azure_functions_doctor.cli:cli"
+azure-functions-doctor = "azure_functions_doctor.cli:cli"
+fdoctor = "azure_functions_doctor.cli:cli"
 
 # ----------------------------------------
 # 🧪 Hatch Environments
@@ -142,6 +145,11 @@ warn_unused_configs = true
 show_error_codes = true
 pretty = true
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["pytest", "_pytest.*"]
+ignore_errors = true
+follow_imports = "skip"
 
 # ----------------------------------------
 # 🧪 Testing Framework - Pytest
