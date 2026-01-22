@@ -1,3 +1,6 @@
+import json
+import os
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Annotated, Optional
@@ -8,18 +11,81 @@ from rich.text import Text
 
 from azure_functions_doctor import __version__
 from azure_functions_doctor.doctor import Doctor
-from azure_functions_doctor.utils import format_detail, format_result, format_status_icon
+from azure_functions_doctor.logging_config import (
+    get_logger,
+    log_diagnostic_complete,
+    log_diagnostic_start,
+    setup_logging,
+)
+from azure_functions_doctor.utils import format_detail, format_status_icon
 
 cli = typer.Typer()
 console = Console()
+logger = get_logger(__name__)
 
 
-@cli.command()
-def diagnose(
+def _validate_inputs(path: str, format_type: str, output: Optional[Path]) -> None:
+    """Validate CLI inputs before processing."""
+    try:
+        path_obj = Path(path).resolve()
+    except (OSError, ValueError) as e:
+        raise typer.BadParameter(f"Invalid path: {e}") from e
+
+    if not path_obj.exists():
+        raise typer.BadParameter(f"Path does not exist: {path}")
+
+    if not path_obj.is_dir():
+        raise typer.BadParameter(f"Path must be a directory: {path}")
+
+    # Check read permissions
+    if not os.access(path_obj, os.R_OK):
+        raise typer.BadParameter(f"No read permission for path: {path}")
+
+    # Validate format type
+    if format_type not in ["table", "json", "sarif", "junit"]:
+        raise typer.BadParameter(f"Invalid format: {format_type}. Must be 'table', 'json', 'sarif', or 'junit'")
+
+    # Validate output path
+    if output:
+        try:
+            output_path = Path(output).resolve()
+        except (OSError, ValueError) as e:
+            raise typer.BadParameter(f"Invalid output path: {e}") from e
+
+        if output_path.exists() and not output_path.is_file():
+            raise typer.BadParameter(f"Output path exists but is not a file: {output}")
+
+        # Check if parent directory exists or can be created
+        try:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+        except (OSError, PermissionError) as e:
+            raise typer.BadParameter(f"Cannot create output directory: {e}") from e
+
+        # Check write permissions
+        if not os.access(output_path.parent, os.W_OK):
+            raise typer.BadParameter(f"No write permission for output directory: {output_path.parent}")
+
+
+def _write_output(content: str, output: Optional[Path], label: str) -> None:
+    if output:
+        try:
+            output.write_text(content, encoding="utf-8")
+            console.print(f"[green]{format_status_icon('pass')} {label} output saved to:[/green] {output}")
+        except (OSError, IOError, PermissionError) as e:
+            console.print(f"[red]{format_status_icon('fail')} Failed to write {label} output:[/red] {e}")
+            logger.error(f"Failed to write {label} output to {output}: {e}")
+            raise typer.Exit(1) from e
+    else:
+        print(content)
+
+
+@cli.command(name="doctor")
+def doctor(
     path: str = ".",
-    verbose: bool = False,
-    format: Annotated[str, typer.Option(help="Output format: 'table' or 'json'")] = "table",
-    output: Annotated[Optional[Path], typer.Option(help="Optional path to save JSON result")] = None,
+    verbose: Annotated[bool, typer.Option("-v", "--verbose", help="Show detailed hints for failed checks")] = False,
+    debug: Annotated[bool, typer.Option(help="Enable debug logging")] = False,
+    format: Annotated[str, typer.Option(help="Output format: 'table', 'json', 'sarif', or 'junit'")] = "table",
+    output: Annotated[Optional[Path], typer.Option(help="Optional path to save output result")] = None,
 ) -> None:
     """
     Run diagnostics on an Azure Functions application.
@@ -27,79 +93,191 @@ def diagnose(
     Args:
         path: Path to the Azure Functions app. Defaults to current directory.
         verbose: Show detailed hints for failed checks.
-        format: Output format: 'table' or 'json'.
-        output: Optional file path to save JSON result.
+        debug: Enable debug logging to stderr.
+        format: Output format: 'table', 'json', 'sarif', or 'junit'.
+        output: Optional file path to save output result.
     """
-    doctor = Doctor(path)
+    # Validate inputs before proceeding
+    _validate_inputs(path, format, output)
+
+    # Configure logging based on CLI flags
+    if debug:
+        setup_logging(level="DEBUG", format_style="structured")
+    else:
+        # Use environment variable or default to WARNING
+        setup_logging(level=None, format_style="simple")
+
+    start_time = time.time()
+    # Allow v1 projects when invoked from CLI so we can show warning but continue
+    doctor = Doctor(path, allow_v1=True)
+    resolved_path = Path(path).resolve()
+
+    # Log diagnostic start
+    rules = doctor.load_rules()
+    log_diagnostic_start(str(resolved_path), len(rules))
+
     results = doctor.run_all_checks()
 
-    passed = failed = 0
+    # Calculate execution metrics
+    end_time = time.time()
+    duration_ms = (end_time - start_time) * 1000
+
+    # Count results for logging
+    total_checks = sum(len(section["items"]) for section in results)
+    passed_items = sum(1 for section in results for item in section["items"] if item.get("status") == "pass")
+    failed_items = sum(1 for section in results for item in section["items"] if item.get("status") == "fail")
+    # Note: handlers currently only return "pass"/"fail", not "error"
+    errors = 0
+
+    # Log diagnostic completion
+    log_diagnostic_complete(total_checks, passed_items, failed_items, errors, duration_ms)
+
+    # Pre-compute aggregated counts from normalized item['status'] values
+    passed_count = 0
+    warning_count = 0  # explicit 'warn' statuses
+    fail_count = 0  # explicit 'fail' statuses
+    for section in results:
+        for item in section["items"]:
+            s = item.get("status")
+            if s == "pass":
+                passed_count += 1
+            elif s == "warn":
+                warning_count += 1
+            elif s == "fail":
+                fail_count += 1
+            else:
+                warning_count += 1  # unknown treated as warning
 
     if format == "json":
-        import json
-
         metadata = {
             "tool_version": __version__,
             "generated_at": f"{datetime.utcnow().isoformat()}Z",
             "target_path": str(Path(path).resolve()),
         }
         json_output = {"metadata": metadata, "results": results}
+        _write_output(json.dumps(json_output, indent=2), output, "JSON")
+        raise typer.Exit(1 if fail_count > 0 else 0)
 
-        if output:
-            output.parent.mkdir(parents=True, exist_ok=True)
-            output.write_text(json.dumps(json_output, indent=2), encoding="utf-8")
-            console.print(f"[green]✓ JSON output saved to:[/green] {output}")
-        else:
-            print(json.dumps(json_output, indent=2))
-        return
+    if format == "sarif":
+        sarif_results = []
+        for section in results:
+            for item in section["items"]:
+                status = item.get("status")
+                if status == "pass":
+                    continue
+                level = "error" if status == "fail" else "warning"
+                sarif_results.append(
+                    {
+                        "ruleId": item.get("label", ""),
+                        "message": {"text": item.get("value", "")},
+                        "level": level,
+                    }
+                )
 
-    # Print header only for table format
-    console.print(f"[bold blue]🩺 Azure Functions Doctor for Python v{__version__}[/bold blue]")
-    console.print(f"[bold]📁 Path:[/bold] {Path(path).resolve()}\n")
+        sarif_output = {
+            "version": "2.1.0",
+            "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+            "runs": [
+                {
+                    "tool": {
+                        "driver": {
+                            "name": "azure-functions-doctor",
+                            "version": __version__,
+                        }
+                    },
+                    "results": sarif_results,
+                }
+            ],
+        }
+        _write_output(json.dumps(sarif_output, indent=2), output, "SARIF")
+        raise typer.Exit(1 if fail_count > 0 else 0)
 
-    # Default: table format
+    if format == "junit":
+        import xml.etree.ElementTree as ET
+
+        tests = 0
+        failures = 0
+        suite = ET.Element(
+            "testsuite",
+            name="func-doctor",
+            tests="0",
+            failures="0",
+            time=f"{duration_ms / 1000:.3f}",
+        )
+
+        for section in results:
+            for item in section["items"]:
+                tests += 1
+                case = ET.SubElement(suite, "testcase", classname=section["title"], name=item.get("label", ""))
+                status = item.get("status")
+                if status != "pass":
+                    failures += 1
+                    failure = ET.SubElement(case, "failure", message=item.get("value", ""))
+                    failure.text = item.get("hint", "")
+
+        suite.set("tests", str(tests))
+        suite.set("failures", str(failures))
+        junit_output = ET.tostring(suite, encoding="utf-8", xml_declaration=True).decode("utf-8")
+        _write_output(junit_output, output, "JUnit")
+        raise typer.Exit(1 if fail_count > 0 else 0)
+
+    # Note: Top header removed per UI change; programming model header intentionally omitted
+
+    if debug:
+        console.print("[dim]Debug logging enabled - check stderr for detailed logs[/dim]\n")
+
+    # Table-format user-facing output (requested design)
+    console.print("Azure Functions Doctor   ")
+    console.print(f"Path: {resolved_path}")
+
+    # Print each section with simple title and items
     for section in results:
-        console.print(Text.assemble("\n", format_result(section["status"]), " ", (section["title"], "bold")))
-
-        if section["status"] == "pass":
-            passed += 1
-        else:
-            failed += 1
+        console.print()
+        console.print(section["title"])
 
         for item in section["items"]:
-            label = item["label"]
-            value = item["value"]
-            status = item["status"]
+            label = item.get("label", "")
+            value = item.get("value", "")
+            status = item.get("status", "pass")
+            icon = format_status_icon(status)
 
-            line = Text.assemble(
-                ("  • ", "default"),
-                (label, "dim"),
-                (": ", "default"),
-                format_detail(status, value),
-            )
+            # Compose main line: [ICON] Label: value (status)
+            line = Text.assemble((f"[{icon}] ", "bold"), (label, "dim"))
+            if value:
+                line.append(": ")
+                line.append(format_detail(status, value))
+
+            # append status in parentheses for clarity on UI when non-pass
+            if status != "pass":
+                line.append(f" ({status})", "italic dim")
+
             console.print(line)
 
-            if verbose and status != "pass":
-                if item.get("hint"):
-                    console.print(f"    ↪ [yellow]{item['hint']}[/yellow]")
-                hint_url = item.get("hint_url", "")
-                if hint_url.strip():
-                    console.print(f"    📚 [blue]{hint_url}[/blue]")
+            # show hint as 'fix:' only when verbose is enabled
+            if status != "pass" and verbose:
+                hint = item.get("hint", "")
+                if hint:
+                    prefix = "↪ "
+                    console.print(f"    {prefix}fix: {hint}")
 
-    # ✅ Summary section
+    # Use the precomputed counts from earlier for final output
     console.print()
-    console.print("[bold]Summary[/bold]")
-    summary = Text.assemble(
-        (f"{format_status_icon('pass')} ", "green bold"),
-        (f"{passed} Passed    ", "bold"),
-        (f"{format_status_icon('fail')} ", "red bold"),
-        (f"{failed} Failed", "bold"),
-    )
-    console.print(summary)
+    # Print Doctor summary at the bottom like the requested sample
+    console.print("Doctor summary (to see all details, run azure-functions doctor -v):")
+    # Use singular/plural simple form as in sample (error vs errors)
+    # Summary now reflects canonical statuses: fails, warnings, passed
+    w_label = "warning" if warning_count == 1 else "warnings"
+    f_label = "fail" if fail_count == 1 else "fails"
+    # 'passed' label remains same for singular/plural in current design
+    console.print(f"  {fail_count} {f_label}, {warning_count} {w_label}, {passed_count} passed")
+    exit_code = 1 if fail_count > 0 else 0
+    console.print(f"Exit code: {exit_code}")
+    if exit_code != 0:
+        raise typer.Exit(exit_code)
 
 
 # Explicit command registration (test-friendly)
-cli.command()(diagnose)
+cli.command()(doctor)
 
 if __name__ == "__main__":
     cli()
