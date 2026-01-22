@@ -4,7 +4,7 @@ Welcome to **Azure Functions Doctor** — a powerful diagnostic CLI tool built w
 
 ---
 
-## ⚡ What Is It?
+## What Is It?
 
 **Azure Functions Doctor** analyzes your project folder and environment to detect:
 
@@ -18,14 +18,14 @@ It provides **clear emoji-based output**, **rule-based extensibility**, and **op
 
 ---
 
-## 🚀 When Should You Use This?
+## When Should You Use This?
 
 | Scenario | Usefulness |
 |----------|------------|
-| 🧪 Developing locally | Quickly catch broken setup before you run `func start` |
+| Developing locally | Quickly catch broken setup before you run `func start` |
 | 🚢 Before deployment | Prevent silent 500 errors caused by bad config |
 | 🔁 In CI pipeline | Automate validation across repos and branches |
-| 🛠 Debugging errors | Eliminate basic mistakes before diving into logs |
+| Debugging errors | Eliminate basic mistakes before diving into logs |
 
 ---
 
@@ -33,11 +33,11 @@ It provides **clear emoji-based output**, **rule-based extensibility**, and **op
 
 ```bash
 pip install azure-functions-doctor
-func-doctor diagnose
+azure-functions doctor
 ```
 
 View [Usage Guide](usage.md) →  
-See [Example Project](../examples/basic-hello/README.md) →
+See Examples: [v2](../examples/v2/multi-trigger/README.md) | [v1](../examples/v1/http-trigger/README.md) →
 
 ---
 
@@ -59,7 +59,7 @@ Feel free to [open an issue](https://github.com/yeongseon/azure-functions-doctor
 
 ---
 
-## 🧪 Example Output
+## Example Output
 
 ![CLI output](assets/func-doctor-example.png)
 
