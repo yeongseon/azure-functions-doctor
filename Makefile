@@ -28,7 +28,11 @@ ensure-hatch: bootstrap
 .PHONY: install
 install: ensure-hatch
 	@$(HATCH) env create
-	@$(MAKE) precommit-install
+	@if [ -n "$$CI" ]; then \
+		echo "🚫 CI detected: skipping pre-commit hook installation"; \
+	else \
+		$(MAKE) precommit-install; \
+	fi
 
 .PHONY: shell
 shell: ensure-hatch
@@ -184,8 +188,16 @@ version: ensure-hatch
 # ------------------------------
 
 .PHONY: docs
-docs: ensure-hatch
-	@$(HATCH) run docs:build
+docs:
+	@if [ -n "$$CI" ]; then \
+		echo "📚 CI detected: running mkdocs directly"; \
+		python -m pip install --upgrade pip >/dev/null 2>&1 || true; \
+		pip install mkdocs mkdocs-material mkdocstrings[python] >/dev/null 2>&1; \
+		mkdocs build; \
+	else \
+		$(MAKE) ensure-hatch >/dev/null; \
+		$(HATCH) run mkdocs build; \
+	fi
 
 .PHONY: docs-serve
 docs-serve: ensure-hatch
