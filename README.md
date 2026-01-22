@@ -29,13 +29,13 @@
 
 ---
 
-# 🚑 Azure Functions Doctor for Python
+# Azure Functions Doctor for Python
 
-A fast and extensible diagnostic CLI for Python-based Azure Functions projects.
+A fast and extensible diagnostic CLI for Python-based Azure Functions projects. Supports both **Programming Model v1** (function.json-based) and **Programming Model v2** (decorator-based) projects.
 
 ---
 
-## 🤔 Why Azure Functions Doctor?
+## Why Azure Functions Doctor?
 
 - Getting random 500 errors and suspect misconfiguration?
 - Need to verify your dev environment before CI/CD deployment?
@@ -45,17 +45,69 @@ A fast and extensible diagnostic CLI for Python-based Azure Functions projects.
 
 ---
 
-## ✨ Key Features
+## Key Features
 
-- Diagnose Python version, venv, `azure-functions` package
-- Validate `host.json`, `local.settings.json`, function structure
-- Fully customizable via `rules.json`
-- Output: colorized CLI or machine-readable JSON
-- Built-in rule engine, easily extensible
+- **Multi-Model Support**: Works with both v1 (function.json) and v2 (decorator) projects
+- **Automatic Detection**: Automatically detects your project's programming model
+- **Model-Specific Checks**: Different requirements for v1 vs v2 (Python version, packages, etc.)
+- **Rich Diagnostics**: Python version, venv, required packages, project files
+- **Extensible Rules**: Customizable rules system for both programming models
+- **Rich Console Output**: Clear formatting with hints and suggestions
+- **CI/CD Ready**: JSON output for automated environments
 
 ---
 
-## 🪠 Requirements
+## Architecture
+
+Azure Functions Doctor uses a modular, rule-based architecture for extensibility and maintainability:
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   CLI Interface │    │  Core Diagnostic │    │   Rule System   │
+│    (cli.py)     │───▶│    Engine        │───▶│  (assets/rules/v2.json or v1.json)   │
+│                 │    │   (doctor.py)    │    │                 │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+         │                        │                       │
+         │                        ▼                       ▼
+         │               ┌──────────────────┐    ┌─────────────────┐
+         │               │     Handler      │    │  Target/Version │
+         │               │    Dispatcher    │    │    Resolver     │
+         │               │  (handlers.py)   │    │ (target_resolver │
+         │               └──────────────────┘    │      .py)       │
+         │                        │              └─────────────────┘
+         │                        ▼
+         │               ┌──────────────────┐
+         │               │   Individual     │
+         │               │    Handlers      │
+         │               │ • file_exists    │
+         │               │ • compare_version│
+         │               │ • check_package  │
+         │               │ • validate_json  │
+         │               └──────────────────┘
+         │                        │
+         ▼                        ▼
+┌─────────────────┐    ┌──────────────────┐
+│ Output Formatter│    │     Results      │
+│   JSON / CLI    │◀───│   Aggregator     │
+│                 │    │                  │
+└─────────────────┘    └──────────────────┘
+```
+
+### Key Components
+
+- **CLI Interface**: Entry point handling commands, flags, and output formatting
+- **Diagnostic Engine**: Core orchestration logic loading rules and coordinating execution  
+- **Rule System**: Declarative JSON-based rule definitions for extensibility
+- **Handler Dispatcher**: Routes rule types to appropriate handler functions
+- **Individual Handlers**: Specific diagnostic implementations (file checks, version validation, etc.)
+- **Results Aggregator**: Collects and structures all diagnostic outcomes
+- **Output Formatter**: Renders results as colorized CLI output or machine-readable JSON
+
+This design allows easy extension by adding new rules to `src/azure_functions_doctor/assets/rules/v2.json` (and `v1.json` for v1 projects) and implementing corresponding handlers, without modifying core engine logic.
+
+---
+
+## Requirements
 
 - Python 3.9+
 - Git
@@ -64,7 +116,7 @@ A fast and extensible diagnostic CLI for Python-based Azure Functions projects.
 
 ---
 
-## 📦 Installation
+## Installation
 
 From PyPI:
 
@@ -84,12 +136,12 @@ pip install -e .
 
 ---
 
-## 🩺 Usage
+## Usage
 
 ### Run the Doctor
 
 ```bash
-func-doctor diagnose
+azure-functions doctor
 ```
 
 <img src="docs/assets/func-doctor-example.png" alt="Sample output" width="100%" />
@@ -97,23 +149,36 @@ func-doctor diagnose
 ### Show Help
 
 ```bash
-func-doctor --help
+azure-functions --help
 ```
 
-📌 Sample: [examples/basic-hello/diagnose-output.md](examples/basic-hello/diagnose-output.md)
+Sample: [examples/v2/http-trigger/diagnose-output.md](examples/v2/http-trigger/diagnose-output.md)
+
+### Exit Codes
+
+| Exit Code | Meaning                           |
+|-----------|-----------------------------------|
+| 0         | No fails (passes and warnings ok) |
+| 1         | One or more fails detected        |
+| >1        | Reserved for internal errors      |
+
+Warnings (`warn`) do not fail the build. However, if there is at least one `fail` item the process exits with code 1 so CI can detect it immediately.
 
 ---
 
-## 📋 Example
+## Example
 
-See [`examples/basic-hello`](examples/basic-hello) for:
+See [`examples/v2/http-trigger`](examples/v2/http-trigger) for:
 
 - Minimal Azure Functions structure setup
 - Running the CLI and inspecting results
 
+See [`examples/v1/http-trigger`](examples/v1/http-trigger) for the legacy function.json model counterpart.
+See [`examples/v1/multi-trigger`](examples/v1/multi-trigger) for multiple v1 triggers (HTTP, Timer, Queue).
+
 ---
 
-## 📘 Documentation
+## Documentation
 
 - Getting Started: [docs/index.md](https://yeongseon.github.io/azure-functions-doctor-for-python/)
 - Custom Rules: [docs/rules.md](https://yeongseon.github.io/azure-functions-doctor-for-python/rules/)
@@ -121,16 +186,16 @@ See [`examples/basic-hello`](examples/basic-hello) for:
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome issues and PRs!
 
 Please see [`CONTRIBUTING.md`](CONTRIBUTING.md) for contribution guidelines.
 
-If you find this useful, please ⭐️ the repo!
+If you find this useful, please star the repo!
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the [MIT License](LICENSE).
