@@ -3,7 +3,7 @@ import json
 import time
 from collections import defaultdict
 from pathlib import Path
-from typing import TypedDict
+from typing import Optional, TypedDict
 
 from jsonschema import ValidationError, validate
 
@@ -38,8 +38,9 @@ class Doctor:
     appropriate v1/v2 files are present in package assets.
     """
 
-    def __init__(self, path: str = ".", allow_v1: bool = False) -> None:
+    def __init__(self, path: str = ".", allow_v1: bool = False, profile: Optional[str] = None) -> None:
         self.project_path: Path = Path(path).resolve()
+        self.profile = profile
         self.programming_model = self._detect_programming_model()
         # If v1 detected in nested function folders (function.json not at project root)
         # and caller did not allow v1, signal incompatibility.
@@ -146,6 +147,10 @@ class Doctor:
 
     def run_all_checks(self) -> list[SectionResult]:
         rules = self.load_rules()
+        if self.profile == "minimal":
+            rules = [rule for rule in rules if rule.get("required", True)]
+        elif self.profile not in (None, "full"):
+            raise ValueError("Profile must be 'minimal' or 'full'")
         grouped: dict[str, list[Rule]] = defaultdict(list)
 
         for rule in rules:
