@@ -4,6 +4,8 @@ from collections import defaultdict
 from pathlib import Path
 from typing import TypedDict
 
+from jsonschema import ValidationError, validate
+
 from azure_functions_doctor.handlers import Rule, generic_handler
 
 
@@ -35,6 +37,16 @@ class Doctor:
         rules_path = importlib.resources.files("azure_functions_doctor.assets").joinpath("rules.json")
         with rules_path.open(encoding="utf-8") as f:
             rules: list[Rule] = json.load(f)
+
+        schema_path = importlib.resources.files("azure_functions_doctor.schemas").joinpath("rules.schema.json")
+        with schema_path.open(encoding="utf-8") as f:
+            schema = json.load(f)
+
+        try:
+            validate(instance=rules, schema=schema)
+        except ValidationError as exc:
+            raise ValueError(f"Invalid rules.json: {exc.message}") from exc
+
         return sorted(rules, key=lambda r: r.get("check_order", 999))
 
     def run_all_checks(self) -> list[SectionResult]:
