@@ -49,6 +49,7 @@ authors = [
 dependencies = [
   "typer",
   "rich",
+  "jsonschema",
   "requests",
   "packaging"
 ]

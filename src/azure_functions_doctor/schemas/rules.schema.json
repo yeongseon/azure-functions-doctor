@@ -7,7 +7,7 @@
     "required": [
       "id", "category", "section", "label",
       "description", "type", "required",
-      "condition", "hint", "check_order"
+      "condition", "check_order"
     ],
     "properties": {
       "id": {
@@ -17,7 +17,20 @@
       "category": {
         "type": "string",
         "description": "Top-level grouping category.",
-        "enum": ["environment", "dependencies", "structure", "config", "tools"]
+        "enum": [
+          "environment",
+          "dependencies",
+          "structure",
+          "project_structure",
+          "configuration",
+          "bindings",
+          "tooling",
+          "telemetry",
+          "framework",
+          "project_health",
+          "config",
+          "tools"
+        ]
       },
       "section": {
         "type": "string",
@@ -41,7 +54,15 @@
           "package_installed",
           "package_declared",
           "path_exists",
-          "source_code_contains"
+          "source_code_contains",
+          "conditional_exists",
+          "callable_detection",
+          "executable_exists",
+          "any_of_exists",
+          "file_glob_check",
+          "host_json_property",
+          "binding_validation",
+          "cron_validation"
         ]
       },
       "required": {
@@ -59,16 +80,19 @@
           "keyword": { "type": "string" },
           "pypi": { "type": "string" },
           "package": { "type": "string" },
-          "file": { "type": "string" }
-        },
-        "anyOf": [
-          { "required": ["target"] },
-          { "required": ["keyword"] }
-        ]
+          "file": { "type": "string" },
+          "jsonpath": { "type": "string" },
+          "targets": { "type": "array", "items": { "type": "string" } },
+          "patterns": { "type": "array", "items": { "type": "string" } }
+        }
       },
       "hint": {
         "type": "string",
         "description": "Hint message shown to users on failure."
+      },
+      "severity": {
+        "type": "string",
+        "description": "Severity classification for the rule (optional)."
       },
       "fix": {
         "type": "string",
@@ -95,7 +119,7 @@
       "check_order": {
         "type": "integer",
         "description": "Display and execution order of the check.",
-        "minimum": 1
+        "minimum": 0
       }
     },
     "additionalProperties": false

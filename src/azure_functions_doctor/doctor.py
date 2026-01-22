@@ -5,6 +5,8 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Optional, TypedDict
 
+from jsonschema import ValidationError, validate
+
 from azure_functions_doctor.handlers import Rule, generic_handler
 from azure_functions_doctor.logging_config import get_logger, log_rule_execution
 
@@ -91,17 +93,29 @@ class Doctor:
         return False
 
     def load_rules(self) -> list[Rule]:
-        """Load rules based on detected programming model or custom path."""
+        """Load and validate rules based on detected programming model or custom path."""
         if self.rules_path is not None:
             with self.rules_path.open(encoding="utf-8") as f:
                 rules: list[Rule] = json.load(f)
-            return sorted(rules, key=lambda r: r.get("check_order", 999))
+        elif self.programming_model == "v2":
+            rules = self._load_v2_rules()
+        elif self.programming_model == "v1":
+            rules = self._load_v1_rules()
+        else:
+            raise RuntimeError("Unknown programming model; no rules to load")
 
-        if self.programming_model == "v2":
-            return self._load_v2_rules()
-        if self.programming_model == "v1":
-            return self._load_v1_rules()
-        raise RuntimeError("Unknown programming model; no rules to load")
+        self._validate_rules(rules)
+        return sorted(rules, key=lambda r: r.get("check_order", 999))
+
+    def _validate_rules(self, rules: list[Rule]) -> None:
+        schema_path = importlib.resources.files("azure_functions_doctor.schemas").joinpath("rules.schema.json")
+        with schema_path.open(encoding="utf-8") as f:
+            schema = json.load(f)
+
+        try:
+            validate(instance=rules, schema=schema)
+        except ValidationError as exc:
+            raise ValueError(f"Invalid rules.json: {exc.message}") from exc
 
     def _load_v2_rules(self) -> list[Rule]:
         """Load complete v2 rules set."""
