@@ -19,6 +19,7 @@ def diagnose(
     verbose: bool = False,
     format: Annotated[str, typer.Option(help="Output format: 'table' or 'json'")] = "table",
     output: Annotated[Optional[Path], typer.Option(help="Optional path to save JSON result")] = None,
+    profile: Annotated[Optional[str], typer.Option(help="Rule profile: 'minimal' or 'full'")] = None,
 ) -> None:
     """
     Run diagnostics on an Azure Functions application.
@@ -28,8 +29,9 @@ def diagnose(
         verbose: Show detailed hints for failed checks.
         format: Output format: 'table' or 'json'.
         output: Optional file path to save JSON result.
+        profile: Optional rule profile ('minimal' or 'full').
     """
-    doctor = Doctor(path)
+    doctor = Doctor(path, profile=profile)
     results = doctor.run_all_checks()
 
     passed = failed = 0

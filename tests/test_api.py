@@ -27,3 +27,20 @@ def test_run_diagnostics_minimal() -> None:
             any("host.json" in item.get("label", "") for item in section["items"]) for section in results
         )
         assert host_check_found, "Expected 'host.json' check not found in results"
+
+
+def test_run_diagnostics_profile_minimal() -> None:
+    """Test running diagnostics with the minimal profile."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        rules_path = files("azure_functions_doctor.assets").joinpath("rules.json")
+        shutil.copy(str(rules_path), os.path.join(tmpdir, "rules.json"))
+
+        with open(os.path.join(tmpdir, "host.json"), "w") as f:
+            json.dump({"version": "2.0"}, f)
+        with open(os.path.join(tmpdir, "requirements.txt"), "w") as f:
+            f.write("azure-functions\n")
+
+        results = run_diagnostics(tmpdir, profile="minimal")
+
+        item_labels = {item["label"] for section in results for item in section["items"]}
+        assert "local.settings.json" not in item_labels

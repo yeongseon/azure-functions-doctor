@@ -2,7 +2,7 @@ import importlib.resources
 import json
 from collections import defaultdict
 from pathlib import Path
-from typing import TypedDict
+from typing import Optional, TypedDict
 
 from azure_functions_doctor.handlers import Rule, generic_handler
 
@@ -28,8 +28,9 @@ class Doctor:
     Loads checks from rules.json and executes them against a target project path.
     """
 
-    def __init__(self, path: str = ".") -> None:
+    def __init__(self, path: str = ".", profile: Optional[str] = None) -> None:
         self.project_path: Path = Path(path).resolve()
+        self.profile = profile
 
     def load_rules(self) -> list[Rule]:
         rules_path = importlib.resources.files("azure_functions_doctor.assets").joinpath("rules.json")
@@ -39,6 +40,10 @@ class Doctor:
 
     def run_all_checks(self) -> list[SectionResult]:
         rules = self.load_rules()
+        if self.profile == "minimal":
+            rules = [rule for rule in rules if rule.get("required", True)]
+        elif self.profile not in (None, "full"):
+            raise ValueError("Profile must be 'minimal' or 'full'")
         grouped: dict[str, list[Rule]] = defaultdict(list)
 
         for rule in rules:
