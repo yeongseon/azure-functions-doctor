@@ -36,9 +36,16 @@ class Doctor:
     appropriate v1/v2 files are present in package assets.
     """
 
-    def __init__(self, path: str = ".", allow_v1: bool = False, profile: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        path: str = ".",
+        allow_v1: bool = False,
+        profile: Optional[str] = None,
+        rules_path: Optional[Path] = None,
+    ) -> None:
         self.project_path: Path = Path(path).resolve()
         self.profile = profile
+        self.rules_path = rules_path.resolve() if rules_path else None
         self.programming_model = self._detect_programming_model()
         # If v1 detected in nested function folders (function.json not at project root)
         # and caller did not allow v1, signal incompatibility.
@@ -84,13 +91,17 @@ class Doctor:
         return False
 
     def load_rules(self) -> list[Rule]:
-        """Load rules based on detected programming model."""
+        """Load rules based on detected programming model or custom path."""
+        if self.rules_path is not None:
+            with self.rules_path.open(encoding="utf-8") as f:
+                rules: list[Rule] = json.load(f)
+            return sorted(rules, key=lambda r: r.get("check_order", 999))
+
         if self.programming_model == "v2":
             return self._load_v2_rules()
-        elif self.programming_model == "v1":
+        if self.programming_model == "v1":
             return self._load_v1_rules()
-        else:
-            raise RuntimeError("Unknown programming model; no rules to load")
+        raise RuntimeError("Unknown programming model; no rules to load")
 
     def _load_v2_rules(self) -> list[Rule]:
         """Load complete v2 rules set."""
