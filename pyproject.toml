@@ -69,17 +69,17 @@ classifiers = [
 # Optional development dependencies
 [project.optional-dependencies]
 dev = [
-  "black==24.4.2",
+  "black==25.11.0",
   "build",
   "coverage",
   "hatch",
   "mkdocs",
   "mkdocs-material",
   "mkdocstrings[python]",
-  "mypy==1.15.0",
+  "mypy==1.19.1",
   "pre-commit",
   "pytest",
-  "ruff==0.11.11",
+  "ruff==0.14.13",
   "types-requests",
   "tox"
 ]
