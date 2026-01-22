@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 from typing import Annotated, Optional
 
@@ -37,7 +38,12 @@ def diagnose(
     if format == "json":
         import json
 
-        json_output = results
+        metadata = {
+            "tool_version": __version__,
+            "generated_at": f"{datetime.utcnow().isoformat()}Z",
+            "target_path": str(Path(path).resolve()),
+        }
+        json_output = {"metadata": metadata, "results": results}
 
         if output:
             output.parent.mkdir(parents=True, exist_ok=True)

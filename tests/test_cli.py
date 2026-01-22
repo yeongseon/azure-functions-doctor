@@ -24,8 +24,12 @@ def test_cli_json_output() -> None:
     output_text = result.output.strip()
     try:
         data = json.loads(output_text)
-        assert isinstance(data, list)
-        assert all("title" in section and "items" in section for section in data)
+        assert isinstance(data, dict)
+        assert "metadata" in data
+        assert "results" in data
+        results = data["results"]
+        assert isinstance(results, list)
+        assert all("title" in section and "items" in section for section in results)
     except json.JSONDecodeError as err:
         raise AssertionError("Output is not valid JSON") from err
 
