@@ -85,6 +85,7 @@ def doctor(
     debug: Annotated[bool, typer.Option(help="Enable debug logging")] = False,
     format: Annotated[str, typer.Option(help="Output format: 'table', 'json', 'sarif', or 'junit'")] = "table",
     output: Annotated[Optional[Path], typer.Option(help="Optional path to save output result")] = None,
+    profile: Annotated[Optional[str], typer.Option(help="Rule profile: 'minimal' or 'full'")] = None,
 ) -> None:
     """
     Run diagnostics on an Azure Functions application.
@@ -95,6 +96,7 @@ def doctor(
         debug: Enable debug logging to stderr.
         format: Output format: 'table', 'json', 'sarif', or 'junit'.
         output: Optional file path to save output result.
+        profile: Optional rule profile ('minimal' or 'full').
     """
     # Validate inputs before proceeding
     _validate_inputs(path, format, output)
@@ -108,13 +110,12 @@ def doctor(
 
     start_time = time.time()
     # Allow v1 projects when invoked from CLI so we can show warning but continue
-    doctor = Doctor(path, allow_v1=True)
+    doctor = Doctor(path, allow_v1=True, profile=profile)
     resolved_path = Path(path).resolve()
 
     # Log diagnostic start
     rules = doctor.load_rules()
     log_diagnostic_start(str(resolved_path), len(rules))
-
     results = doctor.run_all_checks()
 
     # Calculate execution metrics
