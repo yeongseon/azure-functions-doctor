@@ -29,25 +29,35 @@ Each rule is a JSON object with the following fields:
   "section": "python_env",
   "label": "Python version",
   "type": "compare_version",
-  "target": "python",
-  "operator": ">=",
-  "value": "3.9",
+  "condition": {
+    "target": "python",
+    "operator": ">=",
+    "value": "3.9"
+  },
   "hint": "Install Python 3.9 or higher."
 }
 ```
 
 ### 🔑 Fields Explained
 
-| Field      | Type   | Description                                          |
-| ---------- | ------ | ---------------------------------------------------- |
-| `id`       | string | Unique identifier for the rule                       |
-| `section`  | string | Logical group (e.g. `python_env`, `config_files`)    |
-| `label`    | string | Human-readable label for the check                   |
-| `type`     | string | Rule type (see below)                                |
-| `target`   | string | Subject to evaluate (e.g. Python version, file path) |
-| `operator` | string | Comparison operator (e.g. `==`, `!=`, `>=`)          |
-| `value`    | any    | Expected value to compare                            |
-| `hint`     | string | Suggestion if the rule fails                         |
+| Field       | Type   | Description                                       |
+| ----------- | ------ | ------------------------------------------------- |
+| `id`        | string | Unique identifier for the rule                    |
+| `section`   | string | Logical group (e.g. `python_env`, `config_files`) |
+| `label`     | string | Human-readable label for the check                |
+| `type`      | string | Rule type (see below)                             |
+| `condition` | object | Parameters for the rule type (see below)          |
+| `hint`      | string | Suggestion if the rule fails                      |
+
+### 🔑 `condition` Fields
+
+| Field      | Type   | Used by                       | Description                             |
+| ---------- | ------ | ----------------------------- | --------------------------------------- |
+| `target`   | string | compare_version, file/path, env, package | Subject to evaluate           |
+| `operator` | string | compare_version               | Comparison operator (e.g. `==`, `>=`)  |
+| `value`    | any    | compare_version               | Expected value to compare              |
+| `keyword`  | string | source_code_contains          | Keyword to search for in `.py` files  |
+| `pypi`     | string | package_installed (optional)  | Package name for display/documentation |
 
 ---
 
@@ -60,13 +70,15 @@ Compare semantic versions.
 ```json
 {
   "type": "compare_version",
-  "target": "python",
-  "operator": ">=",
-  "value": "3.9"
+  "condition": {
+    "target": "python",
+    "operator": ">=",
+    "value": "3.9"
+  }
 }
 ```
 
-* Valid `target`: `"python"`, `"azure-functions-core-tools"`
+* Valid `target`: `"python"`
 
 ---
 
@@ -77,30 +89,72 @@ Check whether a file exists.
 ```json
 {
   "type": "file_exists",
-  "target": "host.json"
+  "condition": {
+    "target": "host.json"
+  }
 }
 ```
 
 ---
 
-### 3. `file_contains`
+### 3. `env_var_exists`
 
-Check whether a file contains a specific string or key path.
+Check whether an environment variable is set.
 
 ```json
 {
-  "type": "file_contains",
-  "target": "host.json",
-  "key_path": ["version"],
-  "value": "2.0"
+  "type": "env_var_exists",
+  "condition": {
+    "target": "VIRTUAL_ENV"
+  }
 }
 ```
 
 ---
 
-### 4. `custom`
+### 4. `path_exists`
 
-You may register custom handlers in code using the `@handler.register("your_type")` decorator. Add a `"type": "custom"` field and let your handler interpret additional keys under `condition`.
+Check whether a path exists.
+
+```json
+{
+  "type": "path_exists",
+  "condition": {
+    "target": "sys.executable"
+  }
+}
+```
+
+---
+
+### 5. `package_installed`
+
+Check whether a Python package is importable.
+
+```json
+{
+  "type": "package_installed",
+  "condition": {
+    "target": "azure.functions",
+    "pypi": "azure-functions-python-library"
+  }
+}
+```
+
+---
+
+### 6. `source_code_contains`
+
+Check whether a keyword appears in any `.py` files.
+
+```json
+{
+  "type": "source_code_contains",
+  "condition": {
+    "keyword": "@app."
+  }
+}
+```
 
 ---
 
@@ -146,7 +200,9 @@ Example:
   "section": "dependencies",
   "label": "requirements.txt exists",
   "type": "file_exists",
-  "target": "requirements.txt",
+  "condition": {
+    "target": "requirements.txt"
+  },
   "hint": "Create a requirements.txt file to declare Python dependencies."
 }
 ```
@@ -157,7 +213,7 @@ Example:
 
 * Use `hint` to provide helpful, actionable suggestions.
 * Use consistent `section` names for better CLI grouping.
-* If you're writing custom rule types, register them in `handlers.py`.
+* If you're writing new rule types, update `handlers.py` and `rules.schema.json`.
 
 ---
 
@@ -182,9 +238,11 @@ To see grouped results and hints.
     "section": "python_env",
     "label": "Python version",
     "type": "compare_version",
-    "target": "python",
-    "operator": ">=",
-    "value": "3.9",
+    "condition": {
+      "target": "python",
+      "operator": ">=",
+      "value": "3.9"
+    },
     "hint": "Install Python 3.9 or higher."
   },
   {
@@ -192,7 +250,9 @@ To see grouped results and hints.
     "section": "config_files",
     "label": "host.json exists",
     "type": "file_exists",
-    "target": "host.json"
+    "condition": {
+      "target": "host.json"
+    }
   }
 ]
 ```

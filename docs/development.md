@@ -20,7 +20,6 @@ This guide covers how to set up a local development environment, run tests, and 
 azure-functions-doctor-for-python/
 ├── Makefile
 ├── pyproject.toml
-├── hatch.toml
 ├── src/
 │   └── azure_functions_doctor/
 │       ├── __init__.py
@@ -30,7 +29,6 @@ azure-functions-doctor-for-python/
 │       ├── utils.py
 │       ├── assets/
 │       │   └── rules.json
-│       └── checks/
 ├── tests/
 │   ├── test_cli.py
 │   ├── test_handler.py
@@ -48,7 +46,7 @@ azure-functions-doctor-for-python/
 ```
 
 - **`Makefile`**: Defines common commands for creating the environment, running tests, linting, formatting, and publishing.
-- **`pyproject.toml`** and **`hatch.toml`**: Configuration for Hatch environments and project metadata.
+- **`pyproject.toml`**: Configuration for Hatch environments and project metadata.
 - **`src/azure_functions_doctor/`**: Core application code, including CLI entrypoint, diagnostic logic, and rule assets.
 - **`tests/`**: Unit and integration tests for the project.
 - **`docs/`**: Documentation files used by MkDocs (if enabled) or GitHub pages.
@@ -66,7 +64,7 @@ azure-functions-doctor-for-python/
 
 2. **Create and activate a virtual environment** using the Makefile:
     ```bash
-    make venv
+    make bootstrap
     source .venv/bin/activate      # On Windows (PowerShell): .venv\Scripts\Activate.ps1
     ```
 
@@ -83,8 +81,7 @@ azure-functions-doctor-for-python/
 
 > **Note**: The Makefile ensures Hatch commands run inside the appropriate environment. If you bypass Makefile, you can manually do:
 > ```bash
-> hatch env create default
-> hatch run pip install -r requirements-dev.txt
+> hatch env create
 > hatch run pre-commit install
 > ```
 
@@ -117,9 +114,14 @@ make test
 ```
 
 ### 5. Combined Quality Checks
-Run formatting, linting, type checking, and tests in one command:
+Run linting and type checking in one command:
 ```bash
 make check
+```
+
+Run linting, type checking, and tests in one command:
+```bash
+make check-all
 ```
 
 ### 6. Generate Coverage Report
@@ -145,7 +147,7 @@ make cov
 
 4. **Run quality checks** locally:
     ```bash
-    make check
+    make check-all
     ```
 
 5. **Commit changes** with Conventional Commits format:
@@ -159,22 +161,25 @@ make cov
 
 ## 📝 Makefile Targets Reference
 
-| Target                 | Description                                                       |
-|------------------------|-------------------------------------------------------------------|
-| `make venv`            | Create a Python virtual environment at `.venv/`                    |
-| `make install`         | Install runtime and dev dependencies via Hatch (`hatch install`)  |
-| `make precommit-install` | Install pre-commit hooks (Black, Ruff, etc.)                    |
-| `make format`          | Format code with Black and apply Ruff fixes                         |
-| `make lint`            | Run Ruff and Mypy checks                                           |
-| `make typecheck`       | Perform static type checking with Mypy                             |
-| `make test`            | Run pytest                                                       |
-| `make check`           | Run formatting, linting, typechecking, and tests in sequence       |
-| `make cov`             | Generate coverage report and open HTML index                       |
-| `make docs`            | Serve MkDocs locally (if MkDocs configured)                        |
-| `make release-patch`   | Bump patch version, update changelog                               |
-| `make release-minor`   | Bump minor version, update changelog                               |
-| `make release-major`   | Bump major version, update changelog                               |
-| `make publish`         | Publish package to PyPI (requires credentials in environment)      |
+| Target                   | Description                                                       |
+|--------------------------|-------------------------------------------------------------------|
+| `make bootstrap`         | Create a Python virtual environment at `.venv/` and install Hatch |
+| `make install`           | Create Hatch env and install pre-commit hooks                      |
+| `make precommit-install` | Install pre-commit hooks                                           |
+| `make format`            | Format code with Ruff/Black                                        |
+| `make lint`              | Run Ruff and Mypy checks                                           |
+| `make typecheck`         | Perform static type checking with Mypy                             |
+| `make test`              | Run pytest                                                        |
+| `make check`             | Run linting and typechecking                                       |
+| `make check-all`         | Run linting, typechecking, and tests                               |
+| `make cov`               | Generate coverage report and open HTML index                       |
+| `make docs`              | Build MkDocs site                                                  |
+| `make docs-serve`        | Serve MkDocs locally                                               |
+| `make release-patch`     | Bump patch version, update changelog                               |
+| `make release-minor`     | Bump minor version, update changelog                               |
+| `make release-major`     | Bump major version, update changelog                               |
+| `make publish-test`      | Publish package to TestPyPI                                        |
+| `make publish-pypi`      | Publish package to PyPI                                            |
 
 > For detailed release workflow, refer to [`release_process.md`](release_process.md).
 
