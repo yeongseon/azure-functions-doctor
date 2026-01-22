@@ -1,10 +1,51 @@
-import logging
+import json
 import os
+import re
+import shutil
 import sys
 from pathlib import Path
-from typing import Literal, TypedDict, Union
+from typing import List, Literal, TypedDict, Union
 
 from packaging.version import parse as parse_version
+
+from azure_functions_doctor.logging_config import get_logger
+
+logger = get_logger(__name__)
+
+
+def _create_result(status: str, detail: str, internal_error: bool = False) -> dict[str, str]:
+    """Create a standardized result dictionary (status limited to 'pass'/'fail')."""
+    res: dict[str, str] = {"status": status, "detail": detail}
+    if internal_error:
+        res["internal_error"] = "true"
+    return res
+
+
+def _handle_exception(operation: str, exc: Exception) -> dict[str, str]:
+    """Handle exceptions consistently across all handlers (always fail)."""
+    error_msg = f"Error during {operation}: {exc}"
+    logger.error(error_msg, exc_info=True)
+    return _create_result("fail", error_msg, internal_error=True)
+
+
+def _handle_specific_exceptions(operation: str, exc: Exception) -> dict[str, str]:
+    """Handle specific exception types with user-friendly messages (fail only)."""
+    if isinstance(exc, UnicodeDecodeError):
+        return _create_result("fail", f"Encoding error in {operation}: {exc}.", internal_error=True)
+    if isinstance(exc, (ValueError, TypeError)):
+        return _create_result("fail", f"Configuration error in {operation}: {exc}.", internal_error=True)
+    if isinstance(exc, (OSError, PermissionError)):
+        return _create_result("fail", f"File system error in {operation}: {exc}", internal_error=True)
+    if isinstance(exc, ImportError):
+        return _create_result("fail", f"Import error in {operation}: {exc}", internal_error=True)
+    if isinstance(exc, MemoryError):
+        return _create_result("fail", "Memory error: file too large", internal_error=True)
+    if isinstance(exc, KeyboardInterrupt):
+        raise exc
+    if isinstance(exc, SystemExit):
+        raise exc
+    logger.error(f"Unexpected error in {operation}: {exc}", exc_info=True)
+    return _create_result("fail", f"Unexpected error in {operation}", internal_error=True)
 
 
 class Condition(TypedDict, total=False):
@@ -12,6 +53,10 @@ class Condition(TypedDict, total=False):
     operator: str
     value: Union[str, int, float]
     keyword: str
+    jsonpath: str
+    targets: list[str]
+    patterns: list[str]
+    pypi: str
 
 
 class Rule(TypedDict, total=False):
@@ -23,13 +68,20 @@ class Rule(TypedDict, total=False):
         "file_exists",
         "package_installed",
         "source_code_contains",
+        "conditional_exists",
+        "callable_detection",
+        "executable_exists",
+        "any_of_exists",
+        "file_glob_check",
+        "host_json_property",
+        "binding_validation",
+        "cron_validation",
     ]
     label: str
     category: str
     section: str
     description: str
     required: bool
-    severity: Literal["error", "warning", "info"]
     condition: Condition
     hint: str
     fix: str
@@ -38,27 +90,52 @@ class Rule(TypedDict, total=False):
     check_order: int
 
 
-def generic_handler(rule: Rule, path: Path) -> dict[str, str]:
-    """
-    Execute a diagnostic rule based on its type and condition.
+class HandlerRegistry:
+    """Registry for diagnostic check handlers with individual handler methods."""
 
-    Args:
-        rule: The diagnostic rule to execute.
+    def __init__(self) -> None:
+        self._handlers = {
+            "compare_version": self._handle_compare_version,
+            "env_var_exists": self._handle_env_var_exists,
+            "path_exists": self._handle_path_exists,
+            "file_exists": self._handle_file_exists,
+            "package_installed": self._handle_package_installed,
+            "package_declared": self._handle_package_declared,
+            "source_code_contains": self._handle_source_code_contains,
+            "conditional_exists": self._handle_conditional_exists,
+            "callable_detection": self._handle_callable_detection,
+            "executable_exists": self._handle_executable_exists,
+            "any_of_exists": self._handle_any_of_exists,
+            "file_glob_check": self._handle_file_glob_check,
+            "host_json_property": self._handle_host_json_property,
+            "binding_validation": self._handle_binding_validation,
+            "cron_validation": self._handle_cron_validation,
+        }
 
-    Returns:
-        A dictionary with the status and detail of the check.
-    """
-    check_type = rule.get("type")
-    condition = rule.get("condition", {})
+    def handle(self, rule: Rule, path: Path) -> dict[str, str]:
+        """Route rule execution to appropriate handler."""
+        check_type = rule.get("type")
+        if check_type is None:
+            return _create_result("fail", "Missing check type in rule")
+        handler = self._handlers.get(check_type)
 
-    target = condition.get("target")
-    operator = condition.get("operator")
-    value = condition.get("value")
+        if not handler:
+            return _create_result("fail", f"Unknown check type: {check_type}")
 
-    # Compare current Python version with expected version
-    if check_type == "compare_version":
+        try:
+            return handler(rule, path)
+        except Exception as exc:
+            return _handle_specific_exceptions(f"executing {check_type} check", exc)
+
+    def _handle_compare_version(self, rule: Rule, path: Path) -> dict[str, str]:
+        """Handle version comparison checks."""
+        condition = rule.get("condition", {}) or {}
+        target = condition.get("target")
+        operator = condition.get("operator")
+        value = condition.get("value")
+
         if not (target and operator and value):
-            return {"status": "fail", "detail": "Missing condition fields for compare_version"}
+            return _create_result("fail", "Missing condition fields for compare_version")
 
         if target == "python":
             current_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
@@ -71,84 +148,81 @@ def generic_handler(rule: Rule, path: Path) -> dict[str, str]:
                 ">": current > expected,
                 "<": current < expected,
             }.get(operator, False)
-            return {
-                "status": "pass" if passed else "fail",
-                "detail": f"Python version is {current_version}, expected {operator}{value}",
-            }
+            # Simplified concise-style detail for Python version
+            return _create_result(
+                "pass" if passed else "fail",
+                f"Python {current_version} ({operator}{value})",
+            )
 
-        return {"status": "fail", "detail": f"Unknown target for version comparison: {target}"}
+        return _create_result("fail", f"Unknown target for version comparison: {target}")
 
-    # Check if an environment variable is set
-    if check_type == "env_var_exists":
+    def _handle_env_var_exists(self, rule: Rule, path: Path) -> dict[str, str]:
+        """Handle environment variable existence checks."""
+        condition = rule.get("condition", {}) or {}
+        target = condition.get("target")
+
         if not target:
-            return {"status": "fail", "detail": "Missing environment variable name"}
+            return _create_result("fail", "Missing environment variable name")
 
         exists = os.getenv(target) is not None
-        return {
-            "status": "pass" if exists else "fail",
-            "detail": f"{target} is {'set' if exists else 'not set'}",
-        }
+        return _create_result(
+            "pass" if exists else "fail",
+            f"{target} is {'set' if exists else 'not set'}",
+        )
 
-    # Check if a path exists (including sys.executable)
-    if check_type == "path_exists":
+    def _handle_path_exists(self, rule: Rule, path: Path) -> dict[str, str]:
+        """Handle path existence checks."""
+        condition = rule.get("condition", {}) or {}
+        target = condition.get("target")
+
         if not target:
-            return {"status": "fail", "detail": "Missing target path"}
-
+            return _create_result("fail", "Missing target path")
         resolved_path = sys.executable if target == "sys.executable" else os.path.join(path, target)
         exists = os.path.exists(resolved_path)
+        detail = f"{resolved_path} {'exists' if exists else 'missing'}"
+        if not exists and not rule.get("required", True):
+            detail += " (optional)"
+        return _create_result("pass" if exists else "fail", detail)
 
-        if exists:
-            return {"status": "pass", "detail": f"{resolved_path} exists"}
+    def _handle_file_exists(self, rule: Rule, path: Path) -> dict[str, str]:
+        """Handle file existence checks."""
+        condition = rule.get("condition", {}) or {}
+        target = condition.get("target")
 
-        if not rule.get("required", True):
-            return {"status": "pass", "detail": f"{resolved_path} is missing (optional)"}
-
-        return {"status": "fail", "detail": f"{resolved_path} is missing"}
-
-    # Check if a specific file exists
-    if check_type == "file_exists":
         if not target:
-            return {"status": "fail", "detail": "Missing file path"}
-
+            return _create_result("fail", "Missing file path")
         file_path = os.path.join(path, target)
         exists = os.path.isfile(file_path)
+        detail = f"{file_path} {'exists' if exists else 'not found'}"
+        if not exists and not rule.get("required", True):
+            detail += " (optional)"
+        return _create_result("pass" if exists else "fail", detail)
 
-        if exists:
-            return {"status": "pass", "detail": f"{file_path} exists"}
+    def _handle_package_installed(self, rule: Rule, path: Path) -> dict[str, str]:
+        """Handle Python package installation checks."""
+        condition = rule.get("condition", {}) or {}
+        target = condition.get("target")
 
-        if not rule.get("required", True):
-            return {"status": "pass", "detail": f"{file_path} not found (optional for local development)"}
-
-        return {"status": "fail", "detail": f"{file_path} not found"}
-
-    # Check if a Python package is importable
-    if check_type == "package_installed":
         if not target:
-            return {"status": "fail", "detail": "Missing package name"}
+            return _create_result("fail", "Missing package name")
 
         import_path_str: str = str(target)
 
         try:
             __import__(import_path_str)
-            found = True
-            error_msg = ""
+            return _create_result("pass", f"Module '{import_path_str}' is installed")
         except ImportError as exc:
-            found = False
-            error_msg = f": {exc}"
+            return _create_result("fail", f"Module '{import_path_str}' is not installed: {exc}")
+        except Exception as exc:
+            return _handle_exception(f"importing module '{import_path_str}'", exc)
 
-        return {
-            "status": "pass" if found else "fail",
-            "detail": f"Module '{import_path_str}' is {'installed' if found else f'not installed{error_msg}'}",
-        }
-
-    # Check if a keyword exists in any .py source files
-    if check_type == "source_code_contains":
+    def _handle_source_code_contains(self, rule: Rule, path: Path) -> dict[str, str]:
+        """Handle source code keyword search checks."""
+        condition = rule.get("condition", {}) or {}
         keyword = condition.get("keyword")
+
         if not isinstance(keyword, str):
-            return {
-                "status": "fail",
-                "detail": "Missing or invalid 'keyword' in condition",
-            }
+            return _create_result("fail", "Missing or invalid 'keyword' in condition")
 
         found = False
 
@@ -158,14 +232,311 @@ def generic_handler(rule: Rule, path: Path) -> dict[str, str]:
                 if keyword in content:
                     found = True
                     break
+            except PermissionError:
+                logger.warning(f"Permission denied reading {py_file}")
+                continue
+            except UnicodeDecodeError:
+                logger.warning(f"Encoding error in {py_file}, trying with errors='ignore'")
+                try:
+                    content = py_file.read_text(encoding="utf-8", errors="ignore")
+                    if keyword in content:
+                        found = True
+                        break
+                except Exception:
+                    logger.warning(f"Failed to read {py_file} even with error handling")
+                    continue
+            except MemoryError:
+                logger.error(f"File too large to process: {py_file}")
+                continue
             except Exception as exc:
-                logging.getLogger(__name__).warning("Failed to read %s: %s", py_file, exc)
+                logger.error(f"Unexpected error reading {py_file}: {exc}")
                 continue
 
-        return {
-            "status": "pass" if found else "fail",
-            "detail": f"Keyword '{keyword}' {'found' if found else 'not found'} in source code",
-        }
+        return _create_result(
+            "pass" if found else "fail",
+            f"Keyword '{keyword}' {'found' if found else 'not found'} in source code",
+        )
 
-    # Unknown check type fallback
-    return {"status": "fail", "detail": f"Unknown check type: {check_type}"}
+    def _handle_package_declared(self, rule: Rule, path: Path) -> dict[str, str]:
+        """Check that a package name appears in requirements.txt (declaration-level)."""
+        condition = rule.get("condition", {}) or {}
+        package_name_obj = condition.get("package") or condition.get("target")
+        req_file_obj = condition.get("file", "requirements.txt")
+        if not isinstance(package_name_obj, str):
+            return _create_result("fail", "Missing 'package' in condition")
+        package_name = package_name_obj
+        req_file = str(req_file_obj)
+        req_path = path / Path(req_file)
+        if not req_path.exists():
+            return _create_result("fail", f"{req_path} not found")
+        try:
+            content = req_path.read_text(encoding="utf-8").splitlines()
+        except Exception as exc:
+            return _handle_specific_exceptions(f"reading {req_file}", exc)
+        normalized = [
+            re.split(pattern=r"[=<>!~]", string=line.strip(), maxsplit=1)[0].lower()
+            for line in content
+            if line.strip() and not line.strip().startswith("#")
+        ]
+        declared = package_name.lower() in normalized
+        return _create_result(
+            "pass" if declared else "fail",
+            f"Package '{package_name}' {'declared' if declared else 'not declared'} in {req_file}",
+        )
+
+    def _handle_conditional_exists(self, rule: Rule, path: Path) -> dict[str, str]:
+        """Handle conditional existence checks such as durableTask in host.json when durable usage exists."""
+        durable_keywords = [
+            "durable",
+            "DurableOrchestrationContext",
+            "durable_functions",
+            "orchestrator",
+        ]
+        uses_durable = False
+
+        try:
+            for py_file in path.rglob("*.py"):
+                try:
+                    content = py_file.read_text(encoding="utf-8", errors="ignore")
+                except Exception:
+                    continue
+                lowered = content.lower()
+                if any(k in lowered for k in durable_keywords):
+                    uses_durable = True
+                    break
+        except Exception as exc:
+            return _handle_specific_exceptions("scanning for durable usage", exc)
+
+        if not uses_durable:
+            return _create_result("pass", "No Durable Functions usage detected; check skipped")
+
+        condition = rule.get("condition", {}) or {}
+        jsonpath = condition.get("jsonpath")
+
+        if not jsonpath:
+            return _create_result(
+                "fail",
+                "Missing jsonpath in condition for conditional_exists check",
+            )
+
+        if not isinstance(jsonpath, str):
+            return _create_result("fail", "jsonpath must be a string for conditional_exists check")
+
+        host_path = path / "host.json"
+        if not host_path.exists():
+            return _create_result("fail", "host.json missing (durable usage)")
+
+        try:
+            host_data = json.loads(host_path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            return _handle_specific_exceptions("reading host.json", exc)
+
+        pointer = jsonpath.lstrip("$.")
+        parts = pointer.split(".") if pointer else []
+        node = host_data
+        for p in parts:
+            if isinstance(node, dict) and p in node:
+                node = node[p]
+            else:
+                return _create_result(
+                    "fail",
+                    f"Required host.json property '{jsonpath}' not found",
+                )
+
+        return _create_result("pass", f"host.json contains '{jsonpath}'")
+
+    def _handle_callable_detection(self, rule: Rule, path: Path) -> dict[str, str]:
+        """Detect ASGI/WSGI callable exposure in source files (basic heuristics)."""
+        patterns = [
+            r"\bFastAPI\s*\(|\bStarlette\s*\(|\bFlask\s*\(|\bQuart\s*\(",
+            r"\bapp\s*=",
+            r"ASGIApp|WSGIApp|asgi_app|wsgi_app",
+        ]
+
+        found_items: List[str] = []
+        try:
+            for py_file in path.rglob("*.py"):
+                try:
+                    content = py_file.read_text(encoding="utf-8", errors="ignore")
+                except Exception:
+                    continue
+                for pat in patterns:
+                    if re.search(pat, content):
+                        found_items.append(f"{py_file.relative_to(path)}:{pat}")
+                        break
+        except Exception as exc:
+            return _handle_specific_exceptions("scanning for ASGI/WSGI callables", exc)
+
+        if found_items:
+            return _create_result("pass", f"Detected ASGI/WSGI-related patterns: {found_items[:3]}")
+
+        return _create_result("fail", "No ASGI/WSGI callable detected in project source")
+
+    # --- adapters / additional handlers ---
+
+    def _handle_executable_exists(self, rule: Rule, path: Path) -> dict[str, str]:
+        """Check if an executable is available on PATH."""
+        condition = rule.get("condition", {}) or {}
+        target = condition.get("target")
+        if not target:
+            return _create_result("fail", "Missing 'target' for executable_exists")
+        found = shutil.which(target) is not None
+        if found:
+            # Concise style: "<name> detected"
+            return _create_result("pass", f"{target} detected")
+        return _create_result("fail", f"{target} not found")
+
+    def _handle_any_of_exists(self, rule: Rule, path: Path) -> dict[str, str]:
+        """Check if any of a list of targets exist (env vars, host.json keys, files)."""
+        condition = rule.get("condition", {}) or {}
+        targets = condition.get("targets", [])
+        if not targets or not isinstance(targets, list):
+            return _create_result("fail", "Missing 'targets' list for any_of_exists")
+
+        for t in targets:
+            if isinstance(t, str) and t.startswith("host.json:"):
+                key = t.split("host.json:", 1)[1].lstrip(".")
+                host_path = path / "host.json"
+                if host_path.exists():
+                    try:
+                        data = json.loads(host_path.read_text(encoding="utf-8"))
+                        node = data
+                        for p in key.split("."):
+                            if isinstance(node, dict) and p in node:
+                                node = node[p]
+                            else:
+                                node = None
+                                break
+                        if node is not None:
+                            return _create_result("pass", f"host.json:{key} present")
+                    except Exception:
+                        continue
+            else:
+                # env var
+                if os.getenv(str(t)) is not None:
+                    return _create_result("pass", f"env:{t} set")
+                # file path
+                candidate = path / str(t)
+                if candidate.exists():
+                    return _create_result("pass", f"path:{candidate.name} present")
+        # Shorter failure detail for concise output integration
+        return _create_result("fail", "Targets not found")
+
+    def _handle_file_glob_check(self, rule: Rule, path: Path) -> dict[str, str]:
+        """Detect unwanted files by glob patterns."""
+        condition = rule.get("condition", {}) or {}
+        patterns = condition.get("patterns", [])
+        if not patterns or not isinstance(patterns, list):
+            return _create_result("fail", "Missing 'patterns' list for file_glob_check")
+        matches: List[str] = []
+        try:
+            for pat in patterns:
+                for p in path.rglob(pat):
+                    matches.append(str(p.relative_to(path)))
+                    if len(matches) >= 5:
+                        break
+                if len(matches) >= 5:
+                    break
+        except Exception as exc:
+            return _handle_specific_exceptions("checking file globs", exc)
+        if matches:
+            return _create_result("fail", f"Found unwanted files: {matches[:5]}")
+        return _create_result("pass", "No unwanted files detected")
+
+    def _handle_host_json_property(self, rule: Rule, path: Path) -> dict[str, str]:
+        """Check a property exists in host.json using simple jsonpath-like pointer."""
+        condition = rule.get("condition", {}) or {}
+        jsonpath = condition.get("jsonpath")
+        if not jsonpath or not isinstance(jsonpath, str):
+            return _create_result("fail", "Missing or invalid 'jsonpath' in condition")
+        host_path = path / "host.json"
+        if not host_path.exists():
+            return _create_result("fail", "host.json not found")
+        try:
+            host_data = json.loads(host_path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            return _handle_specific_exceptions("reading host.json", exc)
+        pointer = jsonpath.lstrip("$.")
+        parts = pointer.split(".") if pointer else []
+        node = host_data
+        for p in parts:
+            if isinstance(node, dict) and p in node:
+                node = node[p]
+            else:
+                return _create_result("fail", f"host.json property '{jsonpath}' not found")
+        return _create_result("pass", f"host.json contains '{jsonpath}'")
+
+    def _handle_binding_validation(self, rule: Rule, path: Path) -> dict[str, str]:
+        """
+        Basic HTTP trigger binding validation:
+        - look for function.json files and validate httpTrigger bindings have authLevel/methods where applicable.
+        This is a lightweight heuristic to catch common misconfigurations.
+        """
+        try:
+            issues = []
+            for func_file in path.rglob("function.json"):
+                try:
+                    data = json.loads(func_file.read_text(encoding="utf-8"))
+                except Exception:
+                    continue
+                bindings = data.get("bindings", [])
+                for b in bindings:
+                    if b.get("type") == "httpTrigger":
+                        if "authLevel" not in b:
+                            issues.append(f"{func_file.relative_to(path)}: missing authLevel")
+                        if "methods" in b and not b.get("methods"):
+                            issues.append(f"{func_file.relative_to(path)}: empty methods in httpTrigger")
+            if issues:
+                return _create_result("fail", f"HTTP trigger binding issues: {issues[:5]}")
+            return _create_result("pass", "HTTP trigger bindings appear valid or not present")
+        except Exception as exc:
+            return _handle_specific_exceptions("validating httpTrigger bindings", exc)
+
+    def _handle_cron_validation(self, rule: Rule, path: Path) -> dict[str, str]:
+        """
+        Simple CRON validation for timerTrigger schedules found in function.json files.
+        Accepts 5- or 6-field cron-like expressions as a heuristic.
+        """
+        cron_regex = re.compile(r"^([\S]+\s+){4,5}[\S]+$")
+        try:
+            found_cron = False
+            invalid = []
+            for func_file in path.rglob("function.json"):
+                try:
+                    data = json.loads(func_file.read_text(encoding="utf-8"))
+                except Exception:
+                    continue
+                bindings = data.get("bindings", [])
+                for b in bindings:
+                    if b.get("type") == "timerTrigger":
+                        schedule = b.get("schedule", "")
+                        found_cron = True
+                        if not isinstance(schedule, str) or not cron_regex.match(schedule.strip()):
+                            invalid.append(f"{func_file.relative_to(path)}: invalid schedule '{schedule}'")
+            if invalid:
+                return _create_result("fail", f"Invalid CRON expressions: {invalid[:5]}")
+            if not found_cron:
+                return _create_result("pass", "No timerTrigger schedules found")
+            return _create_result("pass", "Timer trigger schedules appear valid")
+        except Exception as exc:
+            return _handle_specific_exceptions("validating cron expressions", exc)
+
+
+# Global registry instance
+_registry = HandlerRegistry()
+
+
+def generic_handler(rule: Rule, path: Path) -> dict[str, str]:
+    """
+    Execute a diagnostic rule based on its type and condition.
+
+    This function maintains backward compatibility while delegating to the registry.
+
+    Args:
+        rule: The diagnostic rule to execute.
+        path: Path to the Azure Functions project.
+
+    Returns:
+        A dictionary with the status and detail of the check.
+    """
+    return _registry.handle(rule, path)
