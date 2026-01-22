@@ -1,5 +1,6 @@
 import json
 import re
+import xml.etree.ElementTree as ET
 
 from typer.testing import CliRunner
 
@@ -57,3 +58,37 @@ def test_cli_verbose_output() -> None:
     result = runner.invoke(app, ["doctor", "--format", "table", "--verbose"])
     _assert_exit_code_matches_fail_count_text(result.output, result.exit_code)
     assert "fix:" in result.output  # hint indicator now printed as 'fix:'
+
+
+def test_cli_sarif_output() -> None:
+    """Test CLI outputs SARIF format."""
+    result = runner.invoke(app, ["doctor", "--format", "sarif"])
+    data = json.loads(result.output)
+    assert data.get("version") == "2.1.0"
+    assert isinstance(data.get("runs"), list)
+    run = data["runs"][0]
+    tool = run["tool"]["driver"]
+    assert tool["name"] == "azure-functions-doctor"
+    assert tool["version"]
+
+    has_error = any(item.get("level") == "error" for item in run.get("results", []))
+    expected_exit = 1 if has_error else 0
+    assert result.exit_code == expected_exit
+
+
+def test_cli_junit_output() -> None:
+    """Test CLI outputs JUnit format."""
+    result = runner.invoke(app, ["doctor", "--format", "junit"])
+    assert result.output.startswith("<?xml")
+    root = ET.fromstring(result.output)
+    assert root.tag == "testsuite"
+    assert root.attrib.get("name") == "func-doctor"
+    tests = int(root.attrib.get("tests", "0"))
+    failures = int(root.attrib.get("failures", "0"))
+    testcases = root.findall("testcase")
+    assert tests == len(testcases)
+    assert failures <= tests
+    assert all(case.attrib.get("classname") for case in testcases)
+    assert all(case.attrib.get("name") for case in testcases)
+    expected_exit = 1 if failures > 0 else 0
+    assert result.exit_code == expected_exit

@@ -8,6 +8,7 @@ import typer
 from rich.console import Console
 from rich.text import Text
 
+from azure_functions_doctor import __version__
 from azure_functions_doctor.doctor import Doctor
 from azure_functions_doctor.logging_config import (
     get_logger,
@@ -40,8 +41,8 @@ def _validate_inputs(path: str, format_type: str, output: Optional[Path]) -> Non
         raise typer.BadParameter(f"No read permission for path: {path}")
 
     # Validate format type
-    if format_type not in ["table", "json"]:
-        raise typer.BadParameter(f"Invalid format: {format_type}. Must be 'table' or 'json'")
+    if format_type not in ["table", "json", "sarif", "junit"]:
+        raise typer.BadParameter(f"Invalid format: {format_type}. Must be 'table', 'json', 'sarif', or 'junit'")
 
     # Validate output path
     if output:
@@ -64,13 +65,26 @@ def _validate_inputs(path: str, format_type: str, output: Optional[Path]) -> Non
             raise typer.BadParameter(f"No write permission for output directory: {output_path.parent}")
 
 
+def _write_output(content: str, output: Optional[Path], label: str) -> None:
+    if output:
+        try:
+            output.write_text(content, encoding="utf-8")
+            console.print(f"[green]{format_status_icon('pass')} {label} output saved to:[/green] {output}")
+        except (OSError, IOError, PermissionError) as e:
+            console.print(f"[red]{format_status_icon('fail')} Failed to write {label} output:[/red] {e}")
+            logger.error(f"Failed to write {label} output to {output}: {e}")
+            raise typer.Exit(1) from e
+    else:
+        print(content)
+
+
 @cli.command(name="doctor")
 def doctor(
     path: str = ".",
     verbose: Annotated[bool, typer.Option("-v", "--verbose", help="Show detailed hints for failed checks")] = False,
     debug: Annotated[bool, typer.Option(help="Enable debug logging")] = False,
-    format: Annotated[str, typer.Option(help="Output format: 'table' or 'json'")] = "table",
-    output: Annotated[Optional[Path], typer.Option(help="Optional path to save JSON result")] = None,
+    format: Annotated[str, typer.Option(help="Output format: 'table', 'json', 'sarif', or 'junit'")] = "table",
+    output: Annotated[Optional[Path], typer.Option(help="Optional path to save output result")] = None,
 ) -> None:
     """
     Run diagnostics on an Azure Functions application.
@@ -79,8 +93,8 @@ def doctor(
         path: Path to the Azure Functions app. Defaults to current directory.
         verbose: Show detailed hints for failed checks.
         debug: Enable debug logging to stderr.
-        format: Output format: 'table' or 'json'.
-        output: Optional file path to save JSON result.
+        format: Output format: 'table', 'json', 'sarif', or 'junit'.
+        output: Optional file path to save output result.
     """
     # Validate inputs before proceeding
     _validate_inputs(path, format, output)
@@ -109,15 +123,13 @@ def doctor(
 
     # Count results for logging
     total_checks = sum(len(section["items"]) for section in results)
-    passed_items = sum(1 for section in results for item in section["items"] if item["status"] == "pass")
-    failed_items = sum(1 for section in results for item in section["items"] if item["status"] == "fail")
+    passed_items = sum(1 for section in results for item in section["items"] if item.get("status") == "pass")
+    failed_items = sum(1 for section in results for item in section["items"] if item.get("status") == "fail")
     # Note: handlers currently only return "pass"/"fail", not "error"
     errors = 0
 
     # Log diagnostic completion
     log_diagnostic_complete(total_checks, passed_items, failed_items, errors, duration_ms)
-
-    # local counts handled below; remove unused placeholders
 
     # Pre-compute aggregated counts from normalized item['status'] values
     passed_count = 0
@@ -136,19 +148,72 @@ def doctor(
                 warning_count += 1  # unknown treated as warning
 
     if format == "json":
-        json_output = results
-        if output:
-            try:
-                output.write_text(json.dumps(json_output, indent=2), encoding="utf-8")
-                console.print(f"[green]{format_status_icon('pass')} JSON output saved to:[/green] {output}")
-            except (OSError, IOError, PermissionError) as e:
-                console.print(f"[red]{format_status_icon('fail')} Failed to write output file:[/red] {e}")
-                logger.error(f"Failed to write JSON output to {output}: {e}")
-                raise typer.Exit(1) from e
-        else:
-            print(json.dumps(json_output, indent=2))
-        fail_count_json = sum(1 for section in results for item in section["items"] if item.get("status") == "fail")
-        raise typer.Exit(1 if fail_count_json > 0 else 0)
+        json_output = json.dumps(results, indent=2)
+        _write_output(json_output, output, "JSON")
+        raise typer.Exit(1 if fail_count > 0 else 0)
+
+    if format == "sarif":
+        sarif_results = []
+        for section in results:
+            for item in section["items"]:
+                status = item.get("status")
+                if status == "pass":
+                    continue
+                level = "error" if status == "fail" else "warning"
+                sarif_results.append(
+                    {
+                        "ruleId": item.get("label", ""),
+                        "message": {"text": item.get("value", "")},
+                        "level": level,
+                    }
+                )
+
+        sarif_output = {
+            "version": "2.1.0",
+            "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+            "runs": [
+                {
+                    "tool": {
+                        "driver": {
+                            "name": "azure-functions-doctor",
+                            "version": __version__,
+                        }
+                    },
+                    "results": sarif_results,
+                }
+            ],
+        }
+        _write_output(json.dumps(sarif_output, indent=2), output, "SARIF")
+        raise typer.Exit(1 if fail_count > 0 else 0)
+
+    if format == "junit":
+        import xml.etree.ElementTree as ET
+
+        tests = 0
+        failures = 0
+        suite = ET.Element(
+            "testsuite",
+            name="func-doctor",
+            tests="0",
+            failures="0",
+            time=f"{duration_ms / 1000:.3f}",
+        )
+
+        for section in results:
+            for item in section["items"]:
+                tests += 1
+                case = ET.SubElement(suite, "testcase", classname=section["title"], name=item.get("label", ""))
+                status = item.get("status")
+                if status != "pass":
+                    failures += 1
+                    failure = ET.SubElement(case, "failure", message=item.get("value", ""))
+                    failure.text = item.get("hint", "")
+
+        suite.set("tests", str(tests))
+        suite.set("failures", str(failures))
+        junit_output = ET.tostring(suite, encoding="utf-8", xml_declaration=True).decode("utf-8")
+        _write_output(junit_output, output, "JUnit")
+        raise typer.Exit(1 if fail_count > 0 else 0)
 
     # Note: Top header removed per UI change; programming model header intentionally omitted
 

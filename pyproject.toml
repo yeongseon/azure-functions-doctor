@@ -146,6 +146,11 @@ show_error_codes = true
 pretty = true
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = ["pytest", "_pytest.*"]
+ignore_errors = true
+follow_imports = "skip"
+
 # ----------------------------------------
 # 🧪 Testing Framework - Pytest
 # ----------------------------------------

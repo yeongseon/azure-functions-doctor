@@ -1,5 +1,7 @@
 # 📦 Changelog
 
+- add SARIF and JUnit output formats (issue #13)
+
 - bump version to 0.14.0 (bf16918e69ed0ba42d832434bcaea0d3c9048834)
 
 - bypass hatch and build mkdocs directly in CI (89cbf52d6f84c80eef0fc657523542498f90d8f2)
@@ -183,7 +185,6 @@
 - update changelog (95e1596371c72e478a87a1d06846b14fa8877bb9)
 
 - update changelog (01d9c94bc3adba61f4921df9aee69ef063623e4c)
-
 - bump version to 0.1.9 (5c6af020db3e59dd6ce32e6285aefd6381f8e8c3)
 
 - rename CLI command from azfunc-doctor to func-doctor in docs and scripts (ecbd0320830548de7c74dfb48ab9dccb636c0974)
@@ -441,4 +442,3 @@
 - initial project setup with CLI, Makefile, docs, and packaging (a39efbd9a2d2b953905b6ce3925badab2b44c117)
 
 - Initial commit (457425ebde591e34042116d1e5f92ac7006a03cd)
-
