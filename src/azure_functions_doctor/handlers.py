@@ -149,9 +149,12 @@ def generic_handler(rule: Rule, path: Path) -> dict[str, str]:
                 "detail": "Missing or invalid 'keyword' in condition",
             }
 
+        excluded_dirs = {".venv", "build", "dist", ".pytest_cache", "__pycache__"}
         found = False
 
         for py_file in path.rglob("*.py"):
+            if any(part in excluded_dirs for part in py_file.parts):
+                continue
             try:
                 content = py_file.read_text(encoding="utf-8")
                 if keyword in content:
