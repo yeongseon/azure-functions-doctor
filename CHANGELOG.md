@@ -1,8 +1,176 @@
 # 📦 Changelog
 
-- bump version to 0.1.11 (7fdb1e6c480d4e20497e497a152c2d1b55c85b05)
+- add SARIF and JUnit output formats (issue #13)
 
-- add version check target (29bcbed13943e78c5fcc817be11af8a2dd2ceec4)
+- bump version to 0.14.0 (bf16918e69ed0ba42d832434bcaea0d3c9048834)
+
+- bypass hatch and build mkdocs directly in CI (89cbf52d6f84c80eef0fc657523542498f90d8f2)
+
+- drop hatch usage and run tools directly (adabf3ea0917c719d6f3d99ce95fbd18a3e11988)
+
+- use existing hatch 1.9.4 and simplify env creation (1ca38d2a10dd2407ea997fb8c98792c3edb3f89f)
+
+- pin hatch & skip pre-commit in CI env (859eb6d8d2e8020ac0af66aea36e9eaa8c22b5e4)
+
+- skip pre-commit install in CI (b1ba3ebdebaa7eef3d27bb777c16056279a44e52)
+
+- correct indentation and typing for package_declared handler (d7768207bc95a420301c7ba1ab6643a0c851fe06)
+
+- require 'azure-functions' instead of deprecated 'azure-functions-python-library' (ad4bec2b431e81ef98c0d349dd812147bdd57b3c)
+
+- update changelog (d70a51bff1ddbcb3cfdac09b3c9aa4e9b128de3b)
+
+- bump version to 0.13.0 (95fef3a1e1123bde297c8215a37a52e57470b0f1)
+
+- align CLI tests with strict fail exit semantics (a7b60c3d03549b956c09cfb9ee79d10c5113e931)
+
+- exit with code 1 when fails present and document semantics (a8e38ed7e741fc68ccb9993ceb096978d0019191)
+
+- summarize fails instead of errors without changing exit behavior (f07b16b18f51bd4c38b80689d0408b5cdaa4a7da)
+
+- add v1 multi-trigger sample (http, timer, queue) (e3ea509270d2c2a1f8f374096d6892e942b26f4e)
+
+- rename v1 HttpExample to http-trigger and update docs (beda5550be8ec97eaec829aa24d62b00d58161e1)
+
+- rename v2 basic-hello to http-trigger (8a8e0f23b82fd970f9148b39556ff308fbb714de)
+
+- remove duplicate examples/v1/basic-hello (734cf38c076b4b0d640fe19d75c3c8dff3956a48)
+
+- add installation steps and CLI usage (d9eff0d1a711705943830885e58725e2bd90efad)
+
+- remove deprecated examples/basic-hello (2c2ecd854a4f31d715868bdd669adf4218cf1560)
+
+- split examples into v2/multi-trigger and v1/HttpExample; update docs (c423686945ee3b1247d72d08537976862fcea6f6)
+
+- bump version to 0.12.0 (f47589ae0d6d228041441b81b008c72e30f7c782)
+
+- remove severity field and simplify status model (BREAKING) (3ad0bbc016e1e714010448f67a14ae4bbb6f7b71)
+
+- update usage examples and README for concise messages (03938076cd61823210a4e639ba1001c9bb3937cb)
+
+- shorten executable_exists detail (e.g. 'func detected') (d4e84af95aea624aeceb04b8cf6682689b9dce41)
+
+- unify status icons to README set (✓ ! ✗) (e6316fc717e49f88944fac382ecbee7de52576a1)
+
+- simplify compare_version detail string and update test (ee99799cc177ac678557de10f27bd4bf4d3427f2)
+
+- unify status icons using format_status_icon for JSON output and errors (e784df6e78178f2248e95d9d822b034f4e54708f)
+
+- add icons & status legend (pass/warn/fail) (101644291175c7c3b30c507a514d634dcfab6c2f)
+
+- update changelog (6a122dcd3351e3933514c33bfbd3027cb0397890)
+
+- bump version to 0.11.0 (9b64954b1ed7f1ad8fbc9c37fdecf759c6f17f1a)
+
+- merge handler tests into single file; remove duplicate; add type hints (f1367558997e6a2630ac4496157683cd23a2bf59)
+
+- update changelog (f6f40e2f48cbaa0fff33bea600480ec61d72aba5)
+
+- bump version to 0.10.0 (2979e22dc658b0cf2f1b0266a58f4ba9ddebc6b8)
+
+- update CLI name references and use new example screenshot filename (ec953a1e677e1e28ed3693ed24e813b56f24357a)
+
+- accept 'jsonpath' in Condition TypedDict (fix mypy) (cbcf52850cdd1f86823008baaf267ee22d40f81c)
+
+- rename command to 'azure-functions doctor' and update UI; doctor: include severity metadata and normalize statuses (7b327f9f9dbceb5afc13e6d090be14f1daccadc3)
+
+- update changelog (7c01e2cba5f71ebd4326bc8a441e4a81d278bf76)
+
+- bump version to 0.9.0 (6cf33bc61cb2c8256f1eff52295292ae365d256b)
+
+- replace 'func-doctor' with 'azure-functions' in docs and examples (30057fce6f80fba9e5a4d15dcdbc795823a9b90f)
+
+- update CLI tests to use 'doctor' subcommand (25423c5fb1ea81f3a6401cb9a6f0bfbb9adce300)
+
+- rename subcommand to 'doctor' and add 'azure-functions' console script entrypoints (7101e7f92ecb25f3c9d382674048bb94adc628c7)
+
+- update changelog (c0cb87053d831b1003518e78768f4645ee570dc7)
+
+- bump version to 0.8.0 (52b07238fbc699434e615e00b7828ab06e5dbe82)
+
+- Run formatters (black/ruff) adjustments (1895c63c1d014ba42b6c8e2d899c9178227637f1)
+
+- update changelog (31e2c19f216b44d7a60c33e31cbad87e3561fad4)
+
+- bump version to 0.7.0 (f1a3ebb19a11194282a9e86222174fd89aedfff7)
+
+- merge new handler tests and update programming model/rule-loading tests (019d875570b245ff787e8b73e72097df32cdfb11)
+
+- simplify rule loader, add allow_v1 flag for CLI (c0d52982df13a70587afa67509bb4bf3e80bf4ae)
+
+- add conditional_exists and callable_detection handlers (428b59fbdca4e3151cd8410eb60ee957b1024d34)
+
+- add v1/v2 rule stubs and severities (fcbe157ac2c3246b9171a56b4ee5075ca89dfc89)
+
+- add Severity column to v2 programming model checks (ad021874bc78d42369346f81a2c9b4d7e9bdf0f6)
+
+- update changelog (ffc692f5465f58c8816e9ff28d2e7841d5a5196e)
+
+- bump version to 0.6.0 (f6bad63d9cfd913b6bb6461c9fc8ca8d53ae70eb)
+
+- update legacy rules.json for backward compatibility (a9ba697213ebe60570d701c53c91ce064ada4afb)
+
+- update documentation for v1/v2 programming model support (c7653652bb4045cd624cb6d6b521fa1500103900)
+
+- improve UI and add v1 project support with warning (fd04e11d825d34d7fa6a25816712f25ce7ad1328)
+
+- implement separate rule sets for v1 and v2 programming models (2bb5952602e2d63e9676bb383958b1d6aec0c8e2)
+
+- implement programming model detection for v1 and v2 (568f756521cb6657bcf6a12617a9872bd074bedd)
+
+- bump version to 0.5.1
+
+- Fix verbose option behavior
+- verbose now only controls hint display, not logging level
+- Update CHANGELOG.md with fix details (a6a8690e8f5ac10e9092d2783ecba200403f5caa)
+
+- separate verbose option from logging level control (9b373a91243fcf5668afec8491beea95b258fa7d)
+
+- update changelog (deeb342676ef59776d8812758b64632bc730e9ee)
+
+- bump version to 0.5.0 (248da2a31fa91b09270d72627a2d20569526360d)
+
+- improve error handling and robustness (1c90078671dbee99ce13d3c0a1920447bcfc141f)
+
+- bump version to 0.4.1 (a9fc413faef0efb421ce93cafcc267bb349ada39)
+
+- unify output using Rich Console (ebaf2071df99d2f61eb34a8940ff5e386176a134)
+
+- bump version to 0.4.0 (a21ca7cb94a14e29eb2d3f5d5abb3aaeb35d2bc0)
+
+- add v1/v2 compatibility check at initialization (af3621b35dcef7513839f8e0b8f07b329cf82a9a)
+
+- mark local.settings.json implemented; test: assert optional local.settings.json passes (ab2c16d5dfdab13720a66bf539c61998a0bc8dc6)
+
+- update changelog (1fef4982e53a40df6ac191e8d11aea3607d1d015)
+
+- bump version to 0.3.0 (cb009efdfbae834ee293973df6346c8251e34e90)
+
+- fix documentation build issues (df9046675e4cb25d4f0d1f9e754a034d63c42aa1)
+
+- resolve diagnostic failures and pre-commit issues (cc2a27eedd63c0dbf6d0c35ab2ca93a98b7bf26b)
+
+- implement major code structure improvements (18c3d60ef104003ebc93788a25db5e7fcc34b0cd)
+
+- align local version with PyPI release (0.2.0) (68a011cfc517751eda20de5b19d9a1f378296187)
+
+- update changelog (afdf7359dafaf8ff444552b08152a5d9cd25271b)
+
+- bump version to 0.1.11 (39be13cfef2f5725f46766d897c4b822504b20fc)
+
+- remove overly ambitious roadmap document (3a9d4d15b45709d6a68e77d22939f3288a8bfae8)
+
+- add comprehensive roadmap for static analysis and CI/CD platform (66db758d6d426b0bd76fdcb7d76c2fac60b165b0)
+
+- add architecture diagram and remove emojis from README (654c34195bd21ed502218bd12624843ce1fb89db)
+
+- enhance open source documentation and add contribution templates (2a7a811e19d1394982b88643145196a7c13883f9)
+
+- implement centralized logging infrastructure (8b508c585e54b825fde4456fd53bc995c2e41652)
+
+- Merge branch 'main' of https://github.com/yeongseon/azure-functions-doctor-for-python (40194d23ffe4160319e0d8c428b366e1760c5274)
+
+- Merge branch 'main' of https://github.com/yeongseon/azure-functions-doctor-for-python (3459db77278e4d0a1a1a337b9e13e9fe804ad4aa)
 
 - update release process guide to reflect hatch-based workflow (d0a814cd6222723180a3d10d6f7051041bfb2917)
 
@@ -16,6 +184,7 @@
 
 - update changelog (95e1596371c72e478a87a1d06846b14fa8877bb9)
 
+- update changelog (01d9c94bc3adba61f4921df9aee69ef063623e4c)
 - bump version to 0.1.9 (5c6af020db3e59dd6ce32e6285aefd6381f8e8c3)
 
 - rename CLI command from azfunc-doctor to func-doctor in docs and scripts (ecbd0320830548de7c74dfb48ab9dccb636c0974)
@@ -273,4 +442,3 @@
 - initial project setup with CLI, Makefile, docs, and packaging (a39efbd9a2d2b953905b6ce3925badab2b44c117)
 
 - Initial commit (457425ebde591e34042116d1e5f92ac7006a03cd)
-
