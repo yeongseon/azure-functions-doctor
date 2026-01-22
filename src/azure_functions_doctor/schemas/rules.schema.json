@@ -39,7 +39,8 @@
           "file_exists",
           "env_var_exists",
           "package_installed",
-          "path_exists"
+          "path_exists",
+          "source_code_contains"
         ]
       },
       "required": {
@@ -57,9 +58,13 @@
         "properties": {
           "target": { "type": "string" },
           "operator": { "type": "string" },
-          "value": {}
+          "value": {},
+          "keyword": { "type": "string" }
         },
-        "required": ["target"]
+        "anyOf": [
+          { "required": ["target"] },
+          { "required": ["keyword"] }
+        ]
       },
       "hint": {
         "type": "string",
