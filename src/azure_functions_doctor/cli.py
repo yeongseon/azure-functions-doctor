@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import Annotated, Optional
 
@@ -13,12 +14,21 @@ cli = typer.Typer()
 console = Console()
 
 
+def _write_output(content: str, output: Optional[Path], label: str) -> None:
+    if output:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(content, encoding="utf-8")
+        console.print(f"[green]✓ {label} output saved to:[/green] {output}")
+    else:
+        print(content)
+
+
 @cli.command()
 def diagnose(
     path: str = ".",
     verbose: bool = False,
     format: Annotated[str, typer.Option(help="Output format: 'table', 'json', 'sarif', or 'junit'")] = "table",
-    output: Annotated[Optional[Path], typer.Option(help="Optional path to save JSON result")] = None,
+    output: Annotated[Optional[Path], typer.Option(help="Optional path to save output result")] = None,
 ) -> None:
     """
     Run diagnostics on an Azure Functions application.
@@ -26,30 +36,24 @@ def diagnose(
     Args:
         path: Path to the Azure Functions app. Defaults to current directory.
         verbose: Show detailed hints for failed checks.
-        format: Output format: 'table' or 'json'.
-        output: Optional file path to save JSON result.
+        format: Output format: 'table', 'json', 'sarif', or 'junit'.
+        output: Optional file path to save output result.
     """
+    supported_formats = {"table", "json", "sarif", "junit"}
+    if format not in supported_formats:
+        raise typer.BadParameter(f"Invalid format '{format}'. Choose from: {', '.join(sorted(supported_formats))}.")
+
     doctor = Doctor(path)
     results = doctor.run_all_checks()
 
     passed = failed = 0
 
     if format == "json":
-        import json
-
-        json_output = results
-
-        if output:
-            output.parent.mkdir(parents=True, exist_ok=True)
-            output.write_text(json.dumps(json_output, indent=2), encoding="utf-8")
-            console.print(f"[green]✓ JSON output saved to:[/green] {output}")
-        else:
-            print(json.dumps(json_output, indent=2))
+        json_output = json.dumps(results, indent=2)
+        _write_output(json_output, output, "JSON")
         return
 
     if format == "sarif":
-        import json
-
         sarif_results = []
         for section in results:
             for item in section["items"]:
@@ -79,13 +83,7 @@ def diagnose(
                 }
             ],
         }
-
-        if output:
-            output.parent.mkdir(parents=True, exist_ok=True)
-            output.write_text(json.dumps(sarif_output, indent=2), encoding="utf-8")
-            console.print(f"[green]✓ SARIF output saved to:[/green] {output}")
-        else:
-            print(json.dumps(sarif_output, indent=2))
+        _write_output(json.dumps(sarif_output, indent=2), output, "SARIF")
         return
 
     if format == "junit":
@@ -93,7 +91,7 @@ def diagnose(
 
         tests = 0
         failures = 0
-        suite = ET.Element("testsuite", name="func-doctor", tests="0", failures="0")
+        suite = ET.Element("testsuite", name="func-doctor", tests="0", failures="0", time="0")
 
         for section in results:
             for item in section["items"]:
@@ -107,13 +105,7 @@ def diagnose(
         suite.set("tests", str(tests))
         suite.set("failures", str(failures))
         junit_output = ET.tostring(suite, encoding="utf-8", xml_declaration=True).decode("utf-8")
-
-        if output:
-            output.parent.mkdir(parents=True, exist_ok=True)
-            output.write_text(junit_output, encoding="utf-8")
-            console.print(f"[green]✓ JUnit output saved to:[/green] {output}")
-        else:
-            print(junit_output)
+        _write_output(junit_output, output, "JUnit")
         return
 
     # Print header only for table format
