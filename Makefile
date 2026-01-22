@@ -28,7 +28,7 @@ ensure-hatch: bootstrap
 .PHONY: install
 install: ensure-hatch
 	@$(HATCH) env create
-	@make precommit-install
+	@$(MAKE) precommit-install
 
 .PHONY: shell
 shell: ensure-hatch
@@ -64,14 +64,14 @@ lint: ensure-hatch
 
 .PHONY: check
 check: ensure-hatch
-	@make lint
-	@make typecheck
+	@$(MAKE) lint
+	@$(MAKE) typecheck
 	@echo "✅ Lint & type check passed!"
 
 .PHONY: check-all
 check-all: ensure-hatch
-	@make check
-	@make test
+	@$(MAKE) check
+	@$(MAKE) test
 	@echo "✅ All checks passed including tests!"
 
 .PHONY: precommit
@@ -185,11 +185,11 @@ version: ensure-hatch
 
 .PHONY: docs
 docs: ensure-hatch
-	@$(HATCH) run mkdocs build
+	@$(HATCH) run docs:build
 
 .PHONY: docs-serve
 docs-serve: ensure-hatch
-	@$(HATCH) run mkdocs serve
+	@$(HATCH) run docs:serve
 
 # ------------------------------
 # 🩺 Diagnostic
@@ -197,7 +197,7 @@ docs-serve: ensure-hatch
 
 .PHONY: doctor
 doctor:
-	@echo "🔍 Python version:" && python --version
+	@echo "🔍 Python version:" && $(PYTHON) --version
 	@echo "🔍 Installed packages:" && $(HATCH) env run pip list || echo "⚠️ No hatch env found"
 	@echo "🔍 Azure Function Core Tools version:" && func --version || echo "⚠️ func not found. Install with: npm i -g azure-functions-core-tools@4"
 	@echo "🔍 Pre-commit hook installed:"
