@@ -1,7 +1,7 @@
 import json
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Annotated, Optional
 
@@ -155,9 +155,10 @@ def doctor(
                 warning_count += 1  # unknown treated as warning
 
     if format == "json":
+        generated_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         metadata = {
             "tool_version": __version__,
-            "generated_at": f"{datetime.utcnow().isoformat()}Z",
+            "generated_at": generated_at,
             "target_path": str(Path(path).resolve()),
         }
         json_output = {"metadata": metadata, "results": results}
