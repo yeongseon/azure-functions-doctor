@@ -34,9 +34,9 @@ You can override the rule set with a custom file via the CLI option `--rules` or
 Custom rules files are treated as trusted input.
 
 - **Only use rules files from trusted sources.**
-- Some rule types can execute code as part of evaluation. For example, `package_installed` uses `__import__(target)` for the rule's `target`.
+- Some rule types can execute code as part of evaluation. For example, `package_installed` uses `__import__(target)` for the rule's `target`. Importing a module runs its top-level code at import time.
 
-Do not load rules from untrusted paths.
+Do not load rules from untrusted sources.
 
 ---
 
