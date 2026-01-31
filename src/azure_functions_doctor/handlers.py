@@ -117,6 +117,7 @@ class Rule(TypedDict, total=False):
         "path_exists",
         "file_exists",
         "package_installed",
+        "package_declared",
         "source_code_contains",
         "conditional_exists",
         "callable_detection",
