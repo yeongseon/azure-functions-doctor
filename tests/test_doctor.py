@@ -76,6 +76,15 @@ def test_custom_rules_path() -> None:
         assert results[0]["items"][0]["label"] == "Custom env"
 
 
+def test_custom_rules_path_invalid_raises() -> None:
+    """Tests that Doctor raises ValueError when rules_path is not an existing file."""
+    with tempfile.TemporaryDirectory() as tmp:
+        with pytest.raises(ValueError, match="rules_path must be an existing file"):
+            Doctor(tmp, rules_path=Path(tmp) / "nonexistent.json")
+        with pytest.raises(ValueError, match="rules_path must be an existing file"):
+            Doctor(tmp, rules_path=Path(tmp))  # directory, not file
+
+
 def test_profile_minimal_filters_optional_rules() -> None:
     """Tests that the minimal profile excludes optional rules."""
     with tempfile.TemporaryDirectory() as tmp:
