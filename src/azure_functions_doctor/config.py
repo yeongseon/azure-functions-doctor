@@ -1,4 +1,11 @@
-"""Configuration management for Azure Functions Doctor."""
+"""Configuration management for Azure Functions Doctor.
+
+Environment variables with FUNC_DOCTOR_ prefix (e.g. FUNC_DOCTOR_LOG_LEVEL)
+are loaded into Config. These options are reserved for future use; the CLI
+currently configures logging via logging_config.setup_logging() and does not
+read from Config. When wiring Config into the CLI/Doctor (e.g. max_file_size_mb,
+search_timeout_seconds), update this module and the CLI entry point.
+"""
 
 import os
 from pathlib import Path
@@ -10,7 +17,11 @@ logger = get_logger(__name__)
 
 
 class Config:
-    """Centralized configuration management with environment variable support."""
+    """Centralized configuration management with environment variable support.
+
+    Options (max_file_size_mb, search_timeout_seconds, etc.) are for future use;
+    not yet wired into the CLI or Doctor. Use get_config() to access the global instance.
+    """
 
     # Default configuration values
     _defaults = {
