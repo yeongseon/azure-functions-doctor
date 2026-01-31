@@ -160,8 +160,8 @@ class Doctor:
 
     # Legacy `rules.json` support removed per repository simplification.
 
-    def run_all_checks(self) -> list[SectionResult]:
-        rules = self.load_rules()
+    def run_all_checks(self, rules: Optional[list[Rule]] = None) -> list[SectionResult]:
+        rules = self.load_rules() if rules is None else rules
         if self.profile == "minimal":
             rules = [rule for rule in rules if rule.get("required", True)]
         elif self.profile not in (None, "full"):
