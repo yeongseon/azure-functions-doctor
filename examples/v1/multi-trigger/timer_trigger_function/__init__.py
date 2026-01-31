@@ -6,7 +6,7 @@ import azure.functions as func
 
 def main(mytimer: func.TimerRequest) -> None:  # noqa: D401
     """Timer trigger logging current UTC time."""
-    utc_now = datetime.datetime.utcnow().isoformat()
+    utc_now = datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
     if mytimer.past_due:
         logging.warning("Timer trigger is past due!")
     logging.info("v1 multi-trigger timer fired at %s", utc_now)
