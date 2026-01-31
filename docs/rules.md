@@ -27,6 +27,8 @@ The tool automatically selects the appropriate rule file based on the detected p
 - **v2 projects**: Uses `v2.json` (decorator-based projects)  
 Rules are read from the `assets/rules/v1.json` or `assets/rules/v2.json` files depending on the detected programming model. Legacy `rules.json` support has been removed.
 
+You can override the rule set with a custom file via the CLI option `--rules` or the API argument `rules_path`. **Use only rules files from trusted sources.** Custom rules are executed as-is; for example, the `package_installed` rule type runs `__import__(target)` for the rule’s `target`. Do not load rules from untrusted paths.
+
 ---
 
 ## ⌐ Structure of a Rule
