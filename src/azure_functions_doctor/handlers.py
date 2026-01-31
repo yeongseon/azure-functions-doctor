@@ -224,7 +224,14 @@ class HandlerRegistry:
 
         if not target:
             return _create_result("fail", "Missing target path")
-        resolved_path = Path(sys.executable) if target == "sys.executable" else path / target
+
+        if target == "sys.executable":
+            if not sys.executable:
+                return _create_result("fail", "sys.executable is empty")
+            resolved_path = Path(sys.executable)
+        else:
+            resolved_path = path / target
+
         exists = resolved_path.exists()
         detail = f"{resolved_path} {'exists' if exists else 'missing'}"
         if not exists and not rule.get("required", True):

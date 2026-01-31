@@ -47,7 +47,12 @@ class Doctor:
     ) -> None:
         self.project_path: Path = Path(path).resolve()
         self.profile = profile
-        self.rules_path = rules_path.resolve() if rules_path else None
+        self.rules_path: Optional[Path] = None
+        if rules_path is not None:
+            resolved = rules_path.resolve()
+            if not resolved.is_file():
+                raise ValueError(f"rules_path must be an existing file: {resolved}")
+            self.rules_path = resolved
         self.programming_model = self._detect_programming_model()
         # If v1 detected in nested function folders (function.json not at project root)
         # and caller did not allow v1, signal incompatibility.
@@ -115,7 +120,7 @@ class Doctor:
         try:
             validate(instance=rules, schema=schema)
         except ValidationError as exc:
-            raise ValueError(f"Invalid rules.json: {exc.message}") from exc
+            raise ValueError(f"Invalid rules.json: {str(exc)}") from exc
 
     def _load_v2_rules(self) -> list[Rule]:
         """Load complete v2 rules set."""
