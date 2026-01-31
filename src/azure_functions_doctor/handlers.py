@@ -224,8 +224,8 @@ class HandlerRegistry:
 
         if not target:
             return _create_result("fail", "Missing target path")
-        resolved_path = sys.executable if target == "sys.executable" else os.path.join(path, target)
-        exists = os.path.exists(resolved_path)
+        resolved_path = Path(sys.executable) if target == "sys.executable" else path / target
+        exists = resolved_path.exists()
         detail = f"{resolved_path} {'exists' if exists else 'missing'}"
         if not exists and not rule.get("required", True):
             detail += " (optional)"
@@ -238,8 +238,8 @@ class HandlerRegistry:
 
         if not target:
             return _create_result("fail", "Missing file path")
-        file_path = os.path.join(path, target)
-        exists = os.path.isfile(file_path)
+        file_path = path / target
+        exists = file_path.is_file()
         detail = f"{file_path} {'exists' if exists else 'not found'}"
         if not exists and not rule.get("required", True):
             detail += " (optional)"
