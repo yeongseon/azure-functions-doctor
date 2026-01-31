@@ -1,3 +1,4 @@
+import ast
 import json
 import os
 import re
@@ -6,11 +7,35 @@ import sys
 from pathlib import Path
 from typing import List, Literal, TypedDict, Union
 
+from packaging.version import InvalidVersion
 from packaging.version import parse as parse_version
 
 from azure_functions_doctor.logging_config import get_logger
+from azure_functions_doctor.target_resolver import resolve_target_value
 
 logger = get_logger(__name__)
+
+
+def _source_contains_ast(source: str, identifier: str) -> bool:
+    """Return True if the Python source contains a decorator like @identifier.xxx (e.g. @app.route)."""
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return False
+
+    def decorator_matches(dec: ast.expr) -> bool:
+        # @app.route() is ast.Call(func=Attribute(...)); @app.route is ast.Attribute
+        node: ast.expr = dec.func if isinstance(dec, ast.Call) else dec
+        if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
+            return node.value.id == identifier
+        return False
+
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.ClassDef)) and node.decorator_list:
+            for dec in node.decorator_list:
+                if decorator_matches(dec):
+                    return True
+    return False
 
 
 def _create_result(status: str, detail: str, internal_error: bool = False) -> dict[str, str]:
@@ -53,6 +78,7 @@ class Condition(TypedDict, total=False):
     operator: str
     value: Union[str, int, float]
     keyword: str
+    mode: Literal["string", "ast"]  # for source_code_contains: "string" (default) or "ast"
     jsonpath: str
     targets: list[str]
     patterns: list[str]
@@ -154,6 +180,27 @@ class HandlerRegistry:
                 f"Python {current_version} ({operator}{value})",
             )
 
+        if target == "func_core_tools":
+            raw = resolve_target_value("func_core_tools")
+            if raw in ("not_installed", "timeout", "unknown_error") or raw.startswith("error_"):
+                return _create_result("fail", f"func: {raw}")
+            try:
+                current = parse_version(raw)
+            except InvalidVersion:
+                return _create_result("fail", f"func version unparseable: {raw}")
+            expected = parse_version(str(value))
+            passed = {
+                ">=": current >= expected,
+                "<=": current <= expected,
+                "==": current == expected,
+                ">": current > expected,
+                "<": current < expected,
+            }.get(operator, False)
+            return _create_result(
+                "pass" if passed else "fail",
+                f"func {raw} ({operator}{value})",
+            )
+
         return _create_result("fail", f"Unknown target for version comparison: {target}")
 
     def _handle_env_var_exists(self, rule: Rule, path: Path) -> dict[str, str]:
@@ -217,9 +264,10 @@ class HandlerRegistry:
             return _handle_exception(f"importing module '{import_path_str}'", exc)
 
     def _handle_source_code_contains(self, rule: Rule, path: Path) -> dict[str, str]:
-        """Handle source code keyword search checks."""
+        """Handle source code keyword search checks (string or AST mode)."""
         condition = rule.get("condition", {}) or {}
         keyword = condition.get("keyword")
+        mode = condition.get("mode", "string")
 
         if not isinstance(keyword, str):
             return _create_result("fail", "Missing or invalid 'keyword' in condition")
@@ -227,37 +275,69 @@ class HandlerRegistry:
         excluded_dirs = {".venv", "build", "dist", ".pytest_cache", "__pycache__"}
         found = False
 
-        for py_file in path.rglob("*.py"):
-            if any(part in excluded_dirs for part in py_file.parts):
-                continue
-            try:
-                content = py_file.read_text(encoding="utf-8")
-                if keyword in content:
-                    found = True
-                    break
-            except PermissionError:
-                logger.warning(f"Permission denied reading {py_file}")
-                continue
-            except UnicodeDecodeError:
-                logger.warning(f"Encoding error in {py_file}, trying with errors='ignore'")
+        if mode == "ast":
+            # AST-based: look for decorator Attribute (e.g. @app.xxx) or Name matching keyword
+            # If keyword looks like "@app.", use "app" as the identifier to find
+            ast_identifier = keyword.strip().lstrip("@").rstrip(".")
+            if not ast_identifier:
+                return _create_result("fail", "Invalid 'keyword' for AST mode")
+            for py_file in path.rglob("*.py"):
+                if any(part in excluded_dirs for part in py_file.parts):
+                    continue
                 try:
-                    content = py_file.read_text(encoding="utf-8", errors="ignore")
+                    content = py_file.read_text(encoding="utf-8")
+                    if _source_contains_ast(content, ast_identifier):
+                        found = True
+                        break
+                except PermissionError:
+                    logger.warning(f"Permission denied reading {py_file}")
+                    continue
+                except UnicodeDecodeError:
+                    try:
+                        content = py_file.read_text(encoding="utf-8", errors="ignore")
+                        if _source_contains_ast(content, ast_identifier):
+                            found = True
+                            break
+                    except Exception:
+                        continue
+                except (MemoryError, SyntaxError):
+                    continue
+                except Exception as exc:
+                    logger.debug(f"Skip {py_file} in AST scan: {exc}")
+                    continue
+        else:
+            for py_file in path.rglob("*.py"):
+                if any(part in excluded_dirs for part in py_file.parts):
+                    continue
+                try:
+                    content = py_file.read_text(encoding="utf-8")
                     if keyword in content:
                         found = True
                         break
-                except Exception:
-                    logger.warning(f"Failed to read {py_file} even with error handling")
+                except PermissionError:
+                    logger.warning(f"Permission denied reading {py_file}")
                     continue
-            except MemoryError:
-                logger.error(f"File too large to process: {py_file}")
-                continue
-            except Exception as exc:
-                logger.error(f"Unexpected error reading {py_file}: {exc}")
-                continue
+                except UnicodeDecodeError:
+                    logger.warning(f"Encoding error in {py_file}, trying with errors='ignore'")
+                    try:
+                        content = py_file.read_text(encoding="utf-8", errors="ignore")
+                        if keyword in content:
+                            found = True
+                            break
+                    except Exception:
+                        logger.warning(f"Failed to read {py_file} even with error handling")
+                        continue
+                except MemoryError:
+                    logger.error(f"File too large to process: {py_file}")
+                    continue
+                except Exception as exc:
+                    logger.error(f"Unexpected error reading {py_file}: {exc}")
+                    continue
 
+        detail_suffix = " (AST)" if mode == "ast" else ""
         return _create_result(
             "pass" if found else "fail",
-            f"Keyword '{keyword}' {'found' if found else 'not found'} in source code",
+            f"Keyword '{keyword}' {'found' if found else 'not found'} in source code{detail_suffix}",
         )
 
     def _handle_package_declared(self, rule: Rule, path: Path) -> dict[str, str]:

@@ -37,6 +37,60 @@ def test_compare_python_version_fail() -> None:
     assert result["status"] == "fail"
 
 
+def test_compare_func_core_tools_version_pass(monkeypatch: MonkeyPatch) -> None:
+    """Test that the func Core Tools version check passes when version meets minimum."""
+    from azure_functions_doctor import handlers
+
+    monkeypatch.setattr(handlers, "resolve_target_value", lambda t: "4.0.5455" if t == "func_core_tools" else "")
+    rule: Rule = {
+        "type": "compare_version",
+        "condition": {
+            "target": "func_core_tools",
+            "operator": ">=",
+            "value": "4.0",
+        },
+    }
+    result = generic_handler(rule, Path("."))
+    assert result["status"] == "pass"
+    assert "4.0.5455" in result.get("detail", "")
+
+
+def test_compare_func_core_tools_version_fail_not_installed(monkeypatch: MonkeyPatch) -> None:
+    """Test that the func Core Tools version check fails when func is not installed."""
+    from azure_functions_doctor import handlers
+
+    monkeypatch.setattr(handlers, "resolve_target_value", lambda t: "not_installed" if t == "func_core_tools" else "")
+    rule: Rule = {
+        "type": "compare_version",
+        "condition": {
+            "target": "func_core_tools",
+            "operator": ">=",
+            "value": "4.0",
+        },
+    }
+    result = generic_handler(rule, Path("."))
+    assert result["status"] == "fail"
+    assert "not_installed" in result.get("detail", "")
+
+
+def test_compare_func_core_tools_version_fail_old_version(monkeypatch: MonkeyPatch) -> None:
+    """Test that the func Core Tools version check fails when version is below minimum."""
+    from azure_functions_doctor import handlers
+
+    monkeypatch.setattr(handlers, "resolve_target_value", lambda t: "3.0.0" if t == "func_core_tools" else "")
+    rule: Rule = {
+        "type": "compare_version",
+        "condition": {
+            "target": "func_core_tools",
+            "operator": ">=",
+            "value": "4.0",
+        },
+    }
+    result = generic_handler(rule, Path("."))
+    assert result["status"] == "fail"
+    assert "3.0.0" in result.get("detail", "")
+
+
 def test_env_var_exists_pass(monkeypatch: MonkeyPatch) -> None:
     """ "Test that the environment variable check passes when the variable is set."""
     monkeypatch.setenv("MY_ENV_VAR", "true")
@@ -136,6 +190,40 @@ def test_source_code_contains_fail() -> None:
         }
         result = generic_handler(rule, Path(tmpdir))
         assert result["status"] == "fail"
+
+
+def test_source_code_contains_ast_pass() -> None:
+    """Test that AST mode passes when decorator @app.xxx is present in source."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        file_path = Path(tmpdir) / "app.py"
+        file_path.write_text(
+            "from azure.functions import FunctionApp\n"
+            "app = FunctionApp()\n\n"
+            "@app.route()\n"
+            "def main(req):\n"
+            "    return 'ok'\n"
+        )
+        rule: Rule = {
+            "type": "source_code_contains",
+            "condition": {"keyword": "@app.", "mode": "ast"},
+        }
+        result = generic_handler(rule, Path(tmpdir))
+        assert result["status"] == "pass"
+        assert "AST" in result.get("detail", "")
+
+
+def test_source_code_contains_ast_fail() -> None:
+    """Test that AST mode fails when keyword appears only in comment (no real decorator)."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        file_path = Path(tmpdir) / "app.py"
+        file_path.write_text("# We use @app. decorators elsewhere\nx = 1\n")
+        rule: Rule = {
+            "type": "source_code_contains",
+            "condition": {"keyword": "@app.", "mode": "ast"},
+        }
+        result = generic_handler(rule, Path(tmpdir))
+        assert result["status"] == "fail"
+        assert "AST" in result.get("detail", "")
 
 
 def test_unknown_check_type() -> None:
