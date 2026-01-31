@@ -5,7 +5,7 @@ import re
 import shutil
 import sys
 from pathlib import Path
-from typing import List, Literal, TypedDict, Union
+from typing import Iterator, List, Literal, TypedDict, Union
 
 from packaging.version import InvalidVersion
 from packaging.version import parse as parse_version
@@ -36,6 +36,30 @@ def _source_contains_ast(source: str, identifier: str) -> bool:
                 if decorator_matches(dec):
                     return True
     return False
+
+
+def _iter_project_py_contents(path: Path) -> Iterator[tuple[Path, str]]:
+    """Yield (py_file, content) for each .py file under path, skipping excluded dirs."""
+    excluded_dirs = {".venv", "build", "dist", ".pytest_cache", "__pycache__"}
+    for py_file in path.rglob("*.py"):
+        if any(part in excluded_dirs for part in py_file.parts):
+            continue
+        try:
+            content = py_file.read_text(encoding="utf-8")
+        except PermissionError:
+            logger.warning(f"Permission denied reading {py_file}")
+            continue
+        except UnicodeDecodeError:
+            try:
+                content = py_file.read_text(encoding="utf-8", errors="ignore")
+            except Exception:
+                continue
+        except (MemoryError, OSError):
+            continue
+        except Exception as exc:
+            logger.debug(f"Skip {py_file}: {exc}")
+            continue
+        yield py_file, content
 
 
 def _create_result(status: str, detail: str, internal_error: bool = False) -> dict[str, str]:
@@ -272,67 +296,20 @@ class HandlerRegistry:
         if not isinstance(keyword, str):
             return _create_result("fail", "Missing or invalid 'keyword' in condition")
 
-        excluded_dirs = {".venv", "build", "dist", ".pytest_cache", "__pycache__"}
         found = False
-
         if mode == "ast":
-            # AST-based: look for decorator Attribute (e.g. @app.xxx) or Name matching keyword
-            # If keyword looks like "@app.", use "app" as the identifier to find
             ast_identifier = keyword.strip().lstrip("@").rstrip(".")
             if not ast_identifier:
                 return _create_result("fail", "Invalid 'keyword' for AST mode")
-            for py_file in path.rglob("*.py"):
-                if any(part in excluded_dirs for part in py_file.parts):
-                    continue
-                try:
-                    content = py_file.read_text(encoding="utf-8")
-                    if _source_contains_ast(content, ast_identifier):
-                        found = True
-                        break
-                except PermissionError:
-                    logger.warning(f"Permission denied reading {py_file}")
-                    continue
-                except UnicodeDecodeError:
-                    try:
-                        content = py_file.read_text(encoding="utf-8", errors="ignore")
-                        if _source_contains_ast(content, ast_identifier):
-                            found = True
-                            break
-                    except Exception:
-                        continue
-                except (MemoryError, SyntaxError):
-                    continue
-                except Exception as exc:
-                    logger.debug(f"Skip {py_file} in AST scan: {exc}")
-                    continue
+            for _py_file, content in _iter_project_py_contents(path):
+                if _source_contains_ast(content, ast_identifier):
+                    found = True
+                    break
         else:
-            for py_file in path.rglob("*.py"):
-                if any(part in excluded_dirs for part in py_file.parts):
-                    continue
-                try:
-                    content = py_file.read_text(encoding="utf-8")
-                    if keyword in content:
-                        found = True
-                        break
-                except PermissionError:
-                    logger.warning(f"Permission denied reading {py_file}")
-                    continue
-                except UnicodeDecodeError:
-                    logger.warning(f"Encoding error in {py_file}, trying with errors='ignore'")
-                    try:
-                        content = py_file.read_text(encoding="utf-8", errors="ignore")
-                        if keyword in content:
-                            found = True
-                            break
-                    except Exception:
-                        logger.warning(f"Failed to read {py_file} even with error handling")
-                        continue
-                except MemoryError:
-                    logger.error(f"File too large to process: {py_file}")
-                    continue
-                except Exception as exc:
-                    logger.error(f"Unexpected error reading {py_file}: {exc}")
-                    continue
+            for _py_file, content in _iter_project_py_contents(path):
+                if keyword in content:
+                    found = True
+                    break
 
         detail_suffix = " (AST)" if mode == "ast" else ""
         return _create_result(
