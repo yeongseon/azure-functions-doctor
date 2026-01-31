@@ -24,6 +24,11 @@ console = Console()
 logger = get_logger(__name__)
 
 
+@cli.callback()
+def main() -> None:
+    """Azure Functions Doctor CLI."""
+
+
 def _validate_inputs(path: str, format_type: str, output: Optional[Path]) -> None:
     """Validate CLI inputs before processing."""
     try:
@@ -281,9 +286,6 @@ def doctor(
     if exit_code != 0:
         raise typer.Exit(exit_code)
 
-
-# Explicit command registration (test-friendly)
-cli.command()(doctor)
 
 if __name__ == "__main__":
     cli()
