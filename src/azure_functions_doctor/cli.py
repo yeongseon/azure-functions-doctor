@@ -24,6 +24,22 @@ console = Console()
 logger = get_logger(__name__)
 
 
+@cli.callback()
+def main(
+    version: Annotated[
+        bool,
+        typer.Option(
+            "--version",
+            help="Show version and exit",
+            is_eager=True,
+        ),
+    ] = False,
+) -> None:
+    if version:
+        print(__version__)
+        raise typer.Exit(0)
+
+
 def _validate_inputs(path: str, format_type: str, output: Optional[Path]) -> None:
     """Validate CLI inputs before processing."""
     try:
@@ -122,7 +138,7 @@ def doctor(
     # Log diagnostic start
     loaded_rules = doctor.load_rules()
     log_diagnostic_start(str(resolved_path), len(loaded_rules))
-    results = doctor.run_all_checks()
+    results = doctor.run_all_checks(rules=loaded_rules)
 
     # Calculate execution metrics
     end_time = time.time()
@@ -281,9 +297,6 @@ def doctor(
     if exit_code != 0:
         raise typer.Exit(exit_code)
 
-
-# Explicit command registration (test-friendly)
-cli.command()(doctor)
 
 if __name__ == "__main__":
     cli()

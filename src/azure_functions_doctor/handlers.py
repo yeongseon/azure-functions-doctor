@@ -5,12 +5,13 @@ import re
 import shutil
 import sys
 from pathlib import Path
-from typing import Iterator, List, Literal, TypedDict, Union
+from typing import List, Literal, TypedDict, Union
 
 from packaging.version import InvalidVersion
 from packaging.version import parse as parse_version
 
 from azure_functions_doctor.logging_config import get_logger
+from azure_functions_doctor.project_scan import iter_project_py_contents
 from azure_functions_doctor.target_resolver import resolve_target_value
 
 logger = get_logger(__name__)
@@ -36,30 +37,6 @@ def _source_contains_ast(source: str, identifier: str) -> bool:
                 if decorator_matches(dec):
                     return True
     return False
-
-
-def _iter_project_py_contents(path: Path) -> Iterator[tuple[Path, str]]:
-    """Yield (py_file, content) for each .py file under path, skipping excluded dirs."""
-    excluded_dirs = {".venv", "build", "dist", ".pytest_cache", "__pycache__"}
-    for py_file in path.rglob("*.py"):
-        if any(part in excluded_dirs for part in py_file.parts):
-            continue
-        try:
-            content = py_file.read_text(encoding="utf-8")
-        except PermissionError:
-            logger.warning(f"Permission denied reading {py_file}")
-            continue
-        except UnicodeDecodeError:
-            try:
-                content = py_file.read_text(encoding="utf-8", errors="ignore")
-            except Exception:
-                continue
-        except (MemoryError, OSError):
-            continue
-        except Exception as exc:
-            logger.debug(f"Skip {py_file}: {exc}")
-            continue
-        yield py_file, content
 
 
 def _create_result(status: str, detail: str, internal_error: bool = False) -> dict[str, str]:
@@ -117,6 +94,7 @@ class Rule(TypedDict, total=False):
         "path_exists",
         "file_exists",
         "package_installed",
+        "package_declared",
         "source_code_contains",
         "conditional_exists",
         "callable_detection",
@@ -308,12 +286,12 @@ class HandlerRegistry:
             ast_identifier = keyword.strip().lstrip("@").rstrip(".")
             if not ast_identifier:
                 return _create_result("fail", "Invalid 'keyword' for AST mode")
-            for _py_file, content in _iter_project_py_contents(path):
+            for _py_file, content in iter_project_py_contents(path):
                 if _source_contains_ast(content, ast_identifier):
                     found = True
                     break
         else:
-            for _py_file, content in _iter_project_py_contents(path):
+            for _py_file, content in iter_project_py_contents(path):
                 if keyword in content:
                     found = True
                     break
@@ -362,11 +340,7 @@ class HandlerRegistry:
         uses_durable = False
 
         try:
-            for py_file in path.rglob("*.py"):
-                try:
-                    content = py_file.read_text(encoding="utf-8", errors="ignore")
-                except Exception:
-                    continue
+            for _py_file, content in iter_project_py_contents(path):
                 lowered = content.lower()
                 if any(k in lowered for k in durable_keywords):
                     uses_durable = True
@@ -422,11 +396,7 @@ class HandlerRegistry:
 
         found_items: List[str] = []
         try:
-            for py_file in path.rglob("*.py"):
-                try:
-                    content = py_file.read_text(encoding="utf-8", errors="ignore")
-                except Exception:
-                    continue
+            for py_file, content in iter_project_py_contents(path):
                 for pat in patterns:
                     if re.search(pat, content):
                         found_items.append(f"{py_file.relative_to(path)}:{pat}")

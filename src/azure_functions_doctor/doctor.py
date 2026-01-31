@@ -9,6 +9,7 @@ from jsonschema import ValidationError, validate
 
 from azure_functions_doctor.handlers import Rule, generic_handler
 from azure_functions_doctor.logging_config import get_logger, log_rule_execution
+from azure_functions_doctor.project_scan import iter_project_py_contents
 
 logger = get_logger(__name__)
 
@@ -83,17 +84,9 @@ class Doctor:
 
     def _has_v2_decorators(self) -> bool:
         """Check if the project uses v2 decorators (@app.*)."""
-        python_files = list(self.project_path.rglob("*.py"))
-
-        for py_file in python_files:
-            try:
-                with py_file.open(encoding="utf-8") as f:
-                    content = f.read()
-                    if "@app." in content:
-                        return True
-            except (OSError, UnicodeDecodeError):
-                # Skip files that can't be read
-                continue
+        for _py_file, content in iter_project_py_contents(self.project_path):
+            if "@app." in content:
+                return True
 
         return False
 
@@ -160,8 +153,8 @@ class Doctor:
 
     # Legacy `rules.json` support removed per repository simplification.
 
-    def run_all_checks(self) -> list[SectionResult]:
-        rules = self.load_rules()
+    def run_all_checks(self, rules: Optional[list[Rule]] = None) -> list[SectionResult]:
+        rules = self.load_rules() if rules is None else rules
         if self.profile == "minimal":
             rules = [rule for rule in rules if rule.get("required", True)]
         elif self.profile not in (None, "full"):
