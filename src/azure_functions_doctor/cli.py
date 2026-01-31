@@ -122,7 +122,7 @@ def doctor(
     # Log diagnostic start
     loaded_rules = doctor.load_rules()
     log_diagnostic_start(str(resolved_path), len(loaded_rules))
-    results = doctor.run_all_checks()
+    results = doctor.run_all_checks(rules=loaded_rules)
 
     # Calculate execution metrics
     end_time = time.time()
