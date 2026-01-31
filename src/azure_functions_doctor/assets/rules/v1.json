@@ -121,5 +121,22 @@
   "required": false,
     "hint": "Create local.settings.json for local development if needed.",
     "check_order": 7
+  },
+  {
+    "id": "check_func_core_tools_version",
+    "category": "tooling",
+    "section": "tooling",
+    "label": "Azure Functions Core Tools version",
+    "description": "Checks if the Azure Functions Core Tools (func) version meets the minimum required.",
+    "type": "compare_version",
+    "required": false,
+    "condition": {
+      "target": "func_core_tools",
+      "operator": ">=",
+      "value": "4.0"
+    },
+    "hint": "Install or upgrade Azure Functions Core Tools v4 for local development.",
+    "hint_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local#v4",
+    "check_order": 8
   }
 ]

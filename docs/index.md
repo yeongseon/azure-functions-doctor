@@ -48,6 +48,7 @@ See Examples: [v2](../examples/v2/multi-trigger/README.md) | [v1](../examples/v1
 | [Usage Guide](usage.md) | How to run and interpret results |
 | [Rule System](rules.md) | Understand and customize `rules.json` |
 | [Diagnostics Reference](diagnostics.md) | Full list of built-in checks |
+| [Supported Versions & Policy](supported_versions.md) | Python version support and deprecation timeline |
 | [Developer Guide](development.md) | Contribute and extend the CLI |
 | [Release Process](release_process.md) | Versioning and PyPI publishing |
 

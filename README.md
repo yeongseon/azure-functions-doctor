@@ -109,7 +109,7 @@ This design allows easy extension by adding new rules to `src/azure_functions_do
 
 ## Requirements
 
-- Python 3.9+
+- **Python 3.9+** (aligned with [Azure Functions Python support](https://learn.microsoft.com/en-us/azure/azure-functions/functions-reference-python#supported-python-versions); deprecation of older versions follows Microsoft’s runtime support — see [Supported Versions & Policy](docs/supported_versions.md))
 - Git
 - (Optional) Azure Functions Core Tools v4+ (`npm i -g azure-functions-core-tools@4`)
 - (Recommended) Unix-like shell or PowerShell for Makefile support
