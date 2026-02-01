@@ -36,7 +36,10 @@ def test_cli_table_output() -> None:
 
 
 def test_cli_json_output() -> None:
-    """Test CLI outputs result in JSON format without extra text and exit code matches fail count."""
+    """Test CLI outputs JSON without extra text.
+
+    Exit code must match the fail count.
+    """
     result = runner.invoke(app, ["doctor", "--format", "json"])
     output_text = result.output.strip()
     try:
@@ -50,11 +53,18 @@ def test_cli_json_output() -> None:
     assert isinstance(results, list)
     assert all("title" in section and "items" in section for section in results)
     # Derive fail count from JSON structure
-    fail_count = sum(1 for section in results for item in section.get("items", []) if item.get("status") == "fail")
+    fail_count = sum(
+        1
+        for section in results
+        for item in section.get("items", [])
+        if item.get("status") == "fail"
+    )
     expected_exit = 1 if fail_count > 0 else 0
-    assert (
-        result.exit_code == expected_exit
-    ), f"Expected exit {expected_exit} with {fail_count} fails, got {result.exit_code}. JSON: {output_text[:500]}"
+    error_msg = (
+        f"Expected exit {expected_exit} with {fail_count} fails, got {result.exit_code}. "
+        f"JSON: {output_text[:500]}"
+    )
+    assert result.exit_code == expected_exit, error_msg
 
 
 def test_cli_verbose_output() -> None:

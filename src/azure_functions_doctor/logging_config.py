@@ -59,7 +59,9 @@ def setup_logging(
 
         # Choose format based on style
         if format_style == "structured":
-            formatter = logging.Formatter(fmt="%(asctime)s [%(levelname)8s] %(name)s: %(message)s", datefmt="%H:%M:%S")
+            formatter = logging.Formatter(
+                fmt="%(asctime)s [%(levelname)8s] %(name)s: %(message)s", datefmt="%H:%M:%S"
+            )
         else:  # simple
             formatter = logging.Formatter("%(levelname)s: %(message)s")
 
@@ -141,7 +143,9 @@ def log_diagnostic_start(path: str, rules_count: int) -> None:
     logger.info(f"Executing {rules_count} diagnostic rules")
 
 
-def log_diagnostic_complete(total_checks: int, passed: int, failed: int, errors: int, duration_ms: float) -> None:
+def log_diagnostic_complete(
+    total_checks: int, passed: int, failed: int, errors: int, duration_ms: float
+) -> None:
     """
     Log the completion of a diagnostic session.
 
@@ -154,7 +158,9 @@ def log_diagnostic_complete(total_checks: int, passed: int, failed: int, errors:
     """
     logger = get_logger(__name__)
     logger.info(f"Diagnostics completed in {duration_ms:.1f}ms")
-    logger.info(f"Results: {passed} passed, {failed} failed, {errors} errors out of {total_checks} total")
+    logger.info(
+        f"Results: {passed} passed, {failed} failed, {errors} errors out of {total_checks} total"
+    )
 
     if errors > 0:
         logger.warning(f"Encountered {errors} unexpected errors during execution")

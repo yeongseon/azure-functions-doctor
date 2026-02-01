@@ -1,8 +1,8 @@
 """Tests for configuration management."""
 
 import os
-import tempfile
 from pathlib import Path
+import tempfile
 from typing import TYPE_CHECKING
 
 from azure_functions_doctor.config import Config, get_config, override_config

@@ -1,10 +1,10 @@
 import ast
 import json
 import os
+from pathlib import Path
 import re
 import shutil
 import sys
-from pathlib import Path
 from typing import Iterator, List, Literal, TypedDict, Union
 
 from packaging.version import InvalidVersion
@@ -17,7 +17,10 @@ logger = get_logger(__name__)
 
 
 def _source_contains_ast(source: str, identifier: str) -> bool:
-    """Return True if the Python source contains a decorator like @identifier.xxx (e.g. @app.route)."""
+    """Return True if the Python source contains a decorator like @identifier.xxx.
+
+    Example: @app.route
+    """
     try:
         tree = ast.parse(source)
     except SyntaxError:
@@ -44,20 +47,24 @@ def _iter_project_py_contents(path: Path) -> Iterator[tuple[Path, str]]:
     for py_file in path.rglob("*.py"):
         if any(part in excluded_dirs for part in py_file.parts):
             continue
+        content: str | None
         try:
             content = py_file.read_text(encoding="utf-8")
         except PermissionError:
             logger.warning(f"Permission denied reading {py_file}")
-            continue
+            content = None
         except UnicodeDecodeError:
             try:
                 content = py_file.read_text(encoding="utf-8", errors="ignore")
-            except Exception:
-                continue
+            except (OSError, UnicodeDecodeError):
+                content = None
         except (MemoryError, OSError):
-            continue
+            content = None
         except Exception as exc:
             logger.debug(f"Skip {py_file}: {exc}")
+            content = None
+
+        if content is None:
             continue
         yield py_file, content
 
@@ -82,9 +89,13 @@ def _handle_specific_exceptions(operation: str, exc: Exception) -> dict[str, str
     if isinstance(exc, UnicodeDecodeError):
         return _create_result("fail", f"Encoding error in {operation}: {exc}.", internal_error=True)
     if isinstance(exc, (ValueError, TypeError)):
-        return _create_result("fail", f"Configuration error in {operation}: {exc}.", internal_error=True)
+        return _create_result(
+            "fail", f"Configuration error in {operation}: {exc}.", internal_error=True
+        )
     if isinstance(exc, (OSError, PermissionError)):
-        return _create_result("fail", f"File system error in {operation}: {exc}", internal_error=True)
+        return _create_result(
+            "fail", f"File system error in {operation}: {exc}", internal_error=True
+        )
     if isinstance(exc, ImportError):
         return _create_result("fail", f"Import error in {operation}: {exc}", internal_error=True)
     if isinstance(exc, MemoryError):
@@ -188,7 +199,9 @@ class HandlerRegistry:
             return _create_result("fail", "Missing condition fields for compare_version")
 
         if target == "python":
-            current_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+            current_version = (
+                f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+            )
             current = parse_version(current_version)
             expected = parse_version(str(value))
             passed = {
@@ -319,9 +332,10 @@ class HandlerRegistry:
                     break
 
         detail_suffix = " (AST)" if mode == "ast" else ""
+        status_word = "found" if found else "not found"
         return _create_result(
             "pass" if found else "fail",
-            f"Keyword '{keyword}' {'found' if found else 'not found'} in source code{detail_suffix}",
+            f"Keyword '{keyword}' {status_word} in source code{detail_suffix}",
         )
 
     def _handle_package_declared(self, rule: Rule, path: Path) -> dict[str, str]:
@@ -352,7 +366,10 @@ class HandlerRegistry:
         )
 
     def _handle_conditional_exists(self, rule: Rule, path: Path) -> dict[str, str]:
-        """Handle conditional existence checks such as durableTask in host.json when durable usage exists."""
+        """Handle conditional existence checks.
+
+        Example: require durableTask in host.json when Durable usage is detected.
+        """
         durable_keywords = [
             "durable",
             "DurableOrchestrationContext",
@@ -365,7 +382,10 @@ class HandlerRegistry:
             for py_file in path.rglob("*.py"):
                 try:
                     content = py_file.read_text(encoding="utf-8", errors="ignore")
-                except Exception:
+                except OSError:
+                    content = None
+
+                if content is None:
                     continue
                 lowered = content.lower()
                 if any(k in lowered for k in durable_keywords):
@@ -425,7 +445,10 @@ class HandlerRegistry:
             for py_file in path.rglob("*.py"):
                 try:
                     content = py_file.read_text(encoding="utf-8", errors="ignore")
-                except Exception:
+                except OSError:
+                    content = None
+
+                if content is None:
                     continue
                 for pat in patterns:
                     if re.search(pat, content):
@@ -467,17 +490,22 @@ class HandlerRegistry:
                 if host_path.exists():
                     try:
                         data = json.loads(host_path.read_text(encoding="utf-8"))
-                        node = data
-                        for p in key.split("."):
-                            if isinstance(node, dict) and p in node:
-                                node = node[p]
-                            else:
-                                node = None
-                                break
-                        if node is not None:
-                            return _create_result("pass", f"host.json:{key} present")
                     except Exception:
+                        data = None
+
+                    if data is None:
                         continue
+
+                    node = data
+                    for p in key.split("."):
+                        if isinstance(node, dict) and p in node:
+                            node = node[p]
+                        else:
+                            node = None
+                            break
+
+                    if node is not None:
+                        return _create_result("pass", f"host.json:{key} present")
             else:
                 # env var
                 if os.getenv(str(t)) is not None:
@@ -536,7 +564,8 @@ class HandlerRegistry:
     def _handle_binding_validation(self, rule: Rule, path: Path) -> dict[str, str]:
         """
         Basic HTTP trigger binding validation:
-        - look for function.json files and validate httpTrigger bindings have authLevel/methods where applicable.
+        - look for function.json files and validate httpTrigger bindings have
+          authLevel/methods where applicable.
         This is a lightweight heuristic to catch common misconfigurations.
         """
         try:
@@ -545,6 +574,9 @@ class HandlerRegistry:
                 try:
                     data = json.loads(func_file.read_text(encoding="utf-8"))
                 except Exception:
+                    data = None
+
+                if data is None:
                     continue
                 bindings = data.get("bindings", [])
                 for b in bindings:
@@ -552,7 +584,9 @@ class HandlerRegistry:
                         if "authLevel" not in b:
                             issues.append(f"{func_file.relative_to(path)}: missing authLevel")
                         if "methods" in b and not b.get("methods"):
-                            issues.append(f"{func_file.relative_to(path)}: empty methods in httpTrigger")
+                            issues.append(
+                                f"{func_file.relative_to(path)}: empty methods in httpTrigger"
+                            )
             if issues:
                 return _create_result("fail", f"HTTP trigger binding issues: {issues[:5]}")
             return _create_result("pass", "HTTP trigger bindings appear valid or not present")
@@ -572,6 +606,9 @@ class HandlerRegistry:
                 try:
                     data = json.loads(func_file.read_text(encoding="utf-8"))
                 except Exception:
+                    data = None
+
+                if data is None:
                     continue
                 bindings = data.get("bindings", [])
                 for b in bindings:
@@ -579,7 +616,9 @@ class HandlerRegistry:
                         schedule = b.get("schedule", "")
                         found_cron = True
                         if not isinstance(schedule, str) or not cron_regex.match(schedule.strip()):
-                            invalid.append(f"{func_file.relative_to(path)}: invalid schedule '{schedule}'")
+                            invalid.append(
+                                f"{func_file.relative_to(path)}: invalid schedule '{schedule}'"
+                            )
             if invalid:
                 return _create_result("fail", f"Invalid CRON expressions: {invalid[:5]}")
             if not found_cron:

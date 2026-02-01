@@ -1,11 +1,14 @@
-import azure.functions as func
 import logging
+
+import azure.functions as func
 
 app = func.FunctionApp()
 
 
 @app.route(route="HttpExample", auth_level=func.AuthLevel.Anonymous)
-def HttpExample(req: func.HttpRequest) -> func.HttpResponse:  # noqa: N802 (Azure style name retained)
+def HttpExample(
+    req: func.HttpRequest,
+) -> func.HttpResponse:  # noqa: N802 (Azure style name retained)
     """Basic HTTP trigger function (Programming Model v2).
 
     Returns a greeting. If a name is provided via query string or JSON body,
@@ -27,6 +30,7 @@ def HttpExample(req: func.HttpRequest) -> func.HttpResponse:  # noqa: N802 (Azur
             status_code=200,
         )
     return func.HttpResponse(
-        "This v2 HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
+        "This v2 HTTP triggered function executed successfully. "
+        "Pass a name in the query string or in the request body for a personalized response.",
         status_code=200,
     )

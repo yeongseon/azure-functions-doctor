@@ -1,8 +1,8 @@
 """Tests for improved error handling functionality."""
 
 import os
-import tempfile
 from pathlib import Path
+import tempfile
 from unittest.mock import patch
 
 import pytest
@@ -38,12 +38,16 @@ class TestSpecificExceptionHandling:
         assert "File system error" in result["detail"]
 
     def test_import_error_handling(self) -> None:
-        result = _handle_specific_exceptions("test operation", ImportError("No module named 'test'"))
+        result = _handle_specific_exceptions(
+            "test operation", ImportError("No module named 'test'")
+        )
         assert result["status"] == "fail"
         assert "Import error" in result["detail"]
 
     def test_unicode_decode_error_handling(self) -> None:
-        result = _handle_specific_exceptions("test operation", UnicodeDecodeError("utf-8", b"", 0, 1, "invalid"))
+        result = _handle_specific_exceptions(
+            "test operation", UnicodeDecodeError("utf-8", b"", 0, 1, "invalid")
+        )
         assert result["status"] == "fail"
         assert "Encoding error" in result["detail"]
 

@@ -1,8 +1,8 @@
 """Tests for rule loading functionality."""
 
 import json
-import tempfile
 from pathlib import Path
+import tempfile
 from unittest.mock import patch
 
 import pytest
@@ -20,8 +20,7 @@ class TestRuleLoading:
 
             # Create a v2 project
             python_file = temp_path / "function_app.py"
-            python_file.write_text(
-                """
+            python_file.write_text("""
 import azure.functions as func
 
 app = func.FunctionApp()
@@ -29,8 +28,7 @@ app = func.FunctionApp()
 @app.route(route="test", auth_level=func.AuthLevel.Anonymous)
 def test_function(req: func.HttpRequest) -> func.HttpResponse:
     return func.HttpResponse("Hello")
-"""
-            )
+""")
 
             doctor = Doctor(str(temp_path))
             assert doctor.programming_model == "v2"
@@ -94,8 +92,7 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
 
             # Create a v2 project
             python_file = temp_path / "function_app.py"
-            python_file.write_text(
-                """
+            python_file.write_text("""
 import azure.functions as func
 
 app = func.FunctionApp()
@@ -103,8 +100,7 @@ app = func.FunctionApp()
 @app.route(route="test", auth_level=func.AuthLevel.Anonymous)
 def test_function(req: func.HttpRequest) -> func.HttpResponse:
     return func.HttpResponse("Hello")
-"""
-            )
+""")
 
             doctor = Doctor(str(temp_path))
 
@@ -122,8 +118,7 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
 
             # Create a v2 project
             python_file = temp_path / "function_app.py"
-            python_file.write_text(
-                """
+            python_file.write_text("""
 import azure.functions as func
 
 app = func.FunctionApp()
@@ -131,15 +126,16 @@ app = func.FunctionApp()
 @app.route(route="test", auth_level=func.AuthLevel.Anonymous)
 def test_function(req: func.HttpRequest) -> func.HttpResponse:
     return func.HttpResponse("Hello")
-"""
-            )
+""")
 
             doctor = Doctor(str(temp_path))
 
             # Mock v2.json to have invalid JSON
             with patch("importlib.resources.files") as mock_files:
                 mock_v2_path = mock_files.return_value.joinpath.return_value
-                mock_v2_path.open.return_value.__enter__.return_value.read.return_value = "invalid json"
+                mock_v2_path.open.return_value.__enter__.return_value.read.return_value = (
+                    "invalid json"
+                )
 
                 with pytest.raises(RuntimeError, match="Failed to parse v2.json"):
                     doctor.load_rules()
@@ -151,8 +147,7 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
 
             # Create a v2 project
             python_file = temp_path / "function_app.py"
-            python_file.write_text(
-                """
+            python_file.write_text("""
 import azure.functions as func
 
 app = func.FunctionApp()
@@ -160,8 +155,7 @@ app = func.FunctionApp()
 @app.route(route="test", auth_level=func.AuthLevel.Anonymous)
 def test_function(req: func.HttpRequest) -> func.HttpResponse:
     return func.HttpResponse("Hello")
-"""
-            )
+""")
 
             doctor = Doctor(str(temp_path))
 
@@ -169,8 +163,8 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
             with patch("importlib.resources.files") as mock_files:
                 # Mock common.json exists
                 mock_common_path = mock_files.return_value.joinpath.return_value
-                mock_common_path.open.return_value.__enter__.return_value.read.return_value = json.dumps(
-                    [{"id": "common_rule", "check_order": 1}]
+                mock_common_path.open.return_value.__enter__.return_value.read.return_value = (
+                    json.dumps([{"id": "common_rule", "check_order": 1}])
                 )
 
                 # Mock v2.json not found
@@ -196,8 +190,8 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
             with patch("importlib.resources.files") as mock_files:
                 # Mock common.json exists
                 mock_common_path = mock_files.return_value.joinpath.return_value
-                mock_common_path.open.return_value.__enter__.return_value.read.return_value = json.dumps(
-                    [{"id": "common_rule", "check_order": 1}]
+                mock_common_path.open.return_value.__enter__.return_value.read.return_value = (
+                    json.dumps([{"id": "common_rule", "check_order": 1}])
                 )
 
                 # Mock v1.json not found
@@ -215,8 +209,7 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
 
             # Create a v2 project
             python_file = temp_path / "function_app.py"
-            python_file.write_text(
-                """
+            python_file.write_text("""
 import azure.functions as func
 
 app = func.FunctionApp()
@@ -224,8 +217,7 @@ app = func.FunctionApp()
 @app.route(route="test", auth_level=func.AuthLevel.Anonymous)
 def test_function(req: func.HttpRequest) -> func.HttpResponse:
     return func.HttpResponse("Hello")
-"""
-            )
+""")
 
             doctor = Doctor(str(temp_path))
             rules = doctor.load_rules()
@@ -241,8 +233,7 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
 
             # Create a v2 project
             python_file = temp_path / "function_app.py"
-            python_file.write_text(
-                """
+            python_file.write_text("""
 import azure.functions as func
 
 app = func.FunctionApp()
@@ -250,8 +241,7 @@ app = func.FunctionApp()
 @app.route(route="test", auth_level=func.AuthLevel.Anonymous)
 def test_function(req: func.HttpRequest) -> func.HttpResponse:
     return func.HttpResponse("Hello")
-"""
-            )
+""")
 
             doctor = Doctor(str(temp_path))
 

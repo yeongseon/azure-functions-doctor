@@ -1,8 +1,8 @@
+from collections import defaultdict
 import importlib.resources
 import json
-import time
-from collections import defaultdict
 from pathlib import Path
+import time
 from typing import Optional, TypedDict
 
 from jsonschema import ValidationError, validate
@@ -113,7 +113,9 @@ class Doctor:
         return sorted(rules, key=lambda r: r.get("check_order", 999))
 
     def _validate_rules(self, rules: list[Rule]) -> None:
-        schema_path = importlib.resources.files("azure_functions_doctor.schemas").joinpath("rules.schema.json")
+        schema_path = importlib.resources.files("azure_functions_doctor.schemas").joinpath(
+            "rules.schema.json"
+        )
         with schema_path.open(encoding="utf-8") as f:
             schema = json.load(f)
 
@@ -190,7 +192,8 @@ class Doctor:
                 handler_status = result.get("status", "fail")
                 log_rule_execution(rule["id"], rule["type"], handler_status, rule_duration_ms)
 
-                # Simplified canonical mapping: pass stays pass, else required -> fail, optional -> warn
+                # Simplified canonical mapping:
+                # - pass stays pass, else required -> fail, optional -> warn
                 required = rule.get("required", True)
                 if handler_status == "pass":
                     canonical = "pass"

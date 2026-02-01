@@ -59,14 +59,20 @@ def test_rules_match_schema() -> None:
 
     for rule in rules:
         missing = required_set - set(rule.keys())
-        assert not missing, f"Rule {rule.get('id', '<unknown>')} missing required fields: {sorted(missing)}"
+        assert (
+            not missing
+        ), f"Rule {rule.get('id', '<unknown>')} missing required fields: {sorted(missing)}"
 
         rule_type = rule.get("type")
-        assert rule_type in allowed_types, f"Rule {rule.get('id', '<unknown>')} uses unknown type: {rule_type}"
+        assert (
+            rule_type in allowed_types
+        ), f"Rule {rule.get('id', '<unknown>')} uses unknown type: {rule_type}"
 
         condition = rule.get("condition")
         if isinstance(condition, dict):
             invalid_keys = set(condition.keys()) - condition_props
-            assert (
-                not invalid_keys
-            ), f"Rule {rule.get('id', '<unknown>')} has unsupported condition fields: {sorted(invalid_keys)}"
+            error_msg = (
+                f"Rule {rule.get('id', '<unknown>')} has unsupported condition fields: "
+                f"{sorted(invalid_keys)}"
+            )
+            assert not invalid_keys, error_msg

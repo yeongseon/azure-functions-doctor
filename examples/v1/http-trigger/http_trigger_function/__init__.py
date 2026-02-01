@@ -2,7 +2,9 @@
 
 Each v1 function resides in its own folder alongside a function.json file.
 """
+
 import logging
+
 import azure.functions as func
 
 

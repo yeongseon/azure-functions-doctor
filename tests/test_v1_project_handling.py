@@ -1,7 +1,7 @@
 """Tests for v1 project handling with warning messages."""
 
-import tempfile
 from pathlib import Path
+import tempfile
 
 from typer.testing import CliRunner
 
@@ -37,8 +37,7 @@ class TestV1ProjectHandling:
 
             # Create a v2 project
             python_file = temp_path / "function_app.py"
-            python_file.write_text(
-                """
+            python_file.write_text("""
 import azure.functions as func
 
 app = func.FunctionApp()
@@ -46,8 +45,7 @@ app = func.FunctionApp()
 @app.route(route="test", auth_level=func.AuthLevel.Anonymous)
 def test_function(req: func.HttpRequest) -> func.HttpResponse:
     return func.HttpResponse("Hello")
-"""
-            )
+""")
 
             runner = CliRunner()
             result = runner.invoke(app, ["doctor", "--path", str(temp_path)])
@@ -123,8 +121,7 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
             function_json.write_text('{"scriptFile": "main.py", "entryPoint": "main"}')
 
             python_file = temp_path / "function_app.py"
-            python_file.write_text(
-                """
+            python_file.write_text("""
 import azure.functions as func
 
 app = func.FunctionApp()
@@ -132,8 +129,7 @@ app = func.FunctionApp()
 @app.route(route="test", auth_level=func.AuthLevel.Anonymous)
 def test_function(req: func.HttpRequest) -> func.HttpResponse:
     return func.HttpResponse("Hello")
-"""
-            )
+""")
 
             runner = CliRunner()
             result = runner.invoke(app, ["doctor", "--path", str(temp_path)])

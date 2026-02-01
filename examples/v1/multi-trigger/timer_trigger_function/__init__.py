@@ -1,8 +1,10 @@
 import datetime
 import logging
+
 import azure.functions as func
 
 # Timer trigger passes a TimerRequest object
+
 
 def main(mytimer: func.TimerRequest) -> None:  # noqa: D401
     """Timer trigger logging current UTC time."""

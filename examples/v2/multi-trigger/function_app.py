@@ -3,8 +3,10 @@
 Additional triggers (timer, queue, etc.) can be added in this file using
 decorators (e.g., @app.schedule, @app.queue_trigger).
 """
-import azure.functions as func
+
 import logging
+
+import azure.functions as func
 
 app = func.FunctionApp()
 

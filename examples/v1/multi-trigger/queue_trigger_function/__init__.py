@@ -1,5 +1,7 @@
 import logging
+
 import azure.functions as func
+
 
 def main(msg: func.QueueMessage) -> None:  # noqa: D401
     """Queue trigger logs the message body length."""
