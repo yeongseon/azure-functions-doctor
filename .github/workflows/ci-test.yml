@@ -1,0 +1,44 @@
+name: Test and Coverage
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Hatch and dependencies via Makefile
+        run: |
+          pip install hatch
+          make install
+
+      - name: Run full quality checks (lint, typecheck, test, coverage)
+        run: make check-all
+
+      - name: Verify coverage output
+        run: ls -lh coverage.xml
+
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.9'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          verbose: true
+          fail_ci_if_error: true
+        env:
+          CODECOV_RETRIES: 3
