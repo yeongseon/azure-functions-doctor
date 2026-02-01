@@ -19,12 +19,14 @@ repos:
     hooks:
       - id: mypy
         language: python
-        files: "^(src|tests)/"
+        pass_filenames: false
         args:
           [
             "--config-file=pyproject.toml",
             "--install-types",
             "--non-interactive",
+            "src",
+            "tests",
           ]
         additional_dependencies:
           - types-requests
