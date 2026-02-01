@@ -1,4 +1,4 @@
-# 🖥️ CLI Usage: `azure-functions doctor`
+# Quickstart
 
 The Azure Functions Doctor CLI helps validate your local Python-based Azure Functions project for common issues using an extensible rules system. It supports both **Programming Model v1** (function.json-based) and **Programming Model v2** (decorator-based) projects.
 
@@ -45,7 +45,7 @@ The tool automatically detects your project's programming model:
 
 | Category | v2 Checks | v1 Checks |
 |----------|-----------|-----------|
-| Python Environment | Python ≥ 3.9, virtualenv, executable | Python ≥ 3.6, virtualenv, executable |
+| Python Environment | Python ≥ 3.10, virtualenv, executable | Python ≥ 3.6, virtualenv, executable |
 | Dependencies | `azure-functions` | `azure-functions-worker` |
 | Project Files | `host.json`, `local.settings.json` | `host.json`, `local.settings.json`, `function.json` |
 
@@ -105,5 +105,5 @@ azure-functions doctor --help
 ```
 
 For more examples:
-- v2 (decorator): [examples/v2/multi-trigger](../examples/v2/multi-trigger/README.md)
-- v1 (function.json): [examples/v1/http-trigger](../examples/v1/http-trigger/README.md)
+- v2 (decorator): [Programming Model v2](examples/v2.md)
+- v1 (function.json): [Programming Model v1](examples/v1.md)

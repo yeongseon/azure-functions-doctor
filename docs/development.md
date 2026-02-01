@@ -200,4 +200,4 @@ Thank you for helping improve Azure Functions Doctor!
 
 ## 📄 License
 
-This project is licensed under the [MIT License](../LICENSE).
+This project is licensed under the [MIT License](https://github.com/yeongseon/azure-functions-doctor-for-python/blob/main/LICENSE).

@@ -13,7 +13,7 @@ v2/multi-trigger/
 
 ## Run
 ```bash
-cd examples/v2/multi-trigger
+cd examples/multi_trigger_v2
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt

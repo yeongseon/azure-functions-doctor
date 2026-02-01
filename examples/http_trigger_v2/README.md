@@ -15,11 +15,11 @@ v2/http-trigger/
 ## Key Points
 - Uses the decorator-based programming model.
 - Single HTTP route returning a greeting.
-- Mirrors the v1 example structure for comparison (see `examples/v1/http-trigger`).
+- Mirrors the v1 example structure for comparison (see `examples/http_trigger_v1`).
 
 ## Run
 ```bash
-cd examples/v2/http-trigger
+cd examples/http_trigger_v2
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -32,4 +32,4 @@ func start
 azure-functions doctor --path .
 ```
 
-* Compare with the v1 example in `examples/v1/http-trigger` for structural differences.
+* Compare with the v1 example in `examples/http_trigger_v1` for structural differences.

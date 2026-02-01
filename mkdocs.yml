@@ -2,33 +2,56 @@ site_name: Azure Functions Doctor for Python
 site_description: A diagnostic tool for Python Azure Functions
 site_author: Yeongseon Choe
 repo_url: https://github.com/yeongseon/azure-functions-doctor-for-python
+edit_uri: edit/main/docs/
+
 site_url: https://yeongseon.github.io/azure-functions-doctor-for-python/
 
 theme:
   name: material
   logo: logo_assets/logo.png
   favicon: logo_assets/logo_favicon_16px.png
+  features:
+    - navigation.tabs
+    - content.code.copy
 
 nav:
   - Home: index.md
-  - CLI Usage: usage.md
-  - Diagnostics: diagnostics.md
-  - Rules: rules.md
-  - Supported Versions: supported_versions.md
-  - Handlers: handlers.md
-  - Development: development.md
+  - Getting Started:
+      - Installation: installation.md
+      - Quickstart: usage.md
   - API Reference: api.md
-  - Release Process: release_process.md
+  - Examples:
+      - Programming Model v2: examples/v2.md
+      - Programming Model v1: examples/v1.md
+  - Reference:
+      - Diagnostics: diagnostics.md
+      - Rules: rules.md
+      - Supported Versions: supported_versions.md
+      - Handlers: handlers.md
+      - Release Process: release_process.md
+  - Contributing: contributing.md
+  - Changelog: changelog.md
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - toc:
+      permalink: true
+      toc_depth: 3
+  - tables
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.tabbed
+  - pymdownx.details
+  - pymdownx.inlinehilite
+  - pymdownx.emoji
 
 plugins:
   - search
-  - mkdocstrings:
-      default_handler: python
-      handlers:
-        python:
-          paths: [src]
-          options:
-            docstring_style: google
-            show_signature: true
-            show_root_full_path: false
-            merge_init_into_class: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/yeongseon/azure-functions-doctor-for-python
+  copyright: |
+    © 2026 Yeongseon Choe – MIT Licensed

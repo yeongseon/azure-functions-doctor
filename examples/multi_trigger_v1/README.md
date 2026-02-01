@@ -1,7 +1,7 @@
 # multi-trigger (Programming Model v1)
 
 Multiple triggers in a single v1 (function.json-based) Functions app: HTTP, Timer, Queue.
-Designed to compare against the v2 `examples/v2/multi-trigger` sample and to exercise azure-functions-doctor checks.
+Designed to compare against the v2 `examples/multi_trigger_v2` sample and to exercise azure-functions-doctor checks.
 
 ## Structure
 ```
@@ -23,7 +23,7 @@ v1/multi-trigger/
 
 ## Run Locally
 ```bash
-cd examples/v1/multi-trigger
+cd examples/multi_trigger_v1
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -41,4 +41,4 @@ func start
 azure-functions doctor --path .
 ```
 
-Compare with v2 sample in `examples/v2/multi-trigger`.
+Compare with v2 sample in `examples/multi_trigger_v2`.

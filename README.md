@@ -152,7 +152,7 @@ azure-functions doctor
 azure-functions --help
 ```
 
-Sample: [examples/v2/http-trigger/diagnose-output.md](examples/v2/http-trigger/diagnose-output.md)
+Sample: `azure-functions doctor --path examples/http_trigger_v2`
 
 ### Exit Codes
 
@@ -168,13 +168,13 @@ Warnings (`warn`) do not fail the build. However, if there is at least one `fail
 
 ## Example
 
-See [`examples/v2/http-trigger`](examples/v2/http-trigger) for:
+See [`examples/http_trigger_v2`](examples/http_trigger_v2) for:
 
 - Minimal Azure Functions structure setup
 - Running the CLI and inspecting results
 
-See [`examples/v1/http-trigger`](examples/v1/http-trigger) for the legacy function.json model counterpart.
-See [`examples/v1/multi-trigger`](examples/v1/multi-trigger) for multiple v1 triggers (HTTP, Timer, Queue).
+See [`examples/http_trigger_v1`](examples/http_trigger_v1) for the legacy function.json model counterpart.
+See [`examples/multi_trigger_v1`](examples/multi_trigger_v1) for multiple v1 triggers (HTTP, Timer, Queue).
 
 ---
 

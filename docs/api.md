@@ -1,25 +1,16 @@
-# 🧠 API Reference
+# API Reference
 
-## CLI
+This project is primarily a CLI tool. The Python modules are stable enough to be imported,
+but the public surface is intentionally small.
 
-::: azure_functions_doctor.cli
+Key modules:
 
-## Doctor
+- `azure_functions_doctor.cli`: Typer CLI entrypoint and output formats
+- `azure_functions_doctor.doctor`: orchestration and rule loading
+- `azure_functions_doctor.handlers`: rule handlers / checks
+- `azure_functions_doctor.target_resolver`: resolves runtime targets (Python, Core Tools)
+- `azure_functions_doctor.utils`: small formatting helpers
 
-::: azure_functions_doctor.doctor
+Source:
 
-## Handlers
-
-::: azure_functions_doctor.handlers
-
-## Configuration
-
-::: azure_functions_doctor.config
-
-## Target Resolver
-
-::: azure_functions_doctor.target_resolver
-
-## Utility
-
-::: azure_functions_doctor.utils
+- `src/azure_functions_doctor/`

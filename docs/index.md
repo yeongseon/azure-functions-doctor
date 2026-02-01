@@ -29,15 +29,19 @@ It provides **clear emoji-based output**, **rule-based extensibility**, and **op
 
 ---
 
-## 🧰 Quick Start
+## Quick Start
 
 ```bash
 pip install azure-functions-doctor
 azure-functions doctor
 ```
 
-View [Usage Guide](usage.md) →  
-See Examples: [v2](../examples/v2/multi-trigger/README.md) | [v1](../examples/v1/http-trigger/README.md) →
+View [Quickstart](usage.md) →
+
+Examples:
+
+- [Programming Model v2](examples/v2.md)
+- [Programming Model v1](examples/v1.md)
 
 ---
 
@@ -68,4 +72,4 @@ Feel free to [open an issue](https://github.com/yeongseon/azure-functions-doctor
 
 ## 📄 License
 
-This project is licensed under the [MIT License](../LICENSE).
+This project is licensed under the [MIT License](https://github.com/yeongseon/azure-functions-doctor-for-python/blob/main/LICENSE).

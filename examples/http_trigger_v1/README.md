@@ -16,7 +16,7 @@ v1/http-trigger/
 
 ## Run
 ```bash
-cd examples/v1/http-trigger
+cd examples/http_trigger_v1
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -29,4 +29,4 @@ func start
 azure-functions doctor --path .
 ```
 
-Compare with the v2 single example in `examples/v2/http-trigger` or multi trigger sample in `examples/v2/multi-trigger`.
+Compare with the v2 single example in `examples/http_trigger_v2` or multi trigger sample in `examples/multi_trigger_v2`.
