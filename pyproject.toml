@@ -1,26 +1,57 @@
-# ----------------------------------------
-# 📦 Build System
-# ----------------------------------------
+[project]
+name = "azure-functions-doctor"
+description = "A diagnostic tool for Python Azure Functions"
+authors = [{ name = "Yeongseon Choe", email = "yeongseon.choe@gmail.com" }]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.10,<3.15"
+dynamic = ["version"]
+
+dependencies = [
+    "typer",
+    "rich",
+    "jsonschema",
+    "requests",
+    "packaging",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black==26.1.0",
+    "build",
+    "coverage",
+    "hatch",
+    "mypy==1.19.1",
+    "pre-commit",
+    "pytest",
+    "ruff==0.14.13",
+    "types-requests",
+    "pytest-cov",
+    "git-changelog",
+    "bandit==1.9.3",
+
+    # Kept temporarily until docs are aligned to openapi conventions.
+    "mkdocs",
+    "mkdocs-material",
+    "mkdocstrings[python]",
+]
+docs = [
+    "mkdocs",
+    "mkdocs-material",
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-# ----------------------------------------
-# 🏗️ Hatch Build Configuration
-# ----------------------------------------
 [tool.hatch.build]
 sources = ["src"]
 
 [tool.hatch.build.targets.wheel]
-# The package name will be resolved under "src/"
-# No need to set "packages" explicitly unless necessary
 
 [tool.hatch.version]
 path = "src/azure_functions_doctor/__init__.py"
 
-# ----------------------------------------
-# 🚀 Hatch Publish Configuration
-# ----------------------------------------
 [tool.hatch.publish.index]
 default = "pypi"
 
@@ -30,138 +61,57 @@ url = "https://upload.pypi.org/legacy/"
 [tool.hatch.publish.index.repos.test]
 url = "https://test.pypi.org/legacy/"
 
-# ----------------------------------------
-# 📄 Project Metadata
-# ----------------------------------------
-[project]
-name = "azure-functions-doctor"
-dynamic = ["version"]
-description = "A diagnostic tool for Python Azure Functions"
-readme = "README.md"
-requires-python = ">=3.9"
-license = { text = "MIT" }
-
-authors = [
-  { name = "Yeongseon Choe", email = "yeongseon.choe@gmail.com" }
-]
-
-# Runtime dependencies
-dependencies = [
-  "typer",
-  "rich",
-  "jsonschema",
-  "requests",
-  "packaging"
-]
-
-# Classifiers for PyPI
-classifiers = [
-  "Development Status :: 3 - Alpha",
-  "Intended Audience :: Developers",
-  "License :: OSI Approved :: MIT License",
-  "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Topic :: Software Development :: Libraries :: Python Modules"
-]
-
-# Optional development dependencies
-[project.optional-dependencies]
-dev = [
-  "black==25.11.0",
-  "build",
-  "coverage",
-  "hatch",
-  "mkdocs",
-  "mkdocs-material",
-  "mkdocstrings[python]",
-  "mypy==1.19.1",
-  "pre-commit",
-  "pytest",
-  "ruff==0.14.13",
-  "types-requests",
-  "tox"
-]
-
-# CLI entry point
-[project.scripts]
-# primary CLI entrypoint
-azure-functions = "azure_functions_doctor.cli:cli"
-azure-functions-doctor = "azure_functions_doctor.cli:cli"
-fdoctor = "azure_functions_doctor.cli:cli"
-
-# ----------------------------------------
-# 🧪 Hatch Environments
-# ----------------------------------------
 [tool.hatch.envs.default]
-features = ["dev"]
+python = "3.10"
+features = ["dev", "docs"]
 
 [tool.hatch.envs.default.scripts]
-format = "ruff format src/azure_functions_doctor tests && black src/azure_functions_doctor tests"
-style = "ruff check src/azure_functions_doctor tests"
-typecheck = "mypy src/azure_functions_doctor tests"
+format = "ruff format src tests && black src tests"
+style = "ruff check src tests"
+typecheck = "mypy src tests"
 lint = "hatch run style && hatch run typecheck"
-test = "pytest -v tests"
-cov = "coverage run -m pytest && coverage report && coverage html"
+test = "PYTHONPATH=. pytest -v tests"
+cov = "PYTHONPATH=. pytest --cov=src/azure_functions_doctor --cov-report=term-missing --cov-report=html --cov-report=xml tests/"
 docs = "mkdocs serve"
 precommit = "pre-commit run --all-files"
 precommit-install = "pre-commit install"
 
-[tool.hatch.envs.docs.scripts]
-build = "mkdocs build"
-serve = "mkdocs serve"
+[project.scripts]
+azure-functions = "azure_functions_doctor.cli:cli"
+azure-functions-doctor = "azure_functions_doctor.cli:cli"
+fdoctor = "azure_functions_doctor.cli:cli"
 
-# ----------------------------------------
-# 🎨 Code Formatter - Black
-# ----------------------------------------
 [tool.black]
-line-length = 120
-target-version = ["py39"]
+line-length = 100
+target-version = ["py310", "py311", "py312", "py313"]
 
-# ----------------------------------------
-# 🔍 Linter - Ruff
-# ----------------------------------------
 [tool.ruff]
-line-length = 120
-target-version = "py39"
-exclude = [".venv", "build", "dist", "__pycache__"]
-src = ["src/azure_functions_doctor"]
-fix = true
+line-length = 100
+target-version = "py310"
+exclude = ["tests"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "B"]
+select = ["E", "F", "I"]
+fixable = ["ALL"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["azure_functions_doctor"]
+force-sort-within-sections = true
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
 
-# ----------------------------------------
-# 🧠 Type Checker - Mypy
-# ----------------------------------------
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 strict = true
-warn_unused_configs = true
+ignore_missing_imports = true
+exclude = "examples/"
 show_error_codes = true
 pretty = true
-ignore_missing_imports = true
 
-[[tool.mypy.overrides]]
-module = ["pytest", "_pytest.*"]
-ignore_errors = true
-follow_imports = "skip"
-
-# ----------------------------------------
-# 🧪 Testing Framework - Pytest
-# ----------------------------------------
 [tool.pytest.ini_options]
+addopts = "--cov=src/azure_functions_doctor --cov-report=xml --cov-report=term-missing -ra -q"
 testpaths = ["tests"]
-pythonpath = ["src"]
+pythonpath = ["src", "examples"]
 
-# ----------------------------------------
-# 📊 Coverage Reporting
-# ----------------------------------------
 [tool.coverage.run]
 branch = true
 source = ["src/azure_functions_doctor"]
@@ -169,3 +119,7 @@ source = ["src/azure_functions_doctor"]
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = ["B105"]
