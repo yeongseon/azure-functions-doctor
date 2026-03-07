@@ -1,6 +1,6 @@
 [project]
 name = "azure-functions-doctor"
-description = "A diagnostic tool for Python Azure Functions"
+description = "Diagnostic tool for Azure Functions Python v2 programming model"
 authors = [{ name = "Yeongseon Choe", email = "yeongseon.choe@gmail.com" }]
 license = { text = "MIT" }
 readme = "README.md"
