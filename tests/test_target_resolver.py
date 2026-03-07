@@ -33,3 +33,39 @@ def test_resolve_func_core_tools_fallback(monkeypatch: pytest.MonkeyPatch) -> No
     monkeypatch.setattr(subprocess, "check_output", mock_check_output)
     result = target_resolver.resolve_target_value("func_core_tools")
     assert result == "unknown_error"
+
+
+def test_resolve_func_core_tools_not_installed_when_binary_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("azure_functions_doctor.target_resolver.shutil.which", lambda name: None)
+
+    result = target_resolver.resolve_target_value("func_core_tools")
+
+    assert result == "not_installed"
+
+
+def test_resolve_func_core_tools_timeout_expired(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "azure_functions_doctor.target_resolver.shutil.which", lambda name: "/usr/bin/func"
+    )
+
+    def mock_check_output(cmd: list[str], text: bool, timeout: Optional[int] = None) -> str:
+        raise subprocess.TimeoutExpired(cmd, 10.0)
+
+    monkeypatch.setattr(subprocess, "check_output", mock_check_output)
+    result = target_resolver.resolve_target_value("func_core_tools")
+    assert result == "timeout"
+
+
+def test_resolve_func_core_tools_called_process_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "azure_functions_doctor.target_resolver.shutil.which", lambda name: "/usr/bin/func"
+    )
+
+    def mock_check_output(cmd: list[str], text: bool, timeout: Optional[int] = None) -> str:
+        raise subprocess.CalledProcessError(2, cmd)
+
+    monkeypatch.setattr(subprocess, "check_output", mock_check_output)
+    result = target_resolver.resolve_target_value("func_core_tools")
+    assert result == "error_2"

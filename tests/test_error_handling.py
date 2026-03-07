@@ -3,15 +3,21 @@
 import os
 from pathlib import Path
 import tempfile
+from typing import TYPE_CHECKING, Any
 from unittest.mock import patch
 
 import pytest
 import typer
+from typer.testing import CliRunner
 
-from azure_functions_doctor.cli import _validate_inputs
+from azure_functions_doctor.cli import _validate_inputs, _write_output
+from azure_functions_doctor.cli import cli as doctor_cli
 from azure_functions_doctor.doctor import Doctor
 from azure_functions_doctor.handlers import _handle_specific_exceptions
 from azure_functions_doctor.target_resolver import resolve_target_value
+
+if TYPE_CHECKING:
+    import pytest
 
 
 class TestSpecificExceptionHandling:
@@ -140,6 +146,68 @@ class TestCLIInputValidation:
             finally:
                 # Restore permissions for cleanup
                 os.chmod(tmp_dir, 0o755)
+
+    def test_invalid_resolved_path(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        with patch("azure_functions_doctor.cli.Path.resolve", side_effect=OSError("bad path")):
+            with pytest.raises(typer.BadParameter, match="Invalid path"):
+                _validate_inputs("/tmp/example", "table", None)
+
+    def test_no_read_permission(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            original_access = os.access
+
+            def fake_access(path: Any, mode: int) -> bool:
+                if Path(path) == Path(tmp_dir) and mode == os.R_OK:
+                    return False
+                return original_access(path, mode)
+
+            monkeypatch.setattr("azure_functions_doctor.cli.os.access", fake_access)
+            with pytest.raises(typer.BadParameter, match="No read permission"):
+                _validate_inputs(tmp_dir, "table", None)
+
+    def test_output_directory_creation_error(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            with patch(
+                "azure_functions_doctor.cli.Path.mkdir",
+                side_effect=PermissionError("nope"),
+            ):
+                with pytest.raises(typer.BadParameter, match="Cannot create output directory"):
+                    _validate_inputs(tmp_dir, "json", Path(tmp_dir) / "nested" / "out.json")
+
+    def test_no_write_permission_for_output_parent(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            output_path = Path(tmp_dir) / "out.json"
+            original_access = os.access
+
+            def fake_access(path: Any, mode: int) -> bool:
+                if Path(path) == output_path.parent and mode == os.W_OK:
+                    return False
+                return original_access(path, mode)
+
+            monkeypatch.setattr("azure_functions_doctor.cli.os.access", fake_access)
+            with pytest.raises(typer.BadParameter, match="No write permission"):
+                _validate_inputs(tmp_dir, "json", output_path)
+
+
+class TestCLIOutputHandling:
+    def test_write_output_to_stdout(self, capsys: pytest.CaptureFixture[str]) -> None:
+        _write_output("hello", None, "JSON")
+        captured = capsys.readouterr()
+        assert captured.out.strip() == "hello"
+
+    def test_write_output_failure_raises_exit(self) -> None:
+        output_path = Path("/tmp/out.json")
+        with patch.object(Path, "write_text", side_effect=OSError("disk full")):
+            with pytest.raises(typer.Exit):
+                _write_output("hello", output_path, "JSON")
+
+
+class TestCLIDoctorCommand:
+    def test_rules_path_must_exist(self) -> None:
+        runner = CliRunner()
+        result = runner.invoke(doctor_cli, ["doctor", "--rules", "missing.json"])
+        assert result.exit_code != 0
+        assert "Rules path does not exist" in result.output
 
 
 class TestDoctorErrorHandling:
