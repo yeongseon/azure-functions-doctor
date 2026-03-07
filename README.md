@@ -85,6 +85,10 @@ from an intentionally broken copy.
 
 ![Doctor demo](docs/assets/doctor-demo.gif)
 
+The final terminal state is also captured as a static image for quick inspection.
+
+![Doctor final output](docs/assets/doctor-demo-final.png)
+
 ## Built-in checks
 
 The default ruleset validates:

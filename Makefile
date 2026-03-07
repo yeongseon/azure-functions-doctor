@@ -5,6 +5,8 @@ HATCH := $(VENV_DIR)/bin/hatch
 PACKAGE_INIT := $(shell find src -mindepth 2 -maxdepth 2 -name "__init__.py" | head -n1)
 DEMO_TAPE := demo/doctor-demo.tape
 DEMO_IMAGE := azure-functions-doctor-demo-vhs
+DEMO_GIF := docs/assets/doctor-demo.gif
+DEMO_FINAL_PNG := docs/assets/doctor-demo-final.png
 
 .PHONY: bootstrap
 bootstrap:
@@ -190,6 +192,10 @@ docs-serve: ensure-hatch
 demo: demo-image
 	@mkdir -p docs/assets
 	@docker run --rm -v "$(CURDIR):/workspace" -w /workspace $(DEMO_IMAGE) $(DEMO_TAPE)
+	@TMP_DIR=$$(mktemp -d); \
+	ffmpeg -y -i $(DEMO_GIF) $$TMP_DIR/frame%03d.png >/dev/null 2>&1; \
+	cp "$$TMP_DIR/$$(ls $$TMP_DIR | sort | tail -n 1)" $(DEMO_FINAL_PNG); \
+	rm -rf $$TMP_DIR
 
 .PHONY: demo-image
 demo-image:
