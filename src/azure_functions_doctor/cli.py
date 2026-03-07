@@ -87,7 +87,7 @@ def _write_output(content: str, output: Optional[Path], label: str) -> None:
         print(content)
 
 
-@cli.command(name="doctor")  # type: ignore[untyped-decorator]
+@cli.command(name="doctor")
 def doctor(
     path: str = ".",
     verbose: Annotated[
