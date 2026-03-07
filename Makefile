@@ -188,7 +188,7 @@ docs-serve: ensure-hatch
 .PHONY: demo
 demo:
 	@mkdir -p docs/assets
-	@docker run --rm -v "$(CURDIR):/vhs" -w /vhs ghcr.io/charmbracelet/vhs $(DEMO_TAPE)
+	@docker run --rm -v "$(CURDIR):/workspace" -w /workspace ghcr.io/charmbracelet/vhs $(DEMO_TAPE)
 
 .PHONY: doctor
 doctor:
