@@ -4,6 +4,7 @@ PIP := $(VENV_DIR)/bin/pip
 HATCH := $(VENV_DIR)/bin/hatch
 PACKAGE_INIT := $(shell find src -mindepth 2 -maxdepth 2 -name "__init__.py" | head -n1)
 DEMO_TAPE := demo/doctor-demo.tape
+DEMO_IMAGE := azure-functions-doctor-demo-vhs
 
 .PHONY: bootstrap
 bootstrap:
@@ -186,9 +187,13 @@ docs-serve: ensure-hatch
 	@$(HATCH) run docs
 
 .PHONY: demo
-demo:
+demo: demo-image
 	@mkdir -p docs/assets
-	@docker run --rm -v "$(CURDIR):/workspace" -w /workspace ghcr.io/charmbracelet/vhs $(DEMO_TAPE)
+	@docker run --rm -v "$(CURDIR):/workspace" -w /workspace $(DEMO_IMAGE) $(DEMO_TAPE)
+
+.PHONY: demo-image
+demo-image:
+	@docker build -t $(DEMO_IMAGE) -f demo/Dockerfile.vhs .
 
 .PHONY: doctor
 doctor:
