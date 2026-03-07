@@ -1,7 +1,7 @@
 import json
+from pathlib import Path
 import sys
 import tempfile
-from pathlib import Path
 from typing import cast
 
 from pytest import MonkeyPatch
@@ -41,7 +41,9 @@ def test_compare_func_core_tools_version_pass(monkeypatch: MonkeyPatch) -> None:
     """Test that the func Core Tools version check passes when version meets minimum."""
     from azure_functions_doctor import handlers
 
-    monkeypatch.setattr(handlers, "resolve_target_value", lambda t: "4.0.5455" if t == "func_core_tools" else "")
+    monkeypatch.setattr(
+        handlers, "resolve_target_value", lambda t: "4.0.5455" if t == "func_core_tools" else ""
+    )
     rule: Rule = {
         "type": "compare_version",
         "condition": {
@@ -59,7 +61,11 @@ def test_compare_func_core_tools_version_fail_not_installed(monkeypatch: MonkeyP
     """Test that the func Core Tools version check fails when func is not installed."""
     from azure_functions_doctor import handlers
 
-    monkeypatch.setattr(handlers, "resolve_target_value", lambda t: "not_installed" if t == "func_core_tools" else "")
+    monkeypatch.setattr(
+        handlers,
+        "resolve_target_value",
+        lambda t: "not_installed" if t == "func_core_tools" else "",
+    )
     rule: Rule = {
         "type": "compare_version",
         "condition": {
@@ -77,7 +83,9 @@ def test_compare_func_core_tools_version_fail_old_version(monkeypatch: MonkeyPat
     """Test that the func Core Tools version check fails when version is below minimum."""
     from azure_functions_doctor import handlers
 
-    monkeypatch.setattr(handlers, "resolve_target_value", lambda t: "3.0.0" if t == "func_core_tools" else "")
+    monkeypatch.setattr(
+        handlers, "resolve_target_value", lambda t: "3.0.0" if t == "func_core_tools" else ""
+    )
     rule: Rule = {
         "type": "compare_version",
         "condition": {
@@ -261,7 +269,9 @@ def test_conditional_exists_durable_missing_host_fail() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         # Create a Python file that contains durable keyword
         file_path = Path(tmpdir) / "function.py"
-        file_path.write_text("# uses durable\nfrom azure.durable_functions import DurableOrchestrationContext")
+        file_path.write_text(
+            "# uses durable\nfrom azure.durable_functions import DurableOrchestrationContext"
+        )
 
         rule: Rule = {
             "type": "conditional_exists",
@@ -275,7 +285,9 @@ def test_conditional_exists_durable_present_pass() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         # Create a Python file that contains durable keyword
         file_path = Path(tmpdir) / "function.py"
-        file_path.write_text("# uses durable\nfrom azure.durable_functions import DurableOrchestrationContext")
+        file_path.write_text(
+            "# uses durable\nfrom azure.durable_functions import DurableOrchestrationContext"
+        )
         # Create host.json with the durableTask entry
         host = Path(tmpdir) / "host.json"
         host.write_text('{"extensions": {"durableTask": {}}}')
@@ -361,36 +373,5 @@ def test_host_json_property_pass_and_fail(tmp_path: Path) -> None:
 
     # missing property
     host.write_text(json.dumps({}))
-    res2 = generic_handler(rule, tmp_path)
-    assert res2["status"] == "fail"
-
-
-def test_binding_validation_pass_and_fail(tmp_path: Path) -> None:
-    # valid: no function.json
-    rule = _make_rule("binding_validation", {})
-    res = generic_handler(rule, tmp_path)
-    assert res["status"] == "pass"
-
-    # invalid: create function.json with httpTrigger missing authLevel
-    func_dir = tmp_path / "FuncA"
-    func_dir.mkdir()
-    func_file = func_dir / "function.json"
-    func_file.write_text(json.dumps({"bindings": [{"type": "httpTrigger"}]}))
-    res2 = generic_handler(rule, tmp_path)
-    assert res2["status"] == "fail"
-
-
-def test_cron_validation_pass_and_fail(tmp_path: Path) -> None:
-    # valid cron (5 fields)
-    func_dir = tmp_path / "T"
-    func_dir.mkdir()
-    func_file = func_dir / "function.json"
-    func_file.write_text(json.dumps({"bindings": [{"type": "timerTrigger", "schedule": "0 0 * * *"}]}))
-    rule = _make_rule("cron_validation", {})
-    res = generic_handler(rule, tmp_path)
-    assert res["status"] == "pass"
-
-    # invalid cron
-    func_file.write_text(json.dumps({"bindings": [{"type": "timerTrigger", "schedule": "everyday"}]}))
     res2 = generic_handler(rule, tmp_path)
     assert res2["status"] == "fail"

@@ -44,7 +44,7 @@ def _load_rules(path: Path) -> list[dict[str, Any]]:
 def test_rules_match_schema() -> None:
     repo_root = Path(__file__).resolve().parents[1]
     schema_path = repo_root / "src/azure_functions_doctor/schemas/rules.schema.json"
-    rules_path = repo_root / "src/azure_functions_doctor/assets/rules.json"
+    rules_path = repo_root / "src/azure_functions_doctor/assets/rules/v2.json"
 
     schema = _load_schema(schema_path)
     rules = _load_rules(rules_path)
@@ -59,14 +59,19 @@ def test_rules_match_schema() -> None:
 
     for rule in rules:
         missing = required_set - set(rule.keys())
-        assert not missing, f"Rule {rule.get('id', '<unknown>')} missing required fields: {sorted(missing)}"
+        assert (
+            not missing
+        ), f"Rule {rule.get('id', '<unknown>')} missing required fields: {sorted(missing)}"
 
         rule_type = rule.get("type")
-        assert rule_type in allowed_types, f"Rule {rule.get('id', '<unknown>')} uses unknown type: {rule_type}"
+        assert (
+            rule_type in allowed_types
+        ), f"Rule {rule.get('id', '<unknown>')} uses unknown type: {rule_type}"
 
         condition = rule.get("condition")
         if isinstance(condition, dict):
             invalid_keys = set(condition.keys()) - condition_props
-            assert (
-                not invalid_keys
-            ), f"Rule {rule.get('id', '<unknown>')} has unsupported condition fields: {sorted(invalid_keys)}"
+            assert not invalid_keys, (
+                f"Rule {rule.get('id', '<unknown>')} has unsupported "
+                f"condition fields: {sorted(invalid_keys)}"
+            )

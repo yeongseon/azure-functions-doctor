@@ -1,35 +1,37 @@
 [
   {
-    "id": "check_python_version",
-    "category": "environment",
-    "section": "python_env",
-    "label": "Python version",
-    "description": "Checks if the current Python version is 3.9 or higher.",
-    "type": "compare_version",
-  "required": true,
-    "condition": {
-      "target": "python",
-      "operator": ">=",
-      "value": "3.9"
-    },
-    "hint": "Use Python 3.9 or higher as required by Azure Functions Python v2.",
-    "hint_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-reference-python#supported-python-versions",
-    "fix_command": "pyenv install 3.9.18",
-    "check_order": 1
-  },
-  {
     "id": "check_programming_model_v2",
     "category": "project_structure",
     "section": "programming_model",
     "label": "Programming model v2",
-    "description": "Confirms the project appears to use the v2 decorator-based programming model (AST-based detection).",
+    "description": "Confirms the project appears to use the Azure Functions Python v2 decorator-based programming model.",
     "type": "source_code_contains",
-  "required": true,
+    "required": true,
     "condition": {
       "keyword": "@app.",
       "mode": "ast"
     },
+    "hint": "Use func.FunctionApp() and decorator-based triggers such as @app.route().",
+    "hint_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-reference-python?pivots=python-mode-decorators",
     "check_order": 0
+  },
+  {
+    "id": "check_python_version",
+    "category": "environment",
+    "section": "python_env",
+    "label": "Python version",
+    "description": "Checks if the current Python version is 3.10 or higher.",
+    "type": "compare_version",
+    "required": true,
+    "condition": {
+      "target": "python",
+      "operator": ">=",
+      "value": "3.10"
+    },
+    "hint": "Use Python 3.10 or higher to match Azure Functions Doctor support.",
+    "hint_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-reference-python#supported-python-versions",
+    "fix_command": "pyenv install 3.10.16",
+    "check_order": 1
   },
   {
     "id": "check_venv",
@@ -38,7 +40,7 @@
     "label": "Virtual environment",
     "description": "Checks if a virtual environment is activated.",
     "type": "env_var_exists",
-  "required": true,
+    "required": true,
     "condition": {
       "target": "VIRTUAL_ENV"
     },
@@ -51,9 +53,9 @@
     "category": "environment",
     "section": "python_env",
     "label": "Python executable",
-    "description": "Checks if Python executable path exists.",
+    "description": "Checks if the Python executable path exists.",
     "type": "path_exists",
-  "required": true,
+    "required": true,
     "condition": {
       "target": "sys.executable"
     },
@@ -66,13 +68,13 @@
     "category": "dependencies",
     "section": "python_env",
     "label": "requirements.txt",
-    "description": "Checks if requirements.txt file exists at the root.",
+    "description": "Checks if requirements.txt exists at the project root.",
     "type": "file_exists",
-  "required": true,
+    "required": true,
     "condition": {
       "target": "requirements.txt"
     },
-    "hint": "Add a requirements.txt file to specify your dependencies.",
+    "hint": "Add a requirements.txt file to declare your dependencies.",
     "hint_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-reference-python#managing-dependencies",
     "fix_command": "pip freeze > requirements.txt",
     "check_order": 4
@@ -81,17 +83,17 @@
     "id": "check_azure_functions_library",
     "category": "dependencies",
     "section": "python_env",
-  "label": "azure-functions package",
-  "description": "Checks if the 'azure-functions' package is installed (required for Python Azure Functions projects).",
-  "type": "package_declared",
-  "required": true,
+    "label": "azure-functions package",
+    "description": "Checks if the azure-functions package is declared in requirements.txt.",
+    "type": "package_declared",
+    "required": true,
     "condition": {
       "package": "azure-functions",
       "file": "requirements.txt"
     },
-    "hint": "Add it with: echo azure-functions >> requirements.txt",
-  "hint_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-reference-python",
-  "fix_command": "echo azure-functions >> requirements.txt",
+    "hint": "Add azure-functions to requirements.txt.",
+    "hint_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-reference-python",
+    "fix_command": "echo azure-functions >> requirements.txt",
     "check_order": 5
   },
   {
@@ -99,13 +101,13 @@
     "category": "structure",
     "section": "project_structure",
     "label": "host.json",
-    "description": "Checks if host.json file exists in the root directory.",
+    "description": "Checks if host.json exists at the project root.",
     "type": "file_exists",
-  "required": true,
+    "required": true,
     "condition": {
       "target": "host.json"
     },
-    "hint": "host.json is required for configuring Azure Functions host runtime.",
+    "hint": "Add host.json to configure the Azure Functions host runtime.",
     "hint_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-host-json",
     "check_order": 7
   },
@@ -114,24 +116,23 @@
     "category": "structure",
     "section": "project_structure",
     "label": "local.settings.json",
-    "description": "Checks if local.settings.json exists (useful for local development).",
+    "description": "Checks if local.settings.json exists for local development.",
     "type": "file_exists",
+    "required": false,
     "condition": {
       "target": "local.settings.json"
     },
-  "required": false,
     "hint": "Create local.settings.json for local development if needed.",
-    "check_order": 7
-  }
-  ,
+    "check_order": 8
+  },
   {
     "id": "check_func_cli",
     "category": "tooling",
     "section": "tooling",
     "label": "Azure Functions Core Tools (func)",
-    "description": "Checks if the Azure Functions Core Tools CLI ('func') is available on PATH.",
+    "description": "Checks if Azure Functions Core Tools is available on PATH.",
     "type": "executable_exists",
-  "required": false,
+    "required": false,
     "condition": {
       "target": "func"
     },
@@ -144,7 +145,7 @@
     "category": "tooling",
     "section": "tooling",
     "label": "Azure Functions Core Tools version",
-    "description": "Checks if the Azure Functions Core Tools (func) version meets the minimum required.",
+    "description": "Checks if Azure Functions Core Tools meets the minimum supported version.",
     "type": "compare_version",
     "required": false,
     "condition": {
@@ -163,51 +164,29 @@
     "label": "Durable Functions configuration",
     "description": "Checks for durableTask configuration in host.json when durable functions are present.",
     "type": "conditional_exists",
-  "required": false,
+    "required": false,
     "condition": {
       "target": "host.json",
       "jsonpath": "$.extensions.durableTask"
     },
-    "hint": "If using Durable Functions, ensure durableTask settings and required extensions are configured in host.json.",
+    "hint": "If using Durable Functions, ensure durableTask settings are configured in host.json.",
     "hint_url": "https://learn.microsoft.com/azure/azure-functions/durable/durable-functions-overview",
     "check_order": 21
-  },
-  {
-    "id": "check_http_trigger_bindings",
-    "category": "bindings",
-    "section": "http",
-    "label": "HTTP trigger validation",
-    "description": "Validate common HTTP trigger binding fields like authLevel, methods, and route across functions.",
-    "type": "binding_validation",
-  "required": false,
-    "condition": {},
-    "hint": "Validate httpTrigger bindings for correct authLevel and methods to avoid security or routing issues.",
-    "hint_url": "https://learn.microsoft.com/azure/azure-functions/functions-bindings-http-webhook-trigger?tabs=python",
-    "check_order": 22
-  },
-  {
-    "id": "check_timer_cron",
-    "category": "bindings",
-    "section": "timer",
-    "label": "Timer trigger CRON validation",
-    "description": "Validate timer trigger schedule values and CRON expression format.",
-    "type": "cron_validation",
-  "required": false,
-    "condition": {},
-    "hint": "Ensure CRON expressions are valid for Azure Functions (consider 6-field vs 5-field formats).",
-    "hint_url": "https://learn.microsoft.com/azure/azure-functions/functions-bindings-timer?tabs=python",
-    "check_order": 23
   },
   {
     "id": "check_app_insights",
     "category": "telemetry",
     "section": "monitoring",
     "label": "Application Insights configuration",
-    "description": "Checks for Application Insights connection settings via env vars or host.json instrumentationKey/connection string.",
+    "description": "Checks for Application Insights connection settings via environment variables or host.json.",
     "type": "any_of_exists",
-  "required": false,
+    "required": false,
     "condition": {
-      "targets": ["APPLICATIONINSIGHTS_CONNECTION_STRING", "APPINSIGHTS_INSTRUMENTATIONKEY", "host.json:instrumentationKey"]
+      "targets": [
+        "APPLICATIONINSIGHTS_CONNECTION_STRING",
+        "APPINSIGHTS_INSTRUMENTATIONKEY",
+        "host.json:instrumentationKey"
+      ]
     },
     "hint": "Configure Application Insights to get telemetry and diagnostics in production.",
     "hint_url": "https://learn.microsoft.com/azure/azure-monitor/app/azure-functions",
@@ -217,11 +196,10 @@
     "id": "check_extension_bundle",
     "category": "configuration",
     "section": "extensions",
-    "label": "extensionBundle / binding extensions",
-    "description": "Validate that extensionBundle is configured in host.json or required binding extensions are present.",
+    "label": "extensionBundle",
+    "description": "Checks whether extensionBundle is configured in host.json.",
     "type": "host_json_property",
     "required": false,
-    "severity": "error",
     "condition": {
       "jsonpath": "$.extensionBundle"
     },
@@ -234,11 +212,11 @@
     "category": "framework",
     "section": "asgi_wsgi",
     "label": "ASGI/WSGI compatibility",
-    "description": "Detect whether the project exposes ASGI/WSGI callable and whether it's wired correctly for Functions host.",
+    "description": "Detects whether the project exposes an ASGI or WSGI callable.",
     "type": "callable_detection",
-  "required": false,
+    "required": false,
     "condition": {},
-    "hint": "Verify ASGI/WSGI app is exposed as expected; misconfiguration can prevent routing or startup.",
+    "hint": "Verify that any ASGI or WSGI app is exposed as expected for the Functions host.",
     "hint_url": "https://learn.microsoft.com/azure/azure-functions/functions-reference-python#asgi",
     "check_order": 26
   },
@@ -247,11 +225,16 @@
     "category": "project_health",
     "section": "cleanup",
     "label": "Detect unused or invalid files",
-    "description": "Detect common unwanted files in project root or deployment (e.g., .pyc, __pycache__, .venv, tests).",
+    "description": "Detects common unwanted files in the project root or deployment package.",
     "type": "file_glob_check",
-  "required": false,
+    "required": false,
     "condition": {
-      "patterns": ["**/__pycache__", "**/*.pyc", ".venv", "tests/"]
+      "patterns": [
+        "**/__pycache__",
+        "**/*.pyc",
+        ".venv",
+        "tests/"
+      ]
     },
     "hint": "Remove or exclude unwanted files from deployment to reduce package size and avoid accidental secrets.",
     "check_order": 30

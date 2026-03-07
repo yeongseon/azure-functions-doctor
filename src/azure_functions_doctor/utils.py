@@ -2,7 +2,7 @@ from rich.style import Style
 from rich.text import Text
 
 # Status to icon
-STATUS_ICONS: dict[str, str] = {
+STATUS_ICONS: dict[str, str] = {  # nosec B105
     # Unified with README: ✓ (pass), ! (warn), ✗ (fail)
     "pass": "✓",
     "warn": "!",
@@ -17,7 +17,7 @@ STATUS_STYLES: dict[str, Style] = {
 }
 
 # Status to plain color strings (for result details)
-DETAIL_COLOR_MAP: dict[str, str] = {
+DETAIL_COLOR_MAP: dict[str, str] = {  # nosec B105
     "pass": "green",
     "fail": "red",
     "warn": "yellow",

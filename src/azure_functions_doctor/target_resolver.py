@@ -1,4 +1,5 @@
-import subprocess
+import shutil
+import subprocess  # nosec B404
 import sys
 
 from azure_functions_doctor.logging_config import get_logger
@@ -22,11 +23,17 @@ def resolve_target_value(target: str) -> str:
     if target == "python":
         return sys.version.split()[0]
     if target == "func_core_tools":
+        func_path = shutil.which("func")
+        if not func_path:
+            logger.debug("Azure Functions Core Tools not found in PATH")
+            return "not_installed"
         try:
-            output = subprocess.check_output(["func", "--version"], text=True, timeout=10)
+            output = subprocess.check_output(
+                [func_path, "--version"], text=True, timeout=10
+            )  # nosec B603
             return output.strip()
         except FileNotFoundError:
-            logger.debug("Azure Functions Core Tools not found in PATH")
+            logger.debug("Azure Functions Core Tools executable disappeared before execution")
             return "not_installed"
         except subprocess.TimeoutExpired:
             logger.warning("Timeout getting func version")

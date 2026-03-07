@@ -1,11 +1,11 @@
 import ast
 import json
 import os
+from pathlib import Path
 import re
 import shutil
 import sys
-from pathlib import Path
-from typing import Iterator, List, Literal, TypedDict, Union
+from typing import Iterator, List, Literal, Optional, TypedDict, Union
 
 from packaging.version import InvalidVersion
 from packaging.version import parse as parse_version
@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 
 
 def _source_contains_ast(source: str, identifier: str) -> bool:
-    """Return True if the Python source contains a decorator like @identifier.xxx (e.g. @app.route)."""
+    """Return True when the source contains a decorator like `@identifier.xxx`."""
     try:
         tree = ast.parse(source)
     except SyntaxError:
@@ -44,22 +44,28 @@ def _iter_project_py_contents(path: Path) -> Iterator[tuple[Path, str]]:
     for py_file in path.rglob("*.py"):
         if any(part in excluded_dirs for part in py_file.parts):
             continue
-        try:
-            content = py_file.read_text(encoding="utf-8")
-        except PermissionError:
-            logger.warning(f"Permission denied reading {py_file}")
-            continue
-        except UnicodeDecodeError:
-            try:
-                content = py_file.read_text(encoding="utf-8", errors="ignore")
-            except Exception:
-                continue
-        except (MemoryError, OSError):
-            continue
-        except Exception as exc:
-            logger.debug(f"Skip {py_file}: {exc}")
+        content = _read_project_python_file(py_file)
+        if content is None:
             continue
         yield py_file, content
+
+
+def _read_project_python_file(py_file: Path) -> Optional[str]:
+    """Read Python source without failing the whole traversal."""
+    try:
+        return py_file.read_text(encoding="utf-8")
+    except PermissionError:
+        logger.warning(f"Permission denied reading {py_file}")
+        return None
+    except UnicodeDecodeError:
+        try:
+            return py_file.read_text(encoding="utf-8", errors="ignore")
+        except (OSError, PermissionError, ValueError) as exc:
+            logger.debug(f"Skip {py_file}: {exc}")
+            return None
+    except (MemoryError, OSError, ValueError) as exc:
+        logger.debug(f"Skip {py_file}: {exc}")
+        return None
 
 
 def _create_result(status: str, detail: str, internal_error: bool = False) -> dict[str, str]:
@@ -82,9 +88,13 @@ def _handle_specific_exceptions(operation: str, exc: Exception) -> dict[str, str
     if isinstance(exc, UnicodeDecodeError):
         return _create_result("fail", f"Encoding error in {operation}: {exc}.", internal_error=True)
     if isinstance(exc, (ValueError, TypeError)):
-        return _create_result("fail", f"Configuration error in {operation}: {exc}.", internal_error=True)
+        return _create_result(
+            "fail", f"Configuration error in {operation}: {exc}.", internal_error=True
+        )
     if isinstance(exc, (OSError, PermissionError)):
-        return _create_result("fail", f"File system error in {operation}: {exc}", internal_error=True)
+        return _create_result(
+            "fail", f"File system error in {operation}: {exc}", internal_error=True
+        )
     if isinstance(exc, ImportError):
         return _create_result("fail", f"Import error in {operation}: {exc}", internal_error=True)
     if isinstance(exc, MemoryError):
@@ -124,8 +134,6 @@ class Rule(TypedDict, total=False):
         "any_of_exists",
         "file_glob_check",
         "host_json_property",
-        "binding_validation",
-        "cron_validation",
     ]
     label: str
     category: str
@@ -158,8 +166,6 @@ class HandlerRegistry:
             "any_of_exists": self._handle_any_of_exists,
             "file_glob_check": self._handle_file_glob_check,
             "host_json_property": self._handle_host_json_property,
-            "binding_validation": self._handle_binding_validation,
-            "cron_validation": self._handle_cron_validation,
         }
 
     def handle(self, rule: Rule, path: Path) -> dict[str, str]:
@@ -188,7 +194,9 @@ class HandlerRegistry:
             return _create_result("fail", "Missing condition fields for compare_version")
 
         if target == "python":
-            current_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+            current_version = (
+                f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+            )
             current = parse_version(current_version)
             expected = parse_version(str(value))
             passed = {
@@ -321,7 +329,10 @@ class HandlerRegistry:
         detail_suffix = " (AST)" if mode == "ast" else ""
         return _create_result(
             "pass" if found else "fail",
-            f"Keyword '{keyword}' {'found' if found else 'not found'} in source code{detail_suffix}",
+            (
+                f"Keyword '{keyword}' {'found' if found else 'not found'} "
+                f"in source code{detail_suffix}"
+            ),
         )
 
     def _handle_package_declared(self, rule: Rule, path: Path) -> dict[str, str]:
@@ -352,7 +363,7 @@ class HandlerRegistry:
         )
 
     def _handle_conditional_exists(self, rule: Rule, path: Path) -> dict[str, str]:
-        """Handle conditional existence checks such as durableTask in host.json when durable usage exists."""
+        """Handle host.json checks that only matter when a related feature is detected."""
         durable_keywords = [
             "durable",
             "DurableOrchestrationContext",
@@ -363,9 +374,8 @@ class HandlerRegistry:
 
         try:
             for py_file in path.rglob("*.py"):
-                try:
-                    content = py_file.read_text(encoding="utf-8", errors="ignore")
-                except Exception:
+                content = _read_project_python_file(py_file)
+                if content is None:
                     continue
                 lowered = content.lower()
                 if any(k in lowered for k in durable_keywords):
@@ -423,9 +433,8 @@ class HandlerRegistry:
         found_items: List[str] = []
         try:
             for py_file in path.rglob("*.py"):
-                try:
-                    content = py_file.read_text(encoding="utf-8", errors="ignore")
-                except Exception:
+                content = _read_project_python_file(py_file)
+                if content is None:
                     continue
                 for pat in patterns:
                     if re.search(pat, content):
@@ -476,8 +485,8 @@ class HandlerRegistry:
                                 break
                         if node is not None:
                             return _create_result("pass", f"host.json:{key} present")
-                    except Exception:
-                        continue
+                    except json.JSONDecodeError as exc:
+                        logger.debug(f"Skip invalid host.json while checking {key}: {exc}")
             else:
                 # env var
                 if os.getenv(str(t)) is not None:
@@ -532,61 +541,6 @@ class HandlerRegistry:
             else:
                 return _create_result("fail", f"host.json property '{jsonpath}' not found")
         return _create_result("pass", f"host.json contains '{jsonpath}'")
-
-    def _handle_binding_validation(self, rule: Rule, path: Path) -> dict[str, str]:
-        """
-        Basic HTTP trigger binding validation:
-        - look for function.json files and validate httpTrigger bindings have authLevel/methods where applicable.
-        This is a lightweight heuristic to catch common misconfigurations.
-        """
-        try:
-            issues = []
-            for func_file in path.rglob("function.json"):
-                try:
-                    data = json.loads(func_file.read_text(encoding="utf-8"))
-                except Exception:
-                    continue
-                bindings = data.get("bindings", [])
-                for b in bindings:
-                    if b.get("type") == "httpTrigger":
-                        if "authLevel" not in b:
-                            issues.append(f"{func_file.relative_to(path)}: missing authLevel")
-                        if "methods" in b and not b.get("methods"):
-                            issues.append(f"{func_file.relative_to(path)}: empty methods in httpTrigger")
-            if issues:
-                return _create_result("fail", f"HTTP trigger binding issues: {issues[:5]}")
-            return _create_result("pass", "HTTP trigger bindings appear valid or not present")
-        except Exception as exc:
-            return _handle_specific_exceptions("validating httpTrigger bindings", exc)
-
-    def _handle_cron_validation(self, rule: Rule, path: Path) -> dict[str, str]:
-        """
-        Simple CRON validation for timerTrigger schedules found in function.json files.
-        Accepts 5- or 6-field cron-like expressions as a heuristic.
-        """
-        cron_regex = re.compile(r"^([\S]+\s+){4,5}[\S]+$")
-        try:
-            found_cron = False
-            invalid = []
-            for func_file in path.rglob("function.json"):
-                try:
-                    data = json.loads(func_file.read_text(encoding="utf-8"))
-                except Exception:
-                    continue
-                bindings = data.get("bindings", [])
-                for b in bindings:
-                    if b.get("type") == "timerTrigger":
-                        schedule = b.get("schedule", "")
-                        found_cron = True
-                        if not isinstance(schedule, str) or not cron_regex.match(schedule.strip()):
-                            invalid.append(f"{func_file.relative_to(path)}: invalid schedule '{schedule}'")
-            if invalid:
-                return _create_result("fail", f"Invalid CRON expressions: {invalid[:5]}")
-            if not found_cron:
-                return _create_result("pass", "No timerTrigger schedules found")
-            return _create_result("pass", "Timer trigger schedules appear valid")
-        except Exception as exc:
-            return _handle_specific_exceptions("validating cron expressions", exc)
 
 
 # Global registry instance

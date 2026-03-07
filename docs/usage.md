@@ -1,8 +1,6 @@
-# 🖥️ CLI Usage: `azure-functions doctor`
+# CLI Usage
 
-The Azure Functions Doctor CLI helps validate your local Python-based Azure Functions project for common issues using an extensible rules system. It supports both **Programming Model v1** (function.json-based) and **Programming Model v2** (decorator-based) projects.
-
----
+`azure-functions doctor` validates a local Azure Functions project that uses the **Python v2 programming model**.
 
 ## Basic Usage
 
@@ -10,100 +8,62 @@ The Azure Functions Doctor CLI helps validate your local Python-based Azure Func
 azure-functions doctor
 ```
 
-Run diagnostics in the current or specified folder.
+Run against a specific directory:
 
----
+```bash
+azure-functions doctor --path ./my-function-app
+```
 
 ## Options
 
 | Option | Description |
-|--------|-------------|
-| `--path` | Target directory (default: current folder) |
-| `--format json` | Output in machine-readable JSON |
-| `--verbose` | Show detailed diagnostics and hints |
-| `--profile` | Rule profile: `minimal` (required-only) or `full` (all rules) |
-| `--help` | Show usage for the CLI or subcommand |
+| --- | --- |
+| `--path` | Target directory. Defaults to the current directory. |
+| `--format` | Output format: `table`, `json`, `sarif`, or `junit`. |
+| `--output` | Optional file path for the selected output format. |
+| `--verbose` | Show fix hints for non-passing checks. |
+| `--debug` | Enable debug logging. |
+| `--profile` | Rule profile: `minimal` or `full`. |
+| `--rules` | Optional path to a custom rules file. |
 
-Example:
+## Model Support
+
+Azure Functions Doctor expects the decorator-based Python v2 model:
+
+- `func.FunctionApp()`
+- decorators such as `@app.route()`, `@app.timer_trigger()`, and `@app.schedule()`
+
+If a project does not expose v2 decorators, the built-in `Programming model v2` check fails.
+
+## Output Semantics
+
+Each check produces one of three statuses:
+
+- `pass`: the required condition is satisfied
+- `warn`: an optional check failed
+- `fail`: a required check failed
+
+Exit codes:
+
+- `0`: no failed required checks
+- `1`: one or more failed required checks
+
+## Examples
+
+Human-readable output:
 
 ```bash
-azure-functions doctor --path ./my-func-app --format json --verbose
+azure-functions doctor --path ./examples/v2/http-trigger
+```
+
+JSON output for CI:
+
+```bash
+azure-functions doctor --format json --output doctor-report.json
+```
+
+Required-only profile:
+
+```bash
 azure-functions doctor --profile minimal
 ```
-
----
-
-## ✅ What It Checks
-
-### Programming Model Detection
-The tool automatically detects your project's programming model:
-
-- **v2 (Decorator-based)**: Uses `@app.route`, `@app.schedule` decorators
-- **v1 (function.json-based)**: Uses `function.json` files for configuration
-
-### Diagnostic Categories
-
-| Category | v2 Checks | v1 Checks |
-|----------|-----------|-----------|
-| Python Environment | Python ≥ 3.9, virtualenv, executable | Python ≥ 3.6, virtualenv, executable |
-| Dependencies | `azure-functions` | `azure-functions-worker` |
-| Project Files | `host.json`, `local.settings.json` | `host.json`, `local.settings.json`, `function.json` |
-
----
-
-## Example Output
-
-### v2 Project (Decorator-based)
-```
-🩺 Azure Functions Doctor for Python v0.5.1
-📁 Path: /path/to/v2-project
-🐍 Python Programming Model: v2
-
-✖ Python Env
-  • Python version: Python version is 3.12.3, expected >=3.9
-  • Virtual environment: VIRTUAL_ENV is set
-  • Python executable: .../bin/python exists
-  • requirements.txt: exists
-  • azure-functions package: Module 'azure.functions' is not installed
-
-✔ Project Structure
-  • host.json: exists
-  • local.settings.json: is missing (optional for local development)
-
-Summary
-✔ 1 Passed    ✖ 1 Failed
-```
-
-### v1 Project (function.json-based)
-```
-🩺 Azure Functions Doctor for Python v0.5.1
-📁 Path: /path/to/v1-project
-🐍 Python Programming Model: v1 (limited support)
-
-✖ Python Env
-  • Python version: Python version is 3.12.3, expected >=3.6
-  • Virtual environment: VIRTUAL_ENV is set
-  • Python executable: .../bin/python exists
-  • requirements.txt: exists
-  • azure-functions-worker package: Package 'azure.functions_worker' is not installed
-
-✖ Project Structure
-  • host.json: is missing
-  • local.settings.json: is missing (optional for local development)
-
-Summary
-✔ 0 Passed    ✖ 2 Failed
-```
-
----
-
-## 🆘 Help
-
-```bash
-azure-functions --help
-azure-functions doctor --help
-```
-
-For more examples:
-- v2 (decorator): [examples/v2/multi-trigger](../examples/v2/multi-trigger/README.md)
-- v1 (function.json): [examples/v1/http-trigger](../examples/v1/http-trigger/README.md)

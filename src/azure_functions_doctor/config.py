@@ -29,7 +29,7 @@ class Config:
         "log_format": "simple",
         "max_file_size_mb": 10,
         "search_timeout_seconds": 30,
-        "rules_file": "rules.json",
+        "rules_file": "rules/v2.json",
         "output_width": 120,
         "enable_colors": True,
         "parallel_execution": False,

@@ -1,23 +1,9 @@
-# http-trigger (Programming Model v2)
+# HTTP Trigger Example
 
-Minimal single HTTP trigger for the Python v2 programming model.
-
-## Structure
-```
-v2/http-trigger/
-├── function_app.py
-├── host.json
-├── requirements.txt
-├── local.settings.sample.json
-└── README.md
-```
-
-## Key Points
-- Uses the decorator-based programming model.
-- Single HTTP route returning a greeting.
-- Mirrors the v1 example structure for comparison (see `examples/v1/http-trigger`).
+Minimal single HTTP trigger for the Azure Functions Python v2 programming model.
 
 ## Run
+
 ```bash
 cd examples/v2/http-trigger
 python3 -m venv .venv
@@ -27,9 +13,8 @@ cp local.settings.sample.json local.settings.json
 func start
 ```
 
-## Diagnostics
+## Diagnose
+
 ```bash
 azure-functions doctor --path .
 ```
-
-* Compare with the v1 example in `examples/v1/http-trigger` for structural differences.

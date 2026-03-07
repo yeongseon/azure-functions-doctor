@@ -1,23 +1,24 @@
-# Supported Python Versions and Deprecation Policy
+# Supported Versions
 
-## Current Support
+## Python
 
-Azure Functions Doctor supports **Python 3.9 and above**, consistent with the [Azure Functions Python runtime support](https://learn.microsoft.com/en-us/azure/azure-functions/functions-reference-python#supported-python-versions).
+Azure Functions Doctor supports **Python 3.10 and above**.
 
-- **Minimum version**: Python 3.9
-- **Tested / supported**: 3.9, 3.10, 3.11, 3.12 (as reflected in CI and PyPI classifiers)
+- Minimum supported version: 3.10
+- Targeted versions: 3.10, 3.11, 3.12, 3.13, 3.14
 
-## Deprecation Policy
+## Azure Functions Model
 
-- **Alignment with Azure**: Supported Python versions and deprecation timelines follow **Microsoft’s Azure Functions Python runtime support**. When a Python version is no longer supported by the Azure Functions runtime, we will drop support for that version in this tool and update the minimum accordingly.
-- **Python 3.9**: Python 3.9 is approaching end-of-life. We will **drop Python 3.9 support** when Microsoft ends Azure Functions support for Python 3.9. Until then, the tool will continue to support 3.9.
-- **Version checks and docs**: When we change the minimum supported version, we will:
-  - Update `requires-python` in `pyproject.toml`
-  - Update the version check rules in `src/azure_functions_doctor/assets/rules/` (e.g. `check_python_version`)
-  - Update this document and the [README](../README.md) Requirements section
-  - Bump the project version per [Release Process](release_process.md)
+Azure Functions Doctor supports the **Azure Functions Python v2 programming model** only.
 
-## References
+- Supported: `func.FunctionApp()` and decorator-based triggers
+- Not supported: legacy `function.json`-based Python v1 projects
 
-- [Azure Functions – Supported Python versions](https://learn.microsoft.com/en-us/azure/azure-functions/functions-reference-python#supported-python-versions)
-- [Python release schedule](https://devguide.python.org/versions/)
+## Maintenance Policy
+
+When the supported baseline changes, update:
+
+- `pyproject.toml`
+- `src/azure_functions_doctor/assets/rules/v2.json`
+- CI matrices
+- this document and the main README

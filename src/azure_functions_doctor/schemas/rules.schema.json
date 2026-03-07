@@ -60,9 +60,7 @@
           "executable_exists",
           "any_of_exists",
           "file_glob_check",
-          "host_json_property",
-          "binding_validation",
-          "cron_validation"
+          "host_json_property"
         ]
       },
       "required": {

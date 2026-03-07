@@ -1,203 +1,45 @@
-# Development Guide (Hatch-based)
+# Development Guide
 
-This guide covers how to set up a local development environment, run tests, and manage code quality for **Azure Functions Doctor**, using Hatch and a Makefile for workflow automation.
-
----
+This project uses Hatch, pytest, Ruff, Black, mypy, and Bandit.
 
 ## Prerequisites
 
-- **Python 3.9+** installed on your system
-- **Git** for version control
-- **Hatch** as the build and environment manager (installed via `pip install hatch`)
-- **Make** (for running the provided Makefile targets)
-- (Optional) **uv** for fast dependency installation (`pip install uv`)
+- Python 3.10+
+- Hatch
+- Make
 
----
+## Setup
 
-## Project Structure Overview
-
-```text
-azure-functions-doctor-for-python/
-├── Makefile
-├── pyproject.toml
-├── src/
-│   └── azure_functions_doctor/
-│       ├── __init__.py
-│       ├── cli.py
-│       ├── doctor.py
-│       ├── handlers.py
-│       ├── utils.py
-│       ├── assets/
-│       │   └── rules.json
-├── tests/
-│   ├── test_cli.py
-│   ├── test_handler.py
-│   └── test_*.py
-├── docs/
-│   ├── index.md
-│   ├── usage.md
-│   ├── rules.md
-│   ├── diagnostics.md
-│   └── development.md
-├── examples/
-│   └── basic-hello/
-│       └── diagnose-output.md
-└── ...
+```bash
+make bootstrap
+source .venv/bin/activate
+make install
+make precommit-install
 ```
 
-- **`Makefile`**: Defines common commands for creating the environment, running tests, linting, formatting, and publishing.
-- **`pyproject.toml`**: Configuration for Hatch environments and project metadata.
-- **`src/azure_functions_doctor/`**: Core application code, including CLI entrypoint, diagnostic logic, and rule assets.
-- **`tests/`**: Unit and integration tests for the project.
-- **`docs/`**: Documentation files used by MkDocs (if enabled) or GitHub pages.
-- **`examples/`**: Contains sample Azure Functions projects and expected outputs.
+## Common Commands
 
----
-
-## Initial Setup
-
-1. **Clone the repository**:
-    ```bash
-    git clone https://github.com/yeongseon/azure-functions-doctor-for-python.git
-    cd azure-functions-doctor-for-python
-    ```
-
-2. **Create and activate a virtual environment** using the Makefile:
-    ```bash
-    make bootstrap
-    source .venv/bin/activate      # On Windows (PowerShell): .venv\Scripts\Activate.ps1
-    ```
-
-3. **Install project dependencies** via Hatch (or using `uv` if preferred):
-    ```bash
-    make install
-    # or, if using uv: uv install
-    ```
-
-4. **Install pre-commit hooks** for code formatting and linting:
-    ```bash
-    make precommit-install
-    ```
-
-> **Note**: The Makefile ensures Hatch commands run inside the appropriate environment. If you bypass Makefile, you can manually do:
-> ```bash
-> hatch env create
-> hatch run pre-commit install
-> ```
-
----
-
-## Running Tests and Quality Checks
-
-### 1. Format Code
-Use **Black** and **Ruff** via Makefile to enforce consistent styling:
 ```bash
 make format
-```
-
-### 2. Lint Code
-Run **Ruff** and **Mypy** for linting and type checks:
-```bash
 make lint
-```
-
-### 3. Type Checking
-Perform static type analysis with **Mypy**:
-```bash
 make typecheck
-```
-
-### 4. Run Unit Tests
-Execute all tests using **pytest**:
-```bash
 make test
-```
-
-### 5. Combined Quality Checks
-Run linting and type checking in one command:
-```bash
-make check
-```
-
-Run linting, type checking, and tests in one command:
-```bash
+make security
 make check-all
 ```
 
-### 6. Generate Coverage Report
-Produce a coverage report (HTML + XML):
-```bash
-make cov
-```
-- Opens `htmlcov/index.html` for browser viewing
-- Generates `coverage.xml` for CI integrations (e.g., Codecov)
+## Project Areas
 
----
+- `src/azure_functions_doctor/`: runtime code
+- `src/azure_functions_doctor/assets/rules/v2.json`: built-in rules
+- `src/azure_functions_doctor/schemas/rules.schema.json`: rules schema
+- `tests/`: unit and integration tests
+- `docs/`: MkDocs content
+- `examples/v2/`: supported sample apps
 
-## Development Workflow
+## Workflow
 
-1. **Create a feature branch**:
-    ```bash
-    git checkout -b feature/your-description
-    ```
-
-2. **Implement changes** in `src/azure_functions_doctor/` and/or update `rules.json` under `src/azure_functions_doctor/assets/`.
-
-3. **Add new tests** in the `tests/` directory to cover your changes.
-
-4. **Run quality checks** locally:
-    ```bash
-    make check-all
-    ```
-
-5. **Commit changes** with Conventional Commits format:
-    ```
-    git commit -m "feat: add new check for custom config file"
-    ```
-
-6. **Push and open a Pull Request** to `main`.
-
----
-
-## Makefile Targets Reference
-
-| Target                   | Description                                                       |
-|--------------------------|-------------------------------------------------------------------|
-| `make bootstrap`         | Create a Python virtual environment at `.venv/` and install Hatch |
-| `make install`           | Create Hatch env and install pre-commit hooks                      |
-| `make precommit-install` | Install pre-commit hooks                                           |
-| `make format`            | Format code with Ruff/Black                                        |
-| `make lint`              | Run Ruff and Mypy checks                                           |
-| `make typecheck`         | Perform static type checking with Mypy                             |
-| `make test`              | Run pytest                                                        |
-| `make check`             | Run linting and typechecking                                       |
-| `make check-all`         | Run linting, typechecking, and tests                               |
-| `make cov`               | Generate coverage report and open HTML index                       |
-| `make docs`              | Build MkDocs site                                                  |
-| `make docs-serve`        | Serve MkDocs locally                                               |
-| `make release-patch`     | Bump patch version, update changelog                               |
-| `make release-minor`     | Bump minor version, update changelog                               |
-| `make release-major`     | Bump major version, update changelog                               |
-| `make publish-test`      | Publish package to TestPyPI                                        |
-| `make publish-pypi`      | Publish package to PyPI                                            |
-
-> For detailed release workflow, refer to [`release_process.md`](release_process.md).
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Please follow these steps:
-
-1. Fork the repository and create a new branch.
-2. Follow the **Development Workflow** above.
-3. Ensure tests pass and code quality checks succeed.
-4. Submit a Pull Request with a clear description of your changes.
-
-Thank you for helping improve Azure Functions Doctor!
-
----
-
-## 📄 License
-
-This project is licensed under the [MIT License](../LICENSE).
+1. Update runtime code or the v2 ruleset.
+2. Add or update tests.
+3. Run `make check-all`.
+4. Use English for code comments, docs, and commit messages.

@@ -1,8 +1,8 @@
+from collections import defaultdict
 import importlib.resources
 import json
-import time
-from collections import defaultdict
 from pathlib import Path
+import time
 from typing import Optional, TypedDict
 
 from jsonschema import ValidationError, validate
@@ -32,16 +32,13 @@ class Doctor:
     """
     Diagnostic runner for Azure Functions apps.
 
-    Loads checks from model-specific rule assets located in
-    `azure_functions_doctor.assets.rules.v1.json` and `v2.json`. Legacy
-    `rules.json` support has been removed; callers should ensure the
-    appropriate v1/v2 files are present in package assets.
+    Loads checks from the built-in Azure Functions Python v2 rule asset
+    located at `azure_functions_doctor.assets.rules.v2.json`.
     """
 
     def __init__(
         self,
         path: str = ".",
-        allow_v1: bool = False,
         profile: Optional[str] = None,
         rules_path: Optional[Path] = None,
     ) -> None:
@@ -54,31 +51,17 @@ class Doctor:
                 raise ValueError(f"rules_path must be an existing file: {resolved}")
             self.rules_path = resolved
         self.programming_model = self._detect_programming_model()
-        # If v1 detected in nested function folders (function.json not at project root)
-        # and caller did not allow v1, signal incompatibility.
-        function_json_files = list(self.project_path.rglob("function.json"))
-        nested_v1 = any(f.parent.resolve() != self.project_path for f in function_json_files)
-
-        if nested_v1 and not allow_v1:
-            raise SystemExit("v1 programming model detected - limited support")
 
     def _detect_programming_model(self) -> str:
         """Detect the Azure Functions programming model version.
 
-        Returns:
-            str: 'v1' if function.json files are found, 'v2' if @app decorators are found,
-                 'v2' as default if neither is clearly detected.
+        The doctor targets only the Azure Functions Python v2 programming
+        model. Projects without decorators still default to "v2" so the
+        doctor can report missing v2 signals as regular diagnostics.
         """
-        # Check for v1: function.json files
-        function_json_files = list(self.project_path.rglob("function.json"))
-        if function_json_files:
-            return "v1"
-
-        # Check for v2: @app decorators in Python files
         if self._has_v2_decorators():
             return "v2"
 
-        # Default to v2 (current primary support)
         return "v2"
 
     def _has_v2_decorators(self) -> bool:
@@ -98,29 +81,27 @@ class Doctor:
         return False
 
     def load_rules(self) -> list[Rule]:
-        """Load and validate rules based on detected programming model or custom path."""
+        """Load and validate rules from a custom path or the built-in v2 ruleset."""
         if self.rules_path is not None:
             with self.rules_path.open(encoding="utf-8") as f:
                 rules: list[Rule] = json.load(f)
-        elif self.programming_model == "v2":
-            rules = self._load_v2_rules()
-        elif self.programming_model == "v1":
-            rules = self._load_v1_rules()
         else:
-            raise RuntimeError("Unknown programming model; no rules to load")
+            rules = self._load_v2_rules()
 
         self._validate_rules(rules)
         return sorted(rules, key=lambda r: r.get("check_order", 999))
 
     def _validate_rules(self, rules: list[Rule]) -> None:
-        schema_path = importlib.resources.files("azure_functions_doctor.schemas").joinpath("rules.schema.json")
+        schema_path = importlib.resources.files("azure_functions_doctor.schemas").joinpath(
+            "rules.schema.json"
+        )
         with schema_path.open(encoding="utf-8") as f:
             schema = json.load(f)
 
         try:
             validate(instance=rules, schema=schema)
         except ValidationError as exc:
-            raise ValueError(f"Invalid rules.json: {str(exc)}") from exc
+            raise ValueError(f"Invalid rules file: {str(exc)}") from exc
 
     def _load_v2_rules(self) -> list[Rule]:
         """Load complete v2 rules set."""
@@ -139,26 +120,6 @@ class Doctor:
             raise RuntimeError(f"Failed to parse v2.json: {e}") from e
 
         return sorted(list(v2_rules), key=lambda r: r.get("check_order", 999))
-
-    def _load_v1_rules(self) -> list[Rule]:
-        """Load complete v1 rules set."""
-        files_obj = importlib.resources.files("azure_functions_doctor.assets")
-
-        # Load v1 rules from assets/rules/v1.json only
-        try:
-            rules_path = files_obj.joinpath("rules/v1.json")
-            with rules_path.open(encoding="utf-8") as f:
-                v1_rules = json.load(f)
-        except FileNotFoundError as e:
-            logger.error("v1.json not found")
-            raise RuntimeError("v1.json not found") from e
-        except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON in v1.json: {e}")
-            raise RuntimeError(f"Failed to parse v1.json: {e}") from e
-
-        return sorted(list(v1_rules), key=lambda r: r.get("check_order", 999))
-
-    # Legacy `rules.json` support removed per repository simplification.
 
     def run_all_checks(self, rules: Optional[list[Rule]] = None) -> list[SectionResult]:
         rules = self.load_rules() if rules is None else rules
@@ -190,7 +151,8 @@ class Doctor:
                 handler_status = result.get("status", "fail")
                 log_rule_execution(rule["id"], rule["type"], handler_status, rule_duration_ms)
 
-                # Simplified canonical mapping: pass stays pass, else required -> fail, optional -> warn
+                # Simplified canonical mapping:
+                # pass stays pass, otherwise required -> fail and optional -> warn.
                 required = rule.get("required", True)
                 if handler_status == "pass":
                     canonical = "pass"

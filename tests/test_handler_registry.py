@@ -1,8 +1,8 @@
 """Tests for the handler registry pattern."""
 
+from pathlib import Path
 import sys
 import tempfile
-from pathlib import Path
 from typing import cast
 
 from azure_functions_doctor.handlers import HandlerRegistry, Rule
@@ -209,6 +209,6 @@ def test_handler_registry_optional_rules() -> None:
 
         result = registry.handle(rule, tmp_path)
 
-    # Handlers now always return fail for missing optional resources; optional marking handled at aggregation layer
+    # Optional marking now happens during aggregation, so handlers still return fail here.
     assert result["status"] == "fail"
     assert "optional" in result["detail"]
