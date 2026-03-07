@@ -260,12 +260,24 @@ make test
 # Run with coverage
 make cov
 
+# Run the full local gate
+make check-all
+
 # Run specific test file
 python -m pytest tests/test_handlers.py -v
 
 # Run tests with debugging
 python -m pytest tests/ -v -s
 ```
+
+### Example Coverage Policy
+
+Examples are part of the supported contract and must stay runnable.
+
+- Keep one representative example for the smallest supported workflow.
+- Keep one complex example for a more realistic integration path.
+- Add or update smoke tests whenever an example changes.
+- Prefer lightweight smoke coverage over infrastructure-heavy end-to-end tests.
 
 ### Writing Tests
 
