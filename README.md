@@ -77,6 +77,14 @@ Output JSON for CI:
 azure-functions doctor --format json
 ```
 
+## Demo
+
+The demo below is generated from [`demo/doctor-demo.tape`](demo/doctor-demo.tape) with VHS.
+It shows the doctor validating the representative example and then reporting concrete failures
+from an intentionally broken copy.
+
+![Doctor demo](docs/assets/doctor-demo.gif)
+
 ## Built-in checks
 
 The default ruleset validates:
