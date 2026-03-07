@@ -46,8 +46,8 @@ New to open source? Here are some good first issues to get started:
 
 ### Ways to Contribute
 
-1. **Report Bugs**: Found a bug? [Create an issue](https://github.com/yeongseon/azure-functions-doctor-for-python/issues/new/choose)
-2. **Suggest Features**: Have an idea? [Start a discussion](https://github.com/yeongseon/azure-functions-doctor-for-python/discussions)
+1. **Report Bugs**: Found a bug? [Create an issue](https://github.com/yeongseon/azure-functions-doctor/issues/new/choose)
+2. **Suggest Features**: Have an idea? [Start a discussion](https://github.com/yeongseon/azure-functions-doctor/discussions)
 3. **Improve Docs**: Documentation can always be better
 4. **Write Code**: Pick an issue and submit a PR
 5. **Review PRs**: Help review other contributors' work
@@ -68,13 +68,13 @@ New to open source? Here are some good first issues to get started:
 
 2. **Clone your fork**:
    ```bash
-   git clone https://github.com/YOUR-USERNAME/azure-functions-doctor-for-python.git
-   cd azure-functions-doctor-for-python
+   git clone https://github.com/YOUR-USERNAME/azure-functions-doctor.git
+   cd azure-functions-doctor
    ```
 
 3. **Add upstream remote**:
    ```bash
-   git remote add upstream https://github.com/yeongseon/azure-functions-doctor-for-python.git
+   git remote add upstream https://github.com/yeongseon/azure-functions-doctor.git
    ```
 
 4. **Create and activate a virtual environment**:
@@ -281,8 +281,8 @@ python -m pytest tests/ -v -s
 
 ### Getting Help
 
-- [GitHub Discussions](https://github.com/yeongseon/azure-functions-doctor-for-python/discussions) - General questions and ideas
-- [GitHub Issues](https://github.com/yeongseon/azure-functions-doctor-for-python/issues) - Bug reports and feature requests
+- [GitHub Discussions](https://github.com/yeongseon/azure-functions-doctor/discussions) - General questions and ideas
+- [GitHub Issues](https://github.com/yeongseon/azure-functions-doctor/issues) - Bug reports and feature requests
 - [Documentation](docs/) - Comprehensive guides and API reference
 
 ### Stay Connected
@@ -295,7 +295,7 @@ python -m pytest tests/ -v -s
 ### Recognition
 
 All contributors are recognized in our:
-- [Contributors section](https://github.com/yeongseon/azure-functions-doctor-for-python/graphs/contributors)
+- [Contributors section](https://github.com/yeongseon/azure-functions-doctor/graphs/contributors)
 - Release notes for significant contributions
 - Special thanks in documentation
 

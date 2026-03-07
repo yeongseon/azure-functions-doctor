@@ -1,4 +1,13 @@
-# Azure Functions Doctor for Python
+# Azure Functions Doctor
+
+[![PyPI](https://img.shields.io/pypi/v/azure-functions-doctor.svg)](https://pypi.org/project/azure-functions-doctor/)
+[![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](https://pypi.org/project/azure-functions-doctor/)
+[![CI](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/test.yml/badge.svg)](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/test.yml)
+[![Release](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/release.yml/badge.svg)](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/release.yml)
+[![codecov](https://codecov.io/gh/yeongseon/azure-functions-doctor/branch/main/graph/badge.svg)](https://codecov.io/gh/yeongseon/azure-functions-doctor)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://pre-commit.com/)
+[![Docs](https://img.shields.io/badge/docs-gh--pages-blue)](https://yeongseon.github.io/azure-functions-doctor/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Azure Functions Doctor is a diagnostic CLI for projects built on the **Azure Functions Python v2 programming model**.
 
@@ -35,8 +44,8 @@ pip install azure-functions-doctor
 From source:
 
 ```bash
-git clone https://github.com/yeongseon/azure-functions-doctor-for-python.git
-cd azure-functions-doctor-for-python
+git clone https://github.com/yeongseon/azure-functions-doctor.git
+cd azure-functions-doctor
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .
