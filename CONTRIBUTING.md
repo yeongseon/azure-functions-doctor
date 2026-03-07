@@ -1,4 +1,4 @@
-# Contributing to Azure Functions Doctor
+﻿# Contributing to Azure Functions Doctor
 
 **Thank you for your interest in contributing to Azure Functions Doctor!**
 
@@ -58,7 +58,7 @@ New to open source? Here are some good first issues to get started:
 
 ### Prerequisites
 
-- Python 3.9 or higher
+- Python 3.10 or higher
 - Git
 - Virtual environment tool (venv, conda, etc.)
 
@@ -170,15 +170,15 @@ Our diagnostic system is designed to be easily extensible:
 
 ```
 src/azure_functions_doctor/
-├── cli.py           # CLI interface and logging setup
-├── doctor.py        # Core diagnostic engine
-├── handlers.py      # Individual check implementations
-├── logging_config.py # Centralized logging system
-├── target_resolver.py # Version resolution utilities
-└── assets/
-   └── rules/
-      ├── v1.json
-      └── v2.json
+â”œâ”€â”€ cli.py           # CLI interface and logging setup
+â”œâ”€â”€ doctor.py        # Core diagnostic engine
+â”œâ”€â”€ handlers.py      # Individual check implementations
+â”œâ”€â”€ logging_config.py # Centralized logging system
+â”œâ”€â”€ target_resolver.py # Version resolution utilities
+â””â”€â”€ assets/
+   â””â”€â”€ rules/
+      â”œâ”€â”€ v1.json
+      â””â”€â”€ v2.json
 ```
 
 ### Handler Guidelines
