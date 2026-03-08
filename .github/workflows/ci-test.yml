@@ -38,12 +38,12 @@ jobs:
         run: ls -lh coverage.xml
 
       - name: Upload coverage to Codecov
-        if: matrix.python-version == '3.10' && github.actor != 'dependabot[bot]' && secrets.CODECOV_TOKEN != ''
+        if: matrix.python-version == '3.10' && github.actor != 'dependabot[bot]' && env.CODECOV_TOKEN != ''
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
           verbose: true
           fail_ci_if_error: true
         env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           CODECOV_RETRIES: 3

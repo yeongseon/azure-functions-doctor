@@ -77,7 +77,7 @@ pip install --index-url https://test.pypi.org/simple/ azure-functions-doctor
 
 ## 🔗 Related Documentation
 
-- [CHANGELOG.md](CHANGELOG.md)
-- [Development Guide](docs/development.md)
-- [Makefile Targets](Makefile)
+- [Changelog](https://github.com/yeongseon/azure-functions-doctor/blob/main/CHANGELOG.md)
+- [Development Guide](development.md)
+- [Makefile](https://github.com/yeongseon/azure-functions-doctor/blob/main/Makefile)
 - [PyPI Publishing with Hatch](https://hatch.pypa.io/latest/publishing/)

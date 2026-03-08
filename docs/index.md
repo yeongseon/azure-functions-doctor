@@ -31,5 +31,5 @@ azure-functions doctor
 
 ## Examples
 
-- [examples/v2/http-trigger/README.md](../examples/v2/http-trigger/README.md)
-- [examples/v2/multi-trigger/README.md](../examples/v2/multi-trigger/README.md)
+- [Representative example](https://github.com/yeongseon/azure-functions-doctor/blob/main/examples/v2/http-trigger/README.md)
+- [Complex example](https://github.com/yeongseon/azure-functions-doctor/blob/main/examples/v2/multi-trigger/README.md)
