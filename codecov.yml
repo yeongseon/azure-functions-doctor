@@ -7,7 +7,3 @@ coverage:
       default:
         target: auto
         threshold: 2%
-
-parsers:
-  python:
-    build_root: .
