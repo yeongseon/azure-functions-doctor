@@ -12,6 +12,8 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     strategy:
       matrix:
         # Python 3.14 is stable and required in this matrix (not allow-fail).
@@ -45,5 +47,4 @@ jobs:
           verbose: true
           fail_ci_if_error: true
         env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           CODECOV_RETRIES: 3
