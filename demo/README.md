@@ -3,5 +3,5 @@
 The README demo is generated from code:
 
 - `doctor-demo.tape` renders the terminal GIF with VHS.
-- `render_doctor_output.py` runs the doctor against a representative example and an intentionally broken copy.
+- `prepare_doctor_demo_fixture.py` creates an intentionally broken copy of the representative example.
 - `make demo` regenerates the README demo asset.

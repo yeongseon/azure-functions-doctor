@@ -21,6 +21,14 @@ Type "python -m pip install -q -e ."
 Enter
 Sleep 3200ms
 
-Type "python demo/preview.py"
+Type "python demo/prepare_doctor_demo_fixture.py"
+Enter
+Sleep 2200ms
+
+Type "azure-functions doctor --path examples/v2/http-trigger --profile minimal"
+Enter
+Sleep 3200ms
+
+Type "azure-functions doctor --path demo/.preview/broken-http-trigger --profile minimal"
 Enter
 Sleep 4200ms

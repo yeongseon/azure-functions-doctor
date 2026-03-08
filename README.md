@@ -80,8 +80,8 @@ azure-functions doctor --format json
 ## Demo
 
 The demo below is generated from [`demo/doctor-demo.tape`](demo/doctor-demo.tape) with VHS.
-It shows the doctor validating the representative example and then reporting concrete failures
-from an intentionally broken copy.
+It runs the real `azure-functions doctor` CLI against the representative example
+and then against an intentionally broken copy to show the pass/fail contrast.
 
 ![Doctor demo](docs/assets/doctor-demo.gif)
 
