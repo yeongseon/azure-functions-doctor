@@ -1,6 +1,198 @@
 # 📦 Changelog
 
-- add SARIF and JUnit output formats (issue #13)
+- bump version to 0.15.0 (02cda2ae8437c80e537890cf44306a0bed906976)
+
+- fix doctor workflow and docs build (e1360b8a911f94503f02172526e1be167c40efce)
+
+- address valid review feedback on tooling and coverage (1a95da3c3ce12974b2000ff9aad6b480108767e0)
+
+- support manual doctor releases (401d8eed3307da9b35db426bc7ec320ab83d506c)
+
+- standardize repository planning documents (7b68765e45b5129c55c64de08b60bc5be85e5c17)
+
+- slow down doctor demo and add final snapshot (b0f757893d72bf677aa9fcb719111c69339b68c1)
+
+- fix doctor demo rendering workflow (a10e0378410e4470c480763f461c852ac2e30e66)
+
+- use workspace-based doctor demo setup (75478dd1861ff55acfe43a02aae7092f60275796)
+
+- refine doctor demo output (95a3da17365b65f20b9ff3fd35dff6d0fa2eb647)
+
+- add README doctor demo (cf4fa6558d7b672147267de4a8ac5ae57be74914)
+
+- document example coverage policy (a0e29e8780aad32b173755672e88d4b33d02e325)
+
+- clarify doctor example coverage roles (e16da1470f2fcc529e746871cf914dd7dfe6e664)
+
+- raise doctor coverage for utility paths (b0bb965f848459866fab0d37d1c64cfbdce4058a)
+
+- cover doctor example projects (937a24fd933a938019dd3f6139728452c15b221e)
+
+- pin doctor docs dependencies (7f758a02cf3e43a538b42383783d668c3675e5d9)
+
+- chore: (7d8c5cecaf08bc91bf280ec428297d9d99546e35)
+
+- apply remaining dependabot updates (2ff7fe3721b687246f578049b389d78ac3eeb340)
+
+- Merge pull request #68 from yeongseon/dependabot/github_actions/actions/upload-artifact-7.0.0
+
+chore(deps): bump actions/upload-artifact from 6.0.0 to 7.0.0 (1b601575ef9f827d613f86a397a0b4d8d2ab16e1)
+
+- Merge pull request #71 from yeongseon/dependabot/pip/black-26.3.0
+
+chore(deps): bump black from 26.1.0 to 26.3.0 (a5e8409c347def2e92831a4ba5409e94e6f6619d)
+
+- update doctor branding and README badges (8bda49f6ac5a416fe81281f26c41c3ffe8a20093)
+
+- align mypy checks across CI and pre-commit (75e1b84695e86359dcc7e5f623f8e2495aac47ef)
+
+- remove Azure Functions Python v1 support (9dcf66f68b44d253c6aad14439709122a99f9ee5)
+
+- align tooling and repository maintenance (95aa270675885f782bcc4cbbafe196147dd887f1)
+
+- migrate forbid-korean hook to pre-commit stage (78efd58d86ea8341b92198dbbf65ee6eea7e9f20)
+
+- run tests on stacked PRs by removing base branch filter (ceb52f3a61bb0a4d6f3aded0aebea610536d701a)
+
+- Replace deprecated utcnow() with timezone-aware datetime.now(UTC) (4bfc8df269e17c5a0d23887bcfbac0266fcb392a)
+
+- avoid reloading rules in CLI (879af4c82e84a82e154d8b67db4a7597c57645bb)
+
+- document trust assumption for custom rules (Fixes #40) (6ec4ce0c0f96c392f628e680387fc4af3dbdc688)
+
+- deduplicate file iteration in source_code_contains (Fixes #39) (7fce3bcbc8c2b94c8647ffd81936dee829b4e948)
+
+- use Path consistently in handlers (Fixes #38) (2c5ff462b8115df13919a9fe5539ec68fa792bd8)
+
+- use Path consistently in path_exists and file_exists (Fixes #38) (a3e6c4fe1b149b53175c79bddbd134c5698f8d30)
+
+- document Config as reserved for future use (Fixes #37) (312492b5ec2f88c6543f1efe3e062e80e080ac98)
+
+- implement issues #6, #15, #16 (6bc0454524a19349f378f44f3a5871d8b1510d5f)
+
+- Merge pull request #23 from yeongseon/feat/validate-rules-runtime
+
+Validate rules.json at load time (3fe1355bdace66a63238dddd7bab6625b27d3708)
+
+- Merge main into feat/validate-rules-runtime (ea9f160f6fb0e97429f08dea6a1462562adf732f)
+
+- Merge main into feat/validate-rules-runtime (b6173021e5d2bdca45a82ef3d86aad1934e62b6b)
+
+- Merge main into feat/validate-rules-runtime (a417f5f3fac9184907e807d25319a84a31a4caf2)
+
+- validate rules.json against schema (ff3b0f11655960144738619ab72ecf78c0d9a34d)
+
+- Merge pull request #22 from yeongseon/fix/rules-schema-source-contains
+
+Align rule schema with source_code_contains (5648c7890cdbc947835e1ccd18e0cae9309eeda1)
+
+- Merge main into fix/rules-schema-source-contains (a1036d86f8c4d54e52d36698adae8d9d04ea2811)
+
+- Merge remote-tracking branch 'origin/main' into fix/rules-schema-source-contains (a0cdba209a29991b8fb06df4dfcf2caadfde1275)
+
+- align schema with source_code_contains (d66b3bd89faa6df291e8e0c4a48c7ee5383800b4)
+
+- Merge pull request #32 from yeongseon/feat/custom-rules
+
+Add custom rules.json option (488a5d05959c675113bd7cacb05452c2bdf9784b)
+
+- Merge main into feat/custom-rules (72a71adcc36b86cac51abb8345da9a7fc946d580)
+
+- Merge pull request #31 from yeongseon/chore/precommit-hook
+
+Add ruff-format to pre-commit (a507193e714118b36529d2db23311180cf2d3255)
+
+- Merge remote-tracking branch 'origin/main' into chore/precommit-hook (5890f177a8a0fa9e5646747634474d1537fa7a1e)
+
+- add ruff-format pre-commit hook (6d79008084999f9645cc1789fff2b5b72eb423f8)
+
+- Merge pull request #21 from yeongseon/fix/local-settings-rule
+
+Fix local.settings.json rule condition (58a1d24f5b366b03375dd3abe4e78ebf1eeef046)
+
+- Merge main into fix/local-settings-rule (e9079dac35f040aaf4166315b84714b30e1ee600)
+
+- use condition.target for local settings rule (13dace0d4750fdf9881eb80f469ab35edacc7562)
+
+- Merge pull request #24 from yeongseon/test/rules-schema-consistency
+
+Add rules/schema consistency tests (905107e348c77fae9a983ae4091f37aaade82b2e)
+
+- Merge main into test/rules-schema-consistency (37e95a309ea10b166364894204dd9bf29401b8f8)
+
+- add rules and schema consistency checks (92f48f85a0275ea03afd04df41109e8258e9f246)
+
+- Merge pull request #25 from yeongseon/docs/align-implementation
+
+Align docs with current implementation (16f23c560f65336476c9ae4921320364d8575966)
+
+- Merge remote-tracking branch 'origin/main' into docs/align-implementation (62dd35ca9dc1b06a34d1d45a5b1d2059627fac1d)
+
+- align rules and dev guide (67c6bf1a6f088fedbca4e62297310f06eec031bb)
+
+- Merge pull request #26 from yeongseon/feat/exclude-source-scan
+
+Exclude common directories from source scan (3b640a183f4fbdd06a30c1f404b3c8b1b84742a0)
+
+- Merge remote-tracking branch 'origin/main' into feat/exclude-source-scan (7e8d3e1fe67d91a9af4229472f4db1731722f4e2)
+
+- skip common directories in source scan (b729c7cc1304c4fce37154e778abf542915a6ee1)
+
+- Merge pull request #27 from yeongseon/feat/error-context
+
+Add error context logging for handlers (1f34c191d7f9d4ea564e3fefddb8dea6ed96109a)
+
+- Merge main into feat/error-context (9b9de07fb6424770bce1f243613f9bf77ab8053f)
+
+- log handler and resolver failures (9d50c862b1645684d7befb6768cfc05c62795b08)
+
+- Merge pull request #28 from yeongseon/chore/makefile-improvements
+
+Normalize Makefile targets (cf098ffe11179f324b17db3f07fe554590a7ed09)
+
+- Merge main into chore/makefile-improvements (9061871ad8f65ab1317f29c05bd1abc9414ca5cf)
+
+- normalize Makefile targets (9a61bf0ab4b11108aed318dc8918fa67df3ba03e)
+
+- Merge pull request #30 from yeongseon/chore/deps-upgrade
+
+Upgrade dev tool versions (b6342f600534e5e01215ee5ab7265cd996192c8f)
+
+- Merge remote-tracking branch 'origin/main' into chore/deps-upgrade (fef8e4f63f91c26c03c4ba70f3eafa9d0393fe07)
+
+- bump dev tool versions (63dcd424f3032a3eba36b7aa8fc9891bc3ba1d4f)
+
+- Merge pull request #33 from yeongseon/feat/json-metadata
+
+Include metadata in JSON output (546af6579f42e5a2a6965e8c34beb4a797ec20e4)
+
+- Merge main into feat/json-metadata (9a6a9ba227fa37c44e93a69c4237844493d78b22)
+
+- add metadata to JSON output (db68eeda28a1e2064c783cb8704e757d343b1f53)
+
+- Merge pull request #35 from yeongseon/feat/rule-profiles
+
+feat: add minimal rule profile (02c4b7bb2b1c5faf54f1554150248b54c83648d7)
+
+- Merge main into feat/rule-profiles (67b9903d1b09e6b194fdd182cbad4638618ddf8e)
+
+- add minimal rule profile (08b53bed82ed092ebada604ff57bf2089eeadf29)
+
+- Merge main into feat/custom-rules (0d0dcef617b07d8d8bba3bf02d01b77cd75bcc15)
+
+- Merge pull request #34 from yeongseon/feat/sarif-junit
+
+Add SARIF and JUnit output (fe04a752bdfeeadaf08c22bf3dfa36ad6334fc17)
+
+- skip pytest imports in mypy (1b8a91c8f881a1269fe25485668abcbfc55dde17)
+
+- skip pytest typing errors (916c16bceccedba45ff7fb78c1334ded85b2462f)
+
+- Merge main into feat/sarif-junit (3efe287460f481cfc8177f4f9b0a022cfb96c828)
+
+- translate remaining Korean to English and enforce no-Korean hook (a8957774fd03584742080fec0aa91b0b7888ec79)
+
+- update changelog (3490ecacf06a7ab83c8f83728f59e41591f1eac3)
 
 - bump version to 0.14.0 (bf16918e69ed0ba42d832434bcaea0d3c9048834)
 
@@ -172,6 +364,20 @@
 
 - Merge branch 'main' of https://github.com/yeongseon/azure-functions-doctor-for-python (3459db77278e4d0a1a1a337b9e13e9fe804ad4aa)
 
+- update changelog (01d9c94bc3adba61f4921df9aee69ef063623e4c)
+
+- refine sarif and junit outputs (4f288d7f3e289affb104ed446190b2f67a780910)
+
+- add SARIF and JUnit output (b1b674ef96fa2d757e5376586496b7988dd6b004)
+
+- allow custom rules file (ee260411fca40d350d265477f993a195cb5dad49)
+
+- update changelog (67f7d2ea5e2eed122f41f527659e650f12f6614d)
+
+- bump version to 0.1.11 (7fdb1e6c480d4e20497e497a152c2d1b55c85b05)
+
+- add version check target (29bcbed13943e78c5fcc817be11af8a2dd2ceec4)
+
 - update release process guide to reflect hatch-based workflow (d0a814cd6222723180a3d10d6f7051041bfb2917)
 
 - configure default and test PyPI repositories for hatch publish (931563cf2e6d5b463863fed12f7ffe0da79443b9)
@@ -184,7 +390,6 @@
 
 - update changelog (95e1596371c72e478a87a1d06846b14fa8877bb9)
 
-- update changelog (01d9c94bc3adba61f4921df9aee69ef063623e4c)
 - bump version to 0.1.9 (5c6af020db3e59dd6ce32e6285aefd6381f8e8c3)
 
 - rename CLI command from azfunc-doctor to func-doctor in docs and scripts (ecbd0320830548de7c74dfb48ab9dccb636c0974)
@@ -442,3 +647,4 @@
 - initial project setup with CLI, Makefile, docs, and packaging (a39efbd9a2d2b953905b6ce3925badab2b44c117)
 
 - Initial commit (457425ebde591e34042116d1e5f92ac7006a03cd)
+
