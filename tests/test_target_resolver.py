@@ -15,6 +15,9 @@ def test_resolve_python_version() -> None:
 
 def test_resolve_func_core_tools_version(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test resolving func_core_tools version via subprocess."""
+    monkeypatch.setattr(
+        "azure_functions_doctor.target_resolver.shutil.which", lambda name: "/usr/bin/func"
+    )
 
     def mock_check_output(cmd: list[str], text: bool, timeout: Optional[int] = None) -> str:
         return "4.0.5198"
@@ -26,6 +29,9 @@ def test_resolve_func_core_tools_version(monkeypatch: pytest.MonkeyPatch) -> Non
 
 def test_resolve_func_core_tools_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test fallback when func_core_tools resolution fails."""
+    monkeypatch.setattr(
+        "azure_functions_doctor.target_resolver.shutil.which", lambda name: "/usr/bin/func"
+    )
 
     def mock_check_output(cmd: list[str], text: bool, timeout: Optional[int] = None) -> str:
         raise Exception("not found")

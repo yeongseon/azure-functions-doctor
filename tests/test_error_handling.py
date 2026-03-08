@@ -81,21 +81,39 @@ class TestTargetResolverErrorHandling:
 
     def test_func_core_tools_not_found(self) -> None:
         """Test handling when func command is not found."""
-        with patch("subprocess.check_output", side_effect=FileNotFoundError()):
-            result = resolve_target_value("func_core_tools")
-            assert result == "not_installed"
+        with patch(
+            "azure_functions_doctor.target_resolver.shutil.which",
+            return_value="/usr/bin/func",
+        ):
+            with patch("subprocess.check_output", side_effect=FileNotFoundError()):
+                result = resolve_target_value("func_core_tools")
+                assert result == "not_installed"
 
     def test_func_core_tools_timeout(self) -> None:
         """Test handling when func command times out."""
-        with patch("subprocess.check_output", side_effect=TimeoutError()):
-            result = resolve_target_value("func_core_tools")
-            assert result == "timeout"
+        with patch(
+            "azure_functions_doctor.target_resolver.shutil.which",
+            return_value="/usr/bin/func",
+        ):
+            with patch("subprocess.check_output", side_effect=TimeoutError()):
+                result = resolve_target_value("func_core_tools")
+                assert result == "timeout"
 
     def test_func_core_tools_command_error(self) -> None:
         """Test handling when func command fails."""
-        with patch("subprocess.check_output", side_effect=Exception("Command failed")):
+        with patch(
+            "azure_functions_doctor.target_resolver.shutil.which",
+            return_value="/usr/bin/func",
+        ):
+            with patch("subprocess.check_output", side_effect=Exception("Command failed")):
+                result = resolve_target_value("func_core_tools")
+                assert result == "unknown_error"
+
+    def test_func_core_tools_not_installed_without_binary(self) -> None:
+        """Test handling when the func executable is not present in PATH."""
+        with patch("azure_functions_doctor.target_resolver.shutil.which", return_value=None):
             result = resolve_target_value("func_core_tools")
-            assert result == "unknown_error"
+            assert result == "not_installed"
 
     def test_unknown_target(self) -> None:
         """Test handling of unknown target."""
