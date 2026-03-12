@@ -21,8 +21,13 @@ nav:
   - Supported Versions: supported_versions.md
   - Handlers: handlers.md
   - Development: development.md
+  - Testing: testing.md
+  - Troubleshooting: troubleshooting.md
   - API Reference: api.md
   - Release Process: release_process.md
+  - Security: security.md
+  - Changelog: changelog.md
+  - Contributing: contributing.md
 
 plugins:
   - search
