@@ -1,0 +1,52 @@
+# Built-in Rule Inventory
+
+This page is the single source of truth for all built-in rules shipped with Azure Functions Doctor.
+Rules are defined in `src/azure_functions_doctor/assets/rules/v2.json`.
+
+## Rule Table
+
+| Rule ID | Label | Category | Section | Type | Required | Profile |
+| --- | --- | --- | --- | --- | --- | --- |
+| `check_programming_model_v2` | Programming model v2 | project_structure | programming_model | `source_code_contains` | Yes | minimal, full |
+| `check_python_version` | Python version | environment | python_env | `compare_version` | Yes | minimal, full |
+| `check_venv` | Virtual environment | environment | python_env | `env_var_exists` | Yes | minimal, full |
+| `check_python_executable` | Python executable | environment | python_env | `path_exists` | Yes | minimal, full |
+| `check_requirements_txt` | requirements.txt | dependencies | python_env | `file_exists` | Yes | minimal, full |
+| `check_azure_functions_library` | azure-functions package | dependencies | python_env | `package_declared` | Yes | minimal, full |
+| `check_host_json` | host.json | structure | project_structure | `file_exists` | Yes | minimal, full |
+| `check_local_settings` | local.settings.json | structure | project_structure | `file_exists` | No | full |
+| `check_func_cli` | Azure Functions Core Tools (func) | tooling | tooling | `executable_exists` | No | full |
+| `check_func_core_tools_version` | Azure Functions Core Tools version | tooling | tooling | `compare_version` | No | full |
+| `check_durabletask_config` | Durable Functions configuration | configuration | durable | `conditional_exists` | No | full |
+| `check_app_insights` | Application Insights configuration | telemetry | monitoring | `any_of_exists` | No | full |
+| `check_extension_bundle` | extensionBundle | configuration | extensions | `host_json_property` | No | full |
+| `check_asgi_wsgi_exposure` | ASGI/WSGI compatibility | framework | asgi_wsgi | `callable_detection` | No | full |
+| `check_unused_files` | Detect unused or invalid files | project_health | cleanup | `file_glob_check` | No | full |
+
+## Rule Types
+
+| Type | Description |
+| --- | --- |
+| `compare_version` | Compares a runtime version against a minimum threshold. |
+| `file_exists` | Checks whether a file exists at the project root. |
+| `env_var_exists` | Checks whether an environment variable is set. |
+| `path_exists` | Checks whether a filesystem path (e.g. `sys.executable`) exists. |
+| `package_installed` | Checks whether a Python package is importable in the current environment. |
+| `package_declared` | Checks whether a package name appears in a dependency file. |
+| `source_code_contains` | Scans Python source files for a keyword or AST pattern. |
+| `conditional_exists` | Checks for a JSON property only when a related condition is detected. |
+| `callable_detection` | Detects whether the project exposes an ASGI or WSGI callable. |
+| `executable_exists` | Checks whether an executable is available on PATH. |
+| `any_of_exists` | Passes if any one of several targets (env vars, JSON properties) is present. |
+| `file_glob_check` | Matches file glob patterns to detect unwanted files in the project tree. |
+| `host_json_property` | Checks for a specific property in `host.json` via JSONPath. |
+
+## False-positive Risk
+
+The following rule types use heuristic inspection and may produce false positives in unusual project layouts:
+
+- **`source_code_contains`** (`check_programming_model_v2`): Searches for `@app.` in Python files. Projects that use `@app.` for non-Azure-Functions decorators may trigger a false positive.
+- **`callable_detection`** (`check_asgi_wsgi_exposure`): Inspects source for ASGI/WSGI patterns. Non-standard callable exposure may not be detected.
+- **`file_glob_check`** (`check_unused_files`): Matches common unwanted file patterns. Intentionally kept files (e.g. `tests/` in monorepos) may trigger warnings.
+
+False positives in stable rules are treated as bugs. See the [Semver Policy](semver_policy.md) for details.

@@ -14,6 +14,10 @@ nav:
   - CLI Usage: usage.md
   - Diagnostics: diagnostics.md
   - Rules: rules.md
+  - Rule Inventory: rule_inventory.md
+  - Minimal Profile: minimal_profile.md
+  - JSON Output Contract: json_output_contract.md
+  - Semver Policy: semver_policy.md
   - Supported Versions: supported_versions.md
   - Handlers: handlers.md
   - Development: development.md

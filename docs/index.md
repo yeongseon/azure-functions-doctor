@@ -24,6 +24,10 @@ azure-functions doctor
 
 - [Usage Guide](usage.md)
 - [Rules Reference](rules.md)
+- [Rule Inventory](rule_inventory.md)
+- [Minimal Profile](minimal_profile.md)
+- [JSON Output Contract](json_output_contract.md)
+- [Semver Policy](semver_policy.md)
 - [Diagnostics Reference](diagnostics.md)
 - [Supported Versions](supported_versions.md)
 - [Development Guide](development.md)
