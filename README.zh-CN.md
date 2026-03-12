@@ -10,42 +10,41 @@
 [![Docs](https://img.shields.io/badge/docs-gh--pages-blue)](https://yeongseon.github.io/azure-functions-doctor/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Read this in: [한국어](README.ko.md) | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
+其他语言: [English](README.md) | [한국어](README.ko.md) | [日本語](README.ja.md)
 
+Azure Functions Doctor 是一个用于诊断基于 **Azure Functions Python v2 编程模型** 构建的项目的 CLI 工具。
 
-Azure Functions Doctor is a diagnostic CLI for projects built on the **Azure Functions Python v2 programming model**.
+它会检查本地项目中存在的常见问题，例如：
 
-It checks a local project for common issues such as:
-
-- unsupported Python versions
-- missing `host.json` or `requirements.txt`
-- missing `azure-functions` dependency
-- missing virtual environments
-- missing Azure Functions Core Tools
-- incomplete local development setup
+- 不支持的 Python 版本
+- 缺失 `host.json` 或 `requirements.txt`
+- 缺失 `azure-functions` 依赖项
+- 缺失虚拟环境 (virtual environments)
+- 缺失 Azure Functions Core Tools
+- 本地开发环境配置不完整
 
 ## Scope
 
-This repository targets the decorator-based Azure Functions Python v2 programming model only.
+本项目仅针对基于装饰器的 Azure Functions Python v2 编程模型。
 
-- Supported model: `func.FunctionApp()` with decorators such as `@app.route()`
-- Unsupported model: legacy `function.json`-based Python v1 projects
+- 支持的模型：使用 `@app.route()` 等装饰器的 `func.FunctionApp()`
+- 不支持的模型：传统的基于 `function.json` 的 Python v1 项目
 
 ## Requirements
 
 - Python 3.10+
-- Hatch for development workflows
-- Azure Functions Core Tools v4+ recommended for local runs
+- 开发工作流所需的 Hatch
+- 建议安装 Azure Functions Core Tools v4+ 以进行本地运行
 
 ## Installation
 
-From PyPI:
+从 PyPI 安装：
 
 ```bash
 pip install azure-functions-doctor
 ```
 
-From source:
+从源码安装：
 
 ```bash
 git clone https://github.com/yeongseon/azure-functions-doctor.git
@@ -57,25 +56,25 @@ pip install -e .
 
 ## Usage
 
-Run the doctor in the current project:
+在当前项目中运行 doctor：
 
 ```bash
 azure-functions doctor
 ```
 
-Run against a specific project:
+针对特定项目路径运行：
 
 ```bash
 azure-functions doctor --path ./examples/v2/http-trigger
 ```
 
-Use a required-only profile:
+使用仅包含必要检查项的配置：
 
 ```bash
 azure-functions doctor --profile minimal
 ```
 
-Output JSON for CI:
+为 CI 输出 JSON 格式：
 
 ```bash
 azure-functions doctor --format json
@@ -83,34 +82,33 @@ azure-functions doctor --format json
 
 ## Demo
 
-The demo below is generated from [`demo/doctor-demo.tape`](demo/doctor-demo.tape) with VHS.
-It runs the real `azure-functions doctor` CLI against the representative example
-and then against an intentionally broken copy to show the pass/fail contrast.
+以下演示是使用 VHS 从 [`demo/doctor-demo.tape`](demo/doctor-demo.tape) 生成的。
+它通过对代表性示例项目以及一个故意损坏的副本运行真实的 `azure-functions doctor` CLI，来展示成功与失败的对比。
 
 ![Doctor demo](docs/assets/doctor-demo.gif)
 
-The final terminal state is also captured as a static image for quick inspection.
+最终的终端状态也被捕获为静态图像，以便快速查看。
 
 ![Doctor final output](docs/assets/doctor-demo-final.png)
 
 ## Built-in checks
 
-The default ruleset validates:
+默认规则集会验证以下内容：
 
-- Azure Functions Python v2 decorator usage
-- Python version
-- virtual environment activation
-- Python executable availability
+- Azure Functions Python v2 装饰器的使用情况
+- Python 版本
+- 虚拟环境激活状态
+- Python 可执行文件的可用性
 - `requirements.txt`
-- `azure-functions` dependency declaration
+- `azure-functions` 依赖声明
 - `host.json`
-- `local.settings.json` (optional)
-- Azure Functions Core Tools presence and version (optional)
-- Durable Functions host configuration (optional)
-- Application Insights configuration (optional)
-- `extensionBundle` configuration (optional)
-- ASGI/WSGI callable exposure (optional)
-- common unwanted files in the project tree (optional)
+- `local.settings.json` (可选)
+- Azure Functions Core Tools 的存在及其版本 (可选)
+- Durable Functions 主机配置 (可选)
+- Application Insights 配置 (可选)
+- `extensionBundle` 配置 (可选)
+- ASGI/WSGI callable 的公开情况 (可选)
+- 项目树中常见的冗余文件 (可选)
 
 ## Examples
 
@@ -127,15 +125,14 @@ The default ruleset validates:
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+请参阅 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ## Disclaimer
 
-This project is an independent community project and is not affiliated with,
-endorsed by, or maintained by Microsoft.
+本项目是独立的社区项目，与 Microsoft 没有关联，也未获得 Microsoft 的认可或维护。
 
-Azure and Azure Functions are trademarks of Microsoft Corporation.
+Azure 和 Azure Functions 是 Microsoft Corporation 的商标。
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+本项目根据 [MIT License](LICENSE) 获得许可。
