@@ -4,7 +4,7 @@ This document outlines the steps to release a new version of **Azure Functions D
 
 ---
 
-## 🧾 Step 1: Bump Version and Generate Changelog
+## Step 1: Bump Version and Generate Changelog
 
 Use Makefile targets to bump the version and update the changelog:
 
@@ -50,7 +50,7 @@ make publish-pypi
 
 ---
 
-## 🔁 Step 4: (Optional) Publish to TestPyPI
+## Step 4: (Optional) Publish to TestPyPI
 
 ```bash
 make publish-test
@@ -64,7 +64,7 @@ pip install --index-url https://test.pypi.org/simple/ azure-functions-doctor
 
 ---
 
-## ✅ Summary of Makefile Commands
+## Summary of Makefile Commands
 
 | Task                          | Command             |
 |-------------------------------|---------------------|
@@ -75,7 +75,7 @@ pip install --index-url https://test.pypi.org/simple/ azure-functions-doctor
 
 ---
 
-## 🔗 Related Documentation
+## Related Documentation
 
 - [Changelog](https://github.com/yeongseon/azure-functions-doctor/blob/main/CHANGELOG.md)
 - [Development Guide](development.md)

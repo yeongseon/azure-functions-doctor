@@ -1,5 +1,5 @@
 [changelog]
-header = "# 📦 Changelog\n"
+header = "# Changelog\n"
 body = """
 {% for commit in commits %}
 - {{ commit.message }} ({{ commit.id }})
@@ -14,13 +14,13 @@ tag_pattern = "v[0-9]*"
 sort_commits = "newest"
 
 [groups]
-feat = "✨ Features"
-fix = "🐛 Fixes"
-docs = "📝 Documentation"
-refactor = "🛠 Refactoring"
-test = "✅ Tests"
-chore = "🔧 Chore"
-ci = "🔁 CI/CD"
-style = "🎨 Style"
-perf = "⚡ Performance"
-build = "🏗 Build"
+feat = "Features"
+fix = "Fixes"
+docs = "Documentation"
+refactor = "Refactoring"
+test = "Tests"
+chore = "Chore"
+ci = "CI/CD"
+style = "Style"
+perf = "Performance"
+build = "Build"
