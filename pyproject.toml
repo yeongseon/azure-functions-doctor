@@ -31,7 +31,6 @@ classifiers = [
 [project.optional-dependencies]
 dev = [
     "bandit==1.9.4",
-    "black==26.3.0",
     "build",
     "coverage",
     "git-cliff",
@@ -80,7 +79,7 @@ python = "3.10"
 features = ["dev", "docs"]
 
 [tool.hatch.envs.default.scripts]
-format = "ruff format src tests && black src tests"
+format = "ruff format src tests"
 style = "ruff check src tests"
 typecheck = "mypy src tests"
 lint = "hatch run style && hatch run typecheck"
@@ -90,10 +89,6 @@ docs = "mkdocs serve"
 precommit = "pre-commit run --all-files"
 precommit-install = "pre-commit install"
 security = "python -m bandit -r src"
-
-[tool.black]
-line-length = 100
-target-version = ["py310", "py311", "py312", "py313", "py314"]
 
 [tool.ruff]
 line-length = 100

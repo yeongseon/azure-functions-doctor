@@ -28,9 +28,7 @@ def resolve_target_value(target: str) -> str:
             logger.debug("Azure Functions Core Tools not found in PATH")
             return "not_installed"
         try:
-            output = subprocess.check_output(
-                [func_path, "--version"], text=True, timeout=10
-            )  # nosec B603
+            output = subprocess.check_output([func_path, "--version"], text=True, timeout=10)  # nosec B603
             return output.strip()
         except FileNotFoundError:
             logger.debug("Azure Functions Core Tools executable disappeared before execution")

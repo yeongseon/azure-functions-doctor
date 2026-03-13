@@ -106,10 +106,10 @@ New to open source? Here are some good first issues to get started:
 We maintain high code quality standards:
 
 ### Tools We Use
-* **Formatter:** `black` - Consistent code formatting
+* **Formatter:** `ruff` - Consistent code formatting
 * **Linter:** `ruff` - Fast Python linter
 * **Type checker:** `mypy` - Static type checking
-* **Import sorting:** `isort` - Consistent import ordering
+* **Import sorting:** `ruff` - Consistent import ordering
 
 ### Code Standards
 * Follow PEP 8 Python style guide
@@ -121,7 +121,7 @@ We maintain high code quality standards:
 
 ### Before Submitting
 ```bash
-make format      # Format code with black
+make format      # Format code with ruff
 make lint        # Lint with ruff
 make typecheck   # Type check with mypy
 make test        # Run tests

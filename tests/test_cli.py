@@ -19,9 +19,9 @@ def _assert_exit_code_matches_fail_count_text(output: str, exit_code: int) -> No
     if match:
         fail_count = int(match.group(2))
         expected = 1 if fail_count > 0 else 0
-        assert (
-            exit_code == expected
-        ), f"Expected exit {expected} for {fail_count} fails, got {exit_code}. Output:\n{output}"
+        assert exit_code == expected, (
+            f"Expected exit {expected} for {fail_count} fails, got {exit_code}. Output:\n{output}"
+        )
     else:
         # If no summary found, keep original expectation of success
         assert exit_code == 0, f"No fail summary found. Output:\n{output}"
