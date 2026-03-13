@@ -24,18 +24,16 @@ It checks a local project for common issues such as:
 - missing Azure Functions Core Tools
 - incomplete local development setup
 
+## Why Use It
+
+Setting up an Azure Functions Python project involves multiple configuration files, dependencies, and tooling. Missing any one of them leads to confusing runtime errors. `azure-functions-doctor` checks your project against a curated ruleset and reports issues before they reach production.
+
 ## Scope
 
 This repository targets the decorator-based Azure Functions Python v2 programming model only.
 
 - Supported model: `func.FunctionApp()` with decorators such as `@app.route()`
 - Unsupported model: legacy `function.json`-based Python v1 projects
-
-## Requirements
-
-- Python 3.10+
-- Hatch for development workflows
-- Azure Functions Core Tools v4+ recommended for local runs
 
 ## Installation
 
@@ -55,7 +53,7 @@ source .venv/bin/activate
 pip install -e .
 ```
 
-## Usage
+## Quick Start
 
 Run the doctor in the current project:
 
@@ -93,9 +91,9 @@ The final terminal state is also captured as a static image for quick inspection
 
 ![Doctor final output](docs/assets/doctor-demo-final.png)
 
-## Built-in checks
+## Features
 
-The default ruleset validates:
+The default ruleset includes checks for:
 
 - Azure Functions Python v2 decorator usage
 - Python version
@@ -117,6 +115,12 @@ The default ruleset validates:
 - [examples/v2/http-trigger/README.md](examples/v2/http-trigger/README.md)
 - [examples/v2/multi-trigger/README.md](examples/v2/multi-trigger/README.md)
 
+## Requirements
+
+- Python 3.10+
+- Hatch for development workflows
+- Azure Functions Core Tools v4+ recommended for local runs
+
 ## Documentation
 
 - [docs/index.md](docs/index.md)
@@ -125,9 +129,13 @@ The default ruleset validates:
 - [docs/diagnostics.md](docs/diagnostics.md)
 - [docs/development.md](docs/development.md)
 
-## Contributing
+## Ecosystem
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+- [azure-functions-validation](https://github.com/yeongseon/azure-functions-validation) — Request and response validation
+- [azure-functions-openapi](https://github.com/yeongseon/azure-functions-openapi) — OpenAPI and Swagger UI
+- [azure-functions-logging](https://github.com/yeongseon/azure-functions-logging) — Structured logging
+- [azure-functions-scaffold](https://github.com/yeongseon/azure-functions-scaffold) — Project scaffolding
+- [azure-functions-python-cookbook](https://github.com/yeongseon/azure-functions-python-cookbook) — Recipes and examples
 
 ## Disclaimer
 
@@ -138,4 +146,4 @@ Azure and Azure Functions are trademarks of Microsoft Corporation.
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+MIT
