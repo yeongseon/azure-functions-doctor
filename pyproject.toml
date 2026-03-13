@@ -28,6 +28,12 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
+[project.urls]
+Homepage = "https://yeongseon.github.io/azure-functions-doctor/"
+Documentation = "https://yeongseon.github.io/azure-functions-doctor/"
+Repository = "https://github.com/yeongseon/azure-functions-doctor"
+Issues = "https://github.com/yeongseon/azure-functions-doctor/issues"
+
 [project.optional-dependencies]
 dev = [
     "bandit==1.9.4",
