@@ -2,8 +2,9 @@ name: Publish to PyPI
 
 on:
   push:
+    # Trigger the workflow on tag pushes matching v* (e.g., v1.0.0)
     tags:
-      - "v*"
+      - 'v*'
   workflow_dispatch:
     inputs:
       tag:

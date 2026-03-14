@@ -12,8 +12,7 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
     strategy:
       matrix:
         # Python 3.14 is stable and required in this matrix (not allow-fail).
@@ -40,9 +39,10 @@ jobs:
         run: ls -lh coverage.xml
 
       - name: Upload coverage to Codecov
-        if: matrix.python-version == '3.10' && github.actor != 'dependabot[bot]' && env.CODECOV_TOKEN != ''
+        if: matrix.python-version == '3.10' && github.actor != 'dependabot[bot]'
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
           verbose: true
           fail_ci_if_error: false
