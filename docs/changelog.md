@@ -9,6 +9,12 @@ All notable changes to this project will be documented in this file.
 
 ## Full Version History
 
+### v0.15.1 (2026-03-14)
+- Unified tooling: Ruff (lint + format), pre-commit hooks, standardized Makefile
+- Comprehensive documentation overhaul (MkDocs site with standardized nav)
+- Translated README files (Korean, Japanese, Chinese)
+- Standardized documentation quality across ecosystem
+
 ### v0.15.0
 - Fixed doctor workflow and docs build
 - Standardized repository planning documents

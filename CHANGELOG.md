@@ -1,5 +1,7 @@
 # Changelog
 
+- bump version to 0.15.1 — tooling unification, documentation overhaul, translated READMEs
+
 - bump version to 0.15.0 (02cda2ae8437c80e537890cf44306a0bed906976)
 
 - fix doctor workflow and docs build (e1360b8a911f94503f02172526e1be167c40efce)
