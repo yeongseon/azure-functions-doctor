@@ -1,65 +1,34 @@
 # CLI Usage
 
-`azure-functions doctor` validates a local Azure Functions project that uses the **Python v2 programming model**.
+`azure-functions doctor` validates Azure Functions Python v2 projects and reports required failures versus optional warnings.
 
-## Basic Usage
+This page is the complete command and workflow reference.
+
+## Command summary
+
+```bash
+azure-functions doctor [OPTIONS]
+```
+
+The command supports human-readable and machine-readable workflows:
+
+- local developer loops (`table` output)
+- CI gates (`json` + exit code)
+- security/code-scanning pipelines (`sarif`)
+- test-report ecosystems (`junit`)
+
+## Quick examples
+
+Current directory:
 
 ```bash
 azure-functions doctor
 ```
 
-Run against a specific directory:
+Specific path:
 
 ```bash
-azure-functions doctor --path ./my-function-app
-```
-
-## Options
-
-| Option | Description |
-| --- | --- |
-| `--path` | Target directory. Defaults to the current directory. |
-| `--format` | Output format: `table`, `json`, `sarif`, or `junit`. |
-| `--output` | Optional file path for the selected output format. |
-| `--verbose` | Show fix hints for non-passing checks. |
-| `--debug` | Enable debug logging. |
-| `--profile` | Rule profile: `minimal` or `full`. |
-| `--rules` | Optional path to a custom rules file. |
-
-## Model Support
-
-Azure Functions Doctor expects the decorator-based Python v2 model:
-
-- `func.FunctionApp()`
-- decorators such as `@app.route()`, `@app.timer_trigger()`, and `@app.schedule()`
-
-If a project does not expose v2 decorators, the built-in `Programming model v2` check fails.
-
-## Output Semantics
-
-Each check produces one of three statuses:
-
-- `pass`: the required condition is satisfied
-- `warn`: an optional check failed
-- `fail`: a required check failed
-
-Exit codes:
-
-- `0`: no failed required checks
-- `1`: one or more failed required checks
-
-## Examples
-
-Human-readable output:
-
-```bash
-azure-functions doctor --path ./examples/v2/http-trigger
-```
-
-JSON output for CI:
-
-```bash
-azure-functions doctor --format json --output doctor-report.json
+azure-functions doctor --path ./apps/orders-function
 ```
 
 Required-only profile:
@@ -67,3 +36,339 @@ Required-only profile:
 ```bash
 azure-functions doctor --profile minimal
 ```
+
+JSON artifact:
+
+```bash
+azure-functions doctor --format json --output doctor.json
+```
+
+Verbose fix hints:
+
+```bash
+azure-functions doctor --verbose
+```
+
+## Full option reference
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `--path` | string | `.` | Target project directory. |
+| `--format` | enum | `table` | Output format: `table`, `json`, `sarif`, `junit`. |
+| `--output` | path | unset | Write output to file instead of stdout. |
+| `--verbose` | flag | `false` | Show fix hints for non-passing checks (table mode). |
+| `--debug` | flag | `false` | Enable debug logging for troubleshooting. |
+| `--profile` | enum | `full` behavior | Rule profile: `minimal` or `full`. |
+| `--rules` | path | unset | Custom rules file path. |
+
+!!! note
+    Supported output formats are currently `table`, `json`, `sarif`, and `junit`.
+
+## Exit codes
+
+- `0`: no required failures
+- `1`: one or more required failures
+
+Warnings do not change exit code unless a required failure also exists.
+
+## Status model
+
+Each item has one of:
+
+- `pass`
+- `warn` (optional check failed)
+- `fail` (required check failed)
+
+Section status is `fail` if any required check in the section failed.
+
+## Output formats in detail
+
+### Table (default)
+
+Best for local terminal feedback.
+
+```bash
+azure-functions doctor --format table
+```
+
+Includes:
+
+- grouped sections
+- check labels and details
+- summary counts
+- exit code line
+
+### JSON
+
+Best for CI automation and post-processing.
+
+```bash
+azure-functions doctor --format json --output doctor.json
+```
+
+JSON includes:
+
+- `metadata` (`tool_version`, `generated_at`, `target_path`)
+- `results` (section + item diagnostics)
+
+Contract details: [JSON Output Contract](json_output_contract.md)
+
+### SARIF
+
+Best for code scanning integrations.
+
+```bash
+azure-functions doctor --format sarif --output doctor.sarif
+```
+
+Generated document follows SARIF `2.1.0` structure.
+
+### JUnit
+
+Best for CI systems that visualize test suites.
+
+```bash
+azure-functions doctor --format junit --output doctor-junit.xml
+```
+
+Each diagnostic item is represented as a test case.
+
+## Path targeting patterns
+
+Single app repository:
+
+```bash
+azure-functions doctor --path .
+```
+
+Monorepo app path:
+
+```bash
+azure-functions doctor --path ./services/payments-function
+```
+
+Use explicit paths in CI to avoid accidental root-level checks.
+
+## Profile behavior
+
+### Default/full behavior
+
+If `--profile` is omitted, behavior is equivalent to `full`.
+
+`full` includes:
+
+- required checks
+- optional checks
+
+### Minimal profile
+
+```bash
+azure-functions doctor --profile minimal
+```
+
+`minimal` includes only `required: true` rules.
+
+Use cases:
+
+- merge gates
+- low-noise deployment blockers
+- baseline compatibility checks
+
+Reference: [Minimal Profile](minimal_profile.md)
+
+## Custom rules usage
+
+Run with custom rule file:
+
+```bash
+azure-functions doctor --rules ./rules/custom.json
+```
+
+The file must:
+
+- exist
+- contain valid JSON
+- satisfy `rules.schema.json`
+
+Profiles still apply to the loaded custom rules.
+
+Reference: [Rules](rules.md), [Custom Rules Example](examples/custom_rules.md)
+
+## Verbose and debug modes
+
+### Verbose mode
+
+```bash
+azure-functions doctor --verbose
+```
+
+Shows `fix:` guidance for non-passing checks in table output.
+
+### Debug mode
+
+```bash
+azure-functions doctor --debug
+```
+
+Enables debug logging for diagnosing CLI internals and environment issues.
+
+## Recommended command recipes
+
+### Local fast check
+
+```bash
+azure-functions doctor --profile minimal
+```
+
+### Local full quality sweep
+
+```bash
+azure-functions doctor --profile full --verbose
+```
+
+### CI gate (required only)
+
+```bash
+azure-functions doctor --profile minimal --format json --output doctor.json
+```
+
+### SARIF generation
+
+```bash
+azure-functions doctor --profile minimal --format sarif --output doctor.sarif
+```
+
+### JUnit publishing
+
+```bash
+azure-functions doctor --profile minimal --format junit --output doctor-junit.xml
+```
+
+## CI usage patterns
+
+### Fail build automatically
+
+Run doctor as a normal step. Exit code already captures required failures.
+
+### Always upload artifacts
+
+Capture exit code manually, upload report, then fail explicitly.
+
+See full workflow in [CI Integration Example](examples/ci_integration.md).
+
+## Programmatic API usage
+
+Public API entry point:
+
+```python
+from azure_functions_doctor.api import run_diagnostics
+```
+
+Example:
+
+```python
+from azure_functions_doctor.api import run_diagnostics
+
+
+def required_failure_count(path: str) -> int:
+    count = 0
+    for section in run_diagnostics(path=path, profile="minimal", rules_path=None):
+        for item in section["items"]:
+            if item["status"] == "fail":
+                count += 1
+    return count
+```
+
+Using `Doctor` directly:
+
+```python
+from pathlib import Path
+
+from azure_functions_doctor.doctor import Doctor
+
+
+def run_with_custom_rules(path: str, rules_file: str) -> list[dict]:
+    doctor = Doctor(path=path, profile="full", rules_path=Path(rules_file))
+    rules = doctor.load_rules()
+    return doctor.run_all_checks(rules=rules)
+```
+
+Reference: [API](api.md)
+
+## Working with other tools
+
+### With `jq`
+
+Count required failures in JSON:
+
+```bash
+jq '[.results[].items[] | select(.status=="fail")] | length' doctor.json
+```
+
+### With Python scripts
+
+```python
+import json
+from pathlib import Path
+
+
+def failing_labels(json_path: str) -> list[str]:
+    data = json.loads(Path(json_path).read_text(encoding="utf-8"))
+    labels = []
+    for section in data["results"]:
+        for item in section["items"]:
+            if item["status"] == "fail":
+                labels.append(item["label"])
+    return labels
+```
+
+### With security/scanning platforms
+
+Use SARIF format and upload `doctor.sarif` where supported.
+
+### With test dashboards
+
+Use JUnit format and publish `doctor-junit.xml` as a test artifact.
+
+## Troubleshooting common usage mistakes
+
+### Invalid path
+
+Symptom: CLI returns parameter error.
+
+Fix: Ensure `--path` points to an existing readable directory.
+
+### Unknown profile
+
+Symptom: run fails with profile validation error.
+
+Fix: use only `minimal` or `full`.
+
+### Unsupported format
+
+Symptom: CLI rejects `--format` value.
+
+Fix: choose one of `table`, `json`, `sarif`, `junit`.
+
+### Empty or invalid custom rules
+
+Symptom: validation failure before checks run.
+
+Fix: validate JSON and schema compatibility.
+
+## Operational best practices
+
+- Run `minimal` as hard CI gate
+- Run `full` in local development and scheduled quality checks
+- Keep JSON artifacts for failed CI runs
+- Prefer explicit `--path` in monorepos
+- Use `--verbose` for faster local remediation
+
+## Related docs
+
+- [Getting Started](getting-started.md)
+- [Configuration](configuration.md)
+- [Diagnostics](diagnostics.md)
+- [Rules](rules.md)
+- [JSON Output Contract](json_output_contract.md)
+- [Troubleshooting](troubleshooting.md)

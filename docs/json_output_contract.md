@@ -1,30 +1,38 @@
 # JSON Output Contract
 
-The `--format json` flag produces machine-readable output designed for CI/CD pipelines, automated gates, and integration with other tooling.
+`--format json` produces the primary machine-readable output contract for automation.
 
-## Schema Structure
+This page defines field meanings, stability guarantees, and parser examples.
 
-The JSON output consists of a `metadata` object and a `results` array.
+## Emit JSON
+
+```bash
+azure-functions doctor --format json --output doctor.json
+```
+
+If `--output` is omitted, JSON is printed to stdout.
+
+## Top-level shape
 
 ```json
 {
   "metadata": {
-    "tool_version": "string",
-    "generated_at": "ISO 8601 UTC timestamp",
-    "target_path": "absolute path string"
+    "tool_version": "0.15.0",
+    "generated_at": "2026-03-14T10:40:20.731Z",
+    "target_path": "/absolute/path/to/project"
   },
   "results": [
     {
-      "title": "section title (title-cased)",
-      "category": "section key",
-      "status": "pass | fail",
+      "title": "Python Env",
+      "category": "python_env",
+      "status": "fail",
       "items": [
         {
-          "label": "human-readable check name",
-          "value": "detail string",
-          "status": "pass | warn | fail",
-          "hint": "optional fix suggestion",
-          "hint_url": "optional documentation URL"
+          "label": "Python version",
+          "value": "Python 3.9.18 (>=3.10)",
+          "status": "fail",
+          "hint": "Use Python 3.10 or higher to match Azure Functions Doctor support.",
+          "hint_url": "https://learn.microsoft.com/..."
         }
       ]
     }
@@ -32,33 +40,162 @@ The JSON output consists of a `metadata` object and a `results` array.
 }
 ```
 
-## Stability Levels
+## Field reference
 
-To ensure reliable automation, fields are categorized by their stability.
+### `metadata`
 
-| Field | Stability | Notes |
+| Field | Type | Description |
 | --- | --- | --- |
-| `metadata.tool_version` | Stable | Version of the doctor tool. |
-| `metadata.generated_at` | Stable | UTC timestamp of the execution. |
-| `metadata.target_path` | Stable | Resolved absolute path of the target directory. |
-| `results[].category` | Stable | Machine-readable identifier for the check section. |
-| `results[].status` | Stable | Aggregated status: `fail` if any required check in the section failed. |
-| `results[].items[].label` | Stable | Canonical name of the check. |
-| `results[].items[].status` | Stable | Check result: `pass`, `warn` (optional failed), or `fail` (required failed). |
-| `results[].items[].value` | Stable | The diagnostic message or detail string. |
-| `results[].title` | Detail | For display only; formatting or casing may change. |
-| `results[].items[].hint` | Detail | Human-readable fix suggestion. |
-| `results[].items[].hint_url` | Detail | External documentation link. |
+| `tool_version` | string | Installed `azure-functions-doctor` version. |
+| `generated_at` | string | UTC timestamp in ISO 8601 format. |
+| `target_path` | string | Resolved absolute project path used for checks. |
 
-Breaking changes to stable fields require a major version release.
+### `results[]`
 
-## Exit Codes
+| Field | Type | Description |
+| --- | --- | --- |
+| `title` | string | Human-readable section label (display-oriented). |
+| `category` | string | Stable machine-oriented section key. |
+| `status` | `pass` \| `fail` | Section-level status (required-check semantics). |
+| `items` | array | List of check result objects for that section. |
 
-Automated pipelines should rely on the process exit code:
+### `results[].items[]`
 
-- `0`: Success. All required checks passed.
-- `1`: Failure. One or more required checks failed.
+| Field | Type | Description |
+| --- | --- | --- |
+| `label` | string | Check display label. |
+| `value` | string | Diagnostic detail text from handler execution. |
+| `status` | `pass` \| `warn` \| `fail` | Canonical item-level status. |
+| `hint` | string (optional) | Human-readable remediation guidance. |
+| `hint_url` | string (optional) | Supporting documentation link. |
 
-## Other Formats
+## Stability levels
 
-While this contract covers the primary JSON format, Azure Functions Doctor also supports SARIF and JUnit outputs. These follow their respective industry-standard schemas and are not governed by this specific JSON contract.
+Use the following contract expectations when writing parsers.
+
+| Field | Stability | Guidance |
+| --- | --- | --- |
+| `metadata.tool_version` | Stable | Safe for telemetry and compatibility checks. |
+| `metadata.generated_at` | Stable | Safe for run timestamp tracking. |
+| `metadata.target_path` | Stable | Safe for target correlation. |
+| `results[].category` | Stable | Prefer for machine grouping. |
+| `results[].status` | Stable | Safe for section-level logic. |
+| `results[].items[].label` | Stable | Safe for human-readable matching. |
+| `results[].items[].status` | Stable | Primary gate/filter field. |
+| `results[].items[].value` | Stable | Safe for reporting detail text. |
+| `results[].title` | Detail | Display-oriented; do not hardcode behavior on casing/format. |
+| `results[].items[].hint` | Detail | Helpful for UX, optional in parsers. |
+| `results[].items[].hint_url` | Detail | Helpful for UX, optional in parsers. |
+
+!!! note
+    Breaking changes to stable fields require a major version bump under project semver policy.
+
+## Status semantics
+
+Item status rules:
+
+- `pass`: check succeeded
+- `fail`: required rule failed
+- `warn`: optional rule failed
+
+Section status rules:
+
+- `fail` if any required item in section failed
+- otherwise `pass`
+
+## Exit code contract
+
+Process exit code aligns with required failures:
+
+- `0` -> no required failures
+- `1` -> one or more required failures
+
+Always use exit code for gate truth; use JSON for diagnostics detail.
+
+## Python parsing example
+
+```python
+import json
+from pathlib import Path
+
+
+def parse_doctor(path: str) -> dict:
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+
+    summary = {"pass": 0, "warn": 0, "fail": 0}
+    failures: list[dict[str, str]] = []
+
+    for section in payload["results"]:
+        for item in section["items"]:
+            status = item["status"]
+            summary[status] += 1
+            if status == "fail":
+                failures.append(
+                    {
+                        "section": section["category"],
+                        "label": item["label"],
+                        "value": item["value"],
+                        "hint": item.get("hint", ""),
+                    }
+                )
+
+    return {
+        "tool_version": payload["metadata"]["tool_version"],
+        "generated_at": payload["metadata"]["generated_at"],
+        "target_path": payload["metadata"]["target_path"],
+        "summary": summary,
+        "failures": failures,
+    }
+```
+
+## Bash and `jq` parsing examples
+
+Count required failures:
+
+```bash
+jq '[.results[].items[] | select(.status=="fail")] | length' doctor.json
+```
+
+List failure labels:
+
+```bash
+jq -r '.results[].items[] | select(.status=="fail") | .label' doctor.json
+```
+
+Group by status:
+
+```bash
+jq '[.results[].items[] | .status] | group_by(.) | map({status: .[0], count: length})' doctor.json
+```
+
+Extract concise report lines:
+
+```bash
+jq -r '.results[] as $s | $s.items[] | "[\($s.category)] \(.status) - \(.label): \(.value)"' doctor.json
+```
+
+## CI parser recommendations
+
+- Prefer `results[].items[].status` for gates and counters
+- Prefer `results[].category` for section grouping
+- Treat `hint` and `hint_url` as optional display enrichments
+- Avoid coupling logic to `title` formatting
+
+## Common parser mistakes
+
+- Assuming warnings fail builds
+- Treating missing optional fields (`hint`, `hint_url`) as schema errors
+- Parsing output from non-JSON format
+- Ignoring process exit code and relying only on string matching
+
+## Relationship to other formats
+
+- `sarif` output follows SARIF 2.1.0 conventions
+- `junit` output follows JUnit XML conventions
+- This contract governs only the doctor JSON format
+
+## Related docs
+
+- [Usage](usage.md)
+- [Diagnostics](diagnostics.md)
+- [Examples: CI Integration](examples/ci_integration.md)

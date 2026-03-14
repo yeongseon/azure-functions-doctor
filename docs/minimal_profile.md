@@ -1,37 +1,149 @@
 # Minimal Profile
 
-The `--profile minimal` flag provides a low-noise CI baseline by running only the rules required for a functioning Azure Functions Python v2 application.
+`--profile minimal` runs only rules marked `required: true`.
 
-## Core Purpose
+This profile is designed for low-noise, deterministic CI gates.
 
-The minimal profile focuses on the critical path. While the full doctor check (default or `--profile full`) runs 15 checks including optional items like telemetry or unused files, the minimal profile runs only the required rules (currently 7).
+## Why minimal exists
 
-## Required Rules
+Full diagnostics are useful during development, but CI gate checks often need a smaller, stable baseline.
 
-The minimal profile includes:
+Minimal profile provides:
 
-1. `check_programming_model_v2`: Confirm decorator-based v2 model.
-2. `check_python_version`: Ensure Python 3.10 or higher.
-3. `check_venv`: Confirm active virtual environment.
-4. `check_python_executable`: Verify Python path.
-5. `check_requirements_txt`: Ensure requirements.txt exists.
-6. `check_azure_functions_library`: Confirm azure-functions package declaration.
-7. `check_host_json`: Ensure host.json exists.
+- clear blocker signal
+- fewer environment-specific warnings
+- predictable behavior across teams
 
-## Rule Inclusion Criteria
+## How minimal is selected
 
-A rule is included in the minimal profile if it is marked as `required: true` in the `v2.json` ruleset. Adding a new required rule to the minimal profile is a breaking change and requires a major version release.
+Rule inclusion logic:
 
-## Usage
+- Load active ruleset (built-in or custom)
+- Keep only rules where `required` is `true`
+- Execute filtered set in normal section grouping
 
-For local low-noise checks:
+This means `minimal` behavior adapts to your custom rules file if you provide one.
+
+## Built-in minimal rule set (current)
+
+With built-in `v2.json`, minimal includes these 7 checks:
+
+1. `check_programming_model_v2`
+2. `check_python_version`
+3. `check_venv`
+4. `check_python_executable`
+5. `check_requirements_txt`
+6. `check_azure_functions_library`
+7. `check_host_json`
+
+These represent core project viability requirements.
+
+## Full vs minimal comparison
+
+| Dimension | `full` profile | `minimal` profile |
+| --- | --- | --- |
+| Rule scope | Required + optional | Required only |
+| Built-in count | 15 rules | 7 rules |
+| Warning volume | Higher | Lower |
+| CI suitability | Useful for report artifacts | Best for hard gating |
+| Local guidance depth | High | Baseline only |
+
+## What minimal excludes (built-in)
+
+Optional checks excluded by default include:
+
+- `local.settings.json` presence
+- Core Tools availability/version
+- Durable host config checks
+- Application Insights signal checks
+- `extensionBundle` host property
+- ASGI/WSGI callable heuristics
+- cleanup pattern checks
+
+These remain available in full profile.
+
+## Command examples
+
+Local blocker-only check:
 
 ```bash
 azure-functions doctor --profile minimal
 ```
 
-For automated CI/CD pipelines:
+CI-friendly JSON artifact:
 
 ```bash
-azure-functions doctor --profile minimal --format json
+azure-functions doctor --profile minimal --format json --output doctor.json
 ```
+
+Path-targeted monorepo check:
+
+```bash
+azure-functions doctor --path ./apps/orders-function --profile minimal
+```
+
+## Exit code behavior in minimal
+
+Same as full profile:
+
+- exit `0` when no required failures
+- exit `1` when any required failure exists
+
+Because minimal excludes optional checks, status interpretation is often simpler for gate logic.
+
+## When to use minimal
+
+Use minimal when you need:
+
+- strict merge/deploy blockers
+- stable cross-team CI baseline
+- fewer false alarms from optional environment checks
+
+Use full profile when you need broader local quality insights.
+
+## Recommended team policy
+
+Practical pattern:
+
+1. CI gate uses `minimal` (required only)
+2. Local dev uses `full --verbose` for richer guidance
+3. Scheduled quality workflows collect full profile artifacts
+
+This keeps enforcement stable while still exposing optional improvement areas.
+
+## Minimal profile and semver
+
+Adding a new required built-in rule changes minimal profile scope.
+
+Per project semver policy, that is treated as a breaking change because it can fail previously passing CI pipelines.
+
+Reference: [Semver Policy](semver_policy.md)
+
+## Custom rules and minimal
+
+If you supply `--rules custom.json`, minimal profile still means:
+
+"Run only rules with `required: true` in that custom file."
+
+This allows organization-specific baseline policies while preserving minimal semantics.
+
+## Common misunderstandings
+
+### "Minimal means fast only"
+
+Minimal is not only about speed. Its main purpose is **stable, required-only policy enforcement**.
+
+### "Warnings fail minimal"
+
+Warnings are optional-rule failures. In built-in minimal profile, optional rules are excluded, so warnings are typically reduced or absent.
+
+### "Minimal bypasses model checks"
+
+It does not. The v2 programming model rule is required and always included in built-in minimal.
+
+## Related docs
+
+- [Usage](usage.md)
+- [Diagnostics](diagnostics.md)
+- [Rule Inventory](rule_inventory.md)
+- [Examples: CI Integration](examples/ci_integration.md)

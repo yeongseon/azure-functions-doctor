@@ -1,43 +1,41 @@
 # Rules
 
-Azure Functions Doctor uses a declarative JSON ruleset for the **Azure Functions Python v2 programming model**.
+Azure Functions Doctor executes declarative rules from a JSON ruleset.
 
-The built-in rules live in:
+Built-in rules are defined in:
 
-```text
-src/azure_functions_doctor/assets/rules/v2.json
-```
+`src/azure_functions_doctor/assets/rules/v2.json`
 
-You can also pass a custom rules file with `--rules`.
+You can replace the built-in set with `--rules <file>`.
 
-## Rule Format
+## Rule execution model
 
-Each rule is a JSON object with these core fields:
+Each rule contains:
 
-```json
-{
-  "id": "check_python_version",
-  "category": "environment",
-  "section": "python_env",
-  "label": "Python version",
-  "description": "Checks if the current Python version is 3.10 or higher.",
-  "type": "compare_version",
-  "required": true,
-  "condition": {
-    "target": "python",
-    "operator": ">=",
-    "value": "3.10"
-  },
-  "check_order": 1
-}
-```
+- identity (`id`, `label`)
+- grouping (`category`, `section`)
+- behavior (`type`, `condition`)
+- severity intent (`required`)
+- ordering (`check_order`)
+- remediation (`hint`, optional `hint_url`)
 
-## Supported Rule Types
+Rules are validated by:
+
+`src/azure_functions_doctor/schemas/rules.schema.json`
+
+## Required vs optional
+
+- `required: true` + raw handler fail -> item status `fail`
+- `required: false` + raw handler fail -> item status `warn`
+
+Only required failures produce non-zero process exit code.
+
+## Built-in rule types
 
 - `compare_version`
-- `file_exists`
 - `env_var_exists`
 - `path_exists`
+- `file_exists`
 - `package_installed`
 - `package_declared`
 - `source_code_contains`
@@ -48,18 +46,236 @@ Each rule is a JSON object with these core fields:
 - `file_glob_check`
 - `host_json_property`
 
-## Built-in Selection
+## Rule-by-rule reference
 
-The doctor always loads the built-in v2 ruleset unless you provide a custom rules file.
+## 1) `check_programming_model_v2`
 
-## Extending the Rules
+- **What it checks:** Source contains Azure Functions decorator usage (`@app.`) via AST detection.
+- **Why it matters:** Doctor targets Python v2 projects; this check protects model compatibility.
+- **How to fix:** Use `func.FunctionApp()` and decorator-based triggers.
 
-To add or adjust a built-in rule:
+Example failing detail:
 
-1. Edit `src/azure_functions_doctor/assets/rules/v2.json`
-2. Update or add tests
-3. Run `make check-all`
+```text
+Keyword '@app.' not found in source code (AST)
+```
 
-## Safety Note
+## 2) `check_python_version`
 
-Only load custom rules from trusted sources. Some rule types execute imports or inspect the local environment directly.
+- **What it checks:** Current interpreter version is `>=3.10`.
+- **Why it matters:** Package and diagnostics support baseline starts at Python 3.10.
+- **How to fix:** Use Python 3.10+ locally and in CI.
+
+Example output:
+
+```text
+Python 3.9.18 (>=3.10)
+```
+
+## 3) `check_venv`
+
+- **What it checks:** Environment variable `VIRTUAL_ENV` exists.
+- **Why it matters:** Virtual environments reduce dependency drift and environment pollution.
+- **How to fix:** Create and activate `.venv` before running diagnostics.
+
+Example failing detail:
+
+```text
+VIRTUAL_ENV is not set
+```
+
+## 4) `check_python_executable`
+
+- **What it checks:** `sys.executable` points to an existing path.
+- **Why it matters:** Broken interpreter paths indicate unstable runtime environment.
+- **How to fix:** Reinstall or reactivate Python environment.
+
+Example detail:
+
+```text
+/usr/bin/python3 exists
+```
+
+## 5) `check_requirements_txt`
+
+- **What it checks:** `requirements.txt` exists at project root.
+- **Why it matters:** Deployability and reproducibility depend on declared dependencies.
+- **How to fix:** Add `requirements.txt` and include runtime dependencies.
+
+Example failing detail:
+
+```text
+/workspace/app/requirements.txt not found
+```
+
+## 6) `check_azure_functions_library`
+
+- **What it checks:** `azure-functions` appears in `requirements.txt`.
+- **Why it matters:** Function app code depends on Azure Functions Python library.
+- **How to fix:** Add `azure-functions` to dependency declarations.
+
+Example failing detail:
+
+```text
+Package 'azure-functions' not declared in requirements.txt
+```
+
+## 7) `check_host_json`
+
+- **What it checks:** `host.json` exists at project root.
+- **Why it matters:** Azure Functions host configuration is required for valid app structure.
+- **How to fix:** Add a valid `host.json` (at minimum `{ "version": "2.0" }`).
+
+Example failing detail:
+
+```text
+/workspace/app/host.json not found
+```
+
+## 8) `check_local_settings`
+
+- **What it checks:** `local.settings.json` exists.
+- **Why it matters:** Local development often needs this file for settings and connection values.
+- **How to fix:** Create local settings file for local runs (do not commit secrets).
+
+Example warning detail:
+
+```text
+/workspace/app/local.settings.json not found (optional)
+```
+
+## 9) `check_func_cli`
+
+- **What it checks:** `func` executable is available on `PATH`.
+- **Why it matters:** Core Tools enable local hosting and rich runtime tooling.
+- **How to fix:** Install Azure Functions Core Tools v4+.
+
+Example warning detail:
+
+```text
+func not found
+```
+
+## 10) `check_func_core_tools_version`
+
+- **What it checks:** Core Tools version is `>=4.0`.
+- **Why it matters:** Older versions can diverge from current host/runtime expectations.
+- **How to fix:** Upgrade Core Tools installation.
+
+Example warning detail:
+
+```text
+func 3.0.3904 (>=4.0)
+```
+
+## 11) `check_durabletask_config`
+
+- **What it checks:** If durable usage is detected in source, `$.extensions.durableTask` exists in `host.json`.
+- **Why it matters:** Durable Functions need matching host configuration.
+- **How to fix:** Add durableTask configuration when using durable features.
+
+Example details:
+
+```text
+No Durable Functions usage detected; check skipped
+```
+
+or
+
+```text
+Required host.json property '$.extensions.durableTask' not found
+```
+
+## 12) `check_app_insights`
+
+- **What it checks:** At least one telemetry signal exists:
+  - `APPLICATIONINSIGHTS_CONNECTION_STRING`
+  - `APPINSIGHTS_INSTRUMENTATIONKEY`
+  - `host.json:instrumentationKey`
+- **Why it matters:** Telemetry is critical for production diagnostics.
+- **How to fix:** Configure one supported telemetry source.
+
+Example warning detail:
+
+```text
+Targets not found
+```
+
+## 13) `check_extension_bundle`
+
+- **What it checks:** `$.extensionBundle` exists in `host.json`.
+- **Why it matters:** Extension bundles help ensure binding dependencies are available.
+- **How to fix:** Add extensionBundle section to host config.
+
+Example warning detail:
+
+```text
+host.json property '$.extensionBundle' not found
+```
+
+## 14) `check_asgi_wsgi_exposure`
+
+- **What it checks:** Source has ASGI/WSGI exposure patterns.
+- **Why it matters:** Useful signal for framework-host integration readiness.
+- **How to fix:** Ensure framework callable exposure follows expected patterns.
+
+Example warning detail:
+
+```text
+No ASGI/WSGI callable detected in project source
+```
+
+## 15) `check_unused_files`
+
+- **What it checks:** Presence of unwanted patterns (for example `**/*.pyc`, `**/__pycache__`, `.venv`, `tests/`).
+- **Why it matters:** Reduces deployment package clutter and risk.
+- **How to fix:** Clean or exclude unwanted files from deployment artifacts.
+
+Example warning detail:
+
+```text
+Found unwanted files: ['tests/', '.venv']
+```
+
+## Rule authoring template
+
+```json
+{
+  "id": "check_example",
+  "category": "structure",
+  "section": "project_structure",
+  "label": "host.json",
+  "description": "Checks host.json exists.",
+  "type": "file_exists",
+  "required": true,
+  "condition": {
+    "target": "host.json"
+  },
+  "hint": "Add host.json to project root.",
+  "check_order": 10
+}
+```
+
+## Guidance for custom rules
+
+- Keep IDs stable and descriptive
+- Use deterministic `check_order` values
+- Start policy experiments as optional rules
+- Promote to required only after false-positive review
+- Include clear `hint` text for faster remediation
+
+Custom rules docs: [Examples: Custom Rules](examples/custom_rules.md)
+
+## Safety and trust model
+
+Rules may inspect local files, source code, environment variables, executable presence, and importable modules.
+
+!!! warning
+    Only run trusted custom rules files, especially in shared CI environments.
+
+## Related docs
+
+- [Diagnostics](diagnostics.md)
+- [Rule Inventory](rule_inventory.md)
+- [Minimal Profile](minimal_profile.md)
+- [Semver Policy](semver_policy.md)

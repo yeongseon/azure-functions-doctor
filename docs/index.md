@@ -1,133 +1,132 @@
 # Azure Functions Doctor
 
-Azure Functions Doctor validates local projects built on the **Azure Functions Python v2 programming model**.
+Validate Azure Functions Python v2 projects before they fail in local runtime or CI.
 
-Use it to catch common setup and configuration issues before running locally or shipping through CI.
+`azure-functions-doctor` is a diagnostics CLI and API that checks required project health signals, reports optional operational guidance, and returns deterministic exit codes for automation.
 
-It supports both CLI usage (`azure-functions doctor`) and programmatic usage
-through `run_diagnostics(path, profile, rules_path)`.
+## Why teams use it
 
-## Features
+- Catch missing baseline files (`host.json`, `requirements.txt`) early
+- Verify runtime and dependency declarations before deployment
+- Gate merges on required blockers while preserving optional guidance
+- Export machine-readable diagnostics for CI and code-scanning systems
 
-- Validates Azure Functions Python v2 project signals (decorators, host files, dependencies).
-- Differentiates required failures from optional warnings for clear gating.
-- Supports output formats for humans and machines (`table`, `json`, `sarif`, `junit`).
-- Allows custom rule files with schema validation.
-- Supports profile-based execution (`full` and `minimal`).
-- Produces deterministic grouped output by section and check order.
+## Working example
 
-## Quick Start
+Install and run in the current project:
 
 ```bash
-pip install azure-functions-doctor
+python -m pip install azure-functions-doctor
 azure-functions doctor
 ```
 
-Run against a specific project directory:
+Run required-only checks in CI:
 
 ```bash
-azure-functions doctor --path ./my-function-app
+azure-functions doctor --profile minimal --format json --output doctor.json
 ```
 
-Run required checks only:
+## What it checks
 
-```bash
-azure-functions doctor --profile minimal
-```
+Built-in diagnostics currently include:
 
-Sample output:
+- Python version support
+- v2 decorator programming model signal
+- virtual environment presence
+- Python executable path validity
+- `requirements.txt` and `azure-functions` declaration
+- `host.json` presence
+- optional tooling, telemetry, extension, and cleanup checks
 
-```text
-Section: Python Env (status: fail)
-  - Programming model v2: pass
-  - Python version: pass
-  - requirements.txt: fail (required)
+Reference: [Rule Inventory](rule_inventory.md)
 
-Section: Tooling (status: pass)
-  - Azure Functions Core Tools (func): warn (optional)
+## Output and gating model
 
-Overall: 1 required failure, 1 warning
-Exit code: 1
-```
+Item statuses:
 
-## How It Works
+- `pass`
+- `warn` (optional check failed)
+- `fail` (required check failed)
 
-Execution pipeline:
+Exit code contract:
 
-```text
-[CLI or API input]
-        |
-        v
-[Doctor(path, profile, rules_path)]
-        |
-        v
-[Load rules: custom or built-in v2.json]
-        |
-        v
-[Validate against rules.schema.json]
-        |
-        v
-[Dispatch each rule by type via HandlerRegistry]
-        |
-        v
-[Aggregate by section + map optional failures to warn]
-        |
-        v
-[Render output + return exit code/results]
-```
+- `0` when required checks all pass
+- `1` when any required check fails
 
-Programmatic equivalent:
+This enables direct CI usage without custom gate wrappers.
+
+## Feature highlights
+
+- Declarative rules with schema validation
+- Profile-based execution (`full`, `minimal`)
+- Multiple output formats (`table`, `json`, `sarif`, `junit`)
+- Custom rule file support via `--rules`
+- Programmatic API for pipeline/tool integration
+
+## CLI and API entry points
+
+- CLI: `azure-functions doctor`
+- API: `from azure_functions_doctor.api import run_diagnostics`
+
+Programmatic example:
 
 ```python
 from azure_functions_doctor.api import run_diagnostics
 
 
-def run_and_print(path: str) -> None:
-    sections = run_diagnostics(path=path, profile="full", rules_path=None)
-    for section in sections:
-        print(f"[{section['title']}] {section['status']}")
+def has_required_failures(path: str) -> bool:
+    for section in run_diagnostics(path=path, profile="minimal", rules_path=None):
         for item in section["items"]:
-            print(f"- {item['label']}: {item['status']} ({item['value']})")
+            if item["status"] == "fail":
+                return True
+    return False
 ```
 
-## What it checks
+## Documentation map
 
-- Python 3.10+
-- v2 decorator usage
-- `requirements.txt`
-- `azure-functions`
-- `host.json`
-- optional local tooling and host configuration
+### Get started
 
-See [Diagnostics Reference](diagnostics.md) for complete check definitions and behavior.
+- [Installation](installation.md)
+- [Quickstart](getting-started.md)
+- [Configuration](configuration.md)
 
-## When to Use
+### User guide
 
-- Before first local run of a new Azure Functions Python v2 project.
-- During migration from ad-hoc local setup to repeatable team setup.
-- In CI to block merges on required runtime/configuration issues.
-- In release pipelines to emit JSON/SARIF/JUnit diagnostics artifacts.
-- During repository cleanup to detect deployment junk files and missing telemetry signals.
-
-## API and CLI Entry Points
-
-- CLI: `azure-functions doctor`
-- Python API: `from azure_functions_doctor.api import run_diagnostics`
-
-## Documentation
-
-- [Usage Guide](usage.md)
-- [Rules Reference](rules.md)
+- [CLI Usage](usage.md)
+- [Diagnostics](diagnostics.md)
+- [Rules](rules.md)
 - [Rule Inventory](rule_inventory.md)
 - [Minimal Profile](minimal_profile.md)
 - [JSON Output Contract](json_output_contract.md)
-- [Semver Policy](semver_policy.md)
-- [Diagnostics Reference](diagnostics.md)
+- [Handlers](handlers.md)
+
+### Examples
+
+- [Basic Check](examples/basic_check.md)
+- [CI Integration](examples/ci_integration.md)
+- [Custom Rules](examples/custom_rules.md)
+
+### Maintenance and policies
+
 - [Supported Versions](supported_versions.md)
-- [Development Guide](development.md)
-- [Release Process](release_process.md)
+- [Semver Policy](semver_policy.md)
+- [Troubleshooting](troubleshooting.md)
+- [FAQ](faq.md)
 
-## Examples
+## Typical adoption path
 
-- [Representative example](https://github.com/yeongseon/azure-functions-doctor/blob/main/examples/v2/http-trigger/README.md)
-- [Complex example](https://github.com/yeongseon/azure-functions-doctor/blob/main/examples/v2/multi-trigger/README.md)
+1. Install package in your development environment
+2. Run `azure-functions doctor` locally and fix required failures
+3. Add CI job using `--profile minimal --format json`
+4. Publish JSON/SARIF/JUnit artifacts for visibility
+5. Add optional custom rules for organization-specific policy
+
+## Notes on scope
+
+!!! note
+    Azure Functions Doctor targets the Python v2 decorator model.
+    Legacy Python v1 (`function.json`-oriented) projects are out of scope.
+
+## Need help?
+
+Start with [Troubleshooting](troubleshooting.md), then review [FAQ](faq.md). If behavior looks incorrect, include command, version, and JSON output snippet when opening an issue.

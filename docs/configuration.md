@@ -1,0 +1,202 @@
+# Configuration
+
+`azure-functions-doctor` configuration is primarily CLI-driven.
+
+This page explains how runtime behavior changes with flags, profiles, formats, and custom rules.
+
+## Command shape
+
+```bash
+azure-functions doctor [OPTIONS]
+```
+
+Core options:
+
+- `--path <directory>`
+- `--profile <minimal|full>`
+- `--format <table|json|sarif|junit>`
+- `--output <file>`
+- `--verbose`
+- `--debug`
+- `--rules <file>`
+
+## Target path configuration
+
+By default, diagnostics run against the current directory.
+
+```bash
+azure-functions doctor
+```
+
+To check another project:
+
+```bash
+azure-functions doctor --path ./apps/orders-function
+```
+
+Path validation behavior:
+
+- Path must exist
+- Path must be a directory
+- Path must be readable
+
+If invalid, the CLI fails early with a parameter error.
+
+## Profile selection
+
+Profiles control which rules execute.
+
+### `full` profile
+
+- Includes required and optional rules
+- Gives broader operational insight
+- Best for local development and periodic quality sweeps
+
+### `minimal` profile
+
+- Includes only rules marked `required: true`
+- Best for CI gates where noise must stay low
+- Stable contract for pass/fail baseline
+
+```bash
+azure-functions doctor --profile minimal
+```
+
+See [Minimal Profile](minimal_profile.md) for complete rule coverage.
+
+## Output format configuration
+
+### `table`
+
+- Default human-readable output
+- Best for local terminal use
+
+### `json`
+
+- Machine-readable object with `metadata` and `results`
+- Best for CI parsing and automation
+
+### `sarif`
+
+- SARIF 2.1.0 document
+- Best for code scanning ecosystems
+
+### `junit`
+
+- JUnit-style XML
+- Best for CI test-report UIs
+
+Example:
+
+```bash
+azure-functions doctor --format json --output artifacts/doctor.json
+```
+
+!!! note
+    Current supported formats are `table`, `json`, `sarif`, and `junit`.
+
+## Output file behavior
+
+If `--output` is omitted, output is printed to stdout.
+
+If `--output` is provided:
+
+- Parent directory is created when needed
+- File is overwritten with new report content
+- CLI prints a success line showing destination path
+
+Example:
+
+```bash
+azure-functions doctor --format sarif --output reports/doctor.sarif
+```
+
+## Verbose and debug modes
+
+### `--verbose`
+
+Shows fix hints for non-passing checks in table output.
+
+```bash
+azure-functions doctor --verbose
+```
+
+### `--debug`
+
+Enables debug logging output for deeper troubleshooting.
+
+```bash
+azure-functions doctor --debug
+```
+
+Use debug mode when diagnosing tool behavior rather than project diagnostics.
+
+## Custom rule set configuration
+
+You can replace built-in rules with a custom file:
+
+```bash
+azure-functions doctor --rules ./rules/custom-v2.json
+```
+
+Behavior:
+
+- The file must exist
+- The file must be valid JSON
+- The rule list must pass `rules.schema.json` validation
+- Rules are sorted by `check_order`
+
+See [Rules](rules.md) and [Examples: Custom Rules](examples/custom_rules.md).
+
+## Environment-backed config object
+
+The package includes `Config` with `FUNC_DOCTOR_*` env support.
+This is currently oriented toward internal and future runtime wiring.
+
+Examples of recognized keys include:
+
+- `FUNC_DOCTOR_LOG_LEVEL`
+- `FUNC_DOCTOR_LOG_FORMAT`
+- `FUNC_DOCTOR_MAX_FILE_SIZE_MB`
+- `FUNC_DOCTOR_SEARCH_TIMEOUT_SECONDS`
+- `FUNC_DOCTOR_OUTPUT_WIDTH`
+
+Programmatic access:
+
+```python
+from azure_functions_doctor.config import get_config
+
+
+def current_config() -> dict:
+    return get_config().to_dict()
+```
+
+## Recommended CI configuration
+
+For merge blocking:
+
+```bash
+azure-functions doctor --profile minimal --format json --output doctor.json
+```
+
+Why this shape works well:
+
+- Deterministic required-only checks
+- Parse-friendly machine output
+- Exit code directly indicates gate status
+
+See [Examples: CI Integration](examples/ci_integration.md).
+
+## Configuration anti-patterns
+
+- Using full profile as hard gate for every PR (too noisy)
+- Parsing display-only fields (such as section `title`) as contracts
+- Assuming optional warnings fail builds
+- Passing untrusted custom rules files in shared CI
+
+## Related pages
+
+- [Usage](usage.md)
+- [Diagnostics](diagnostics.md)
+- [JSON Output Contract](json_output_contract.md)
+- [Troubleshooting](troubleshooting.md)

@@ -8,26 +8,56 @@ theme:
   name: material
   logo: logo_assets/logo.png
   favicon: logo_assets/logo_favicon_16px.png
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - content.code.copy
 
 nav:
   - Home: index.md
-  - CLI Usage: usage.md
-  - Diagnostics: diagnostics.md
-  - Rules: rules.md
-  - Rule Inventory: rule_inventory.md
-  - Minimal Profile: minimal_profile.md
-  - JSON Output Contract: json_output_contract.md
-  - Semver Policy: semver_policy.md
-  - Supported Versions: supported_versions.md
-  - Handlers: handlers.md
-  - Development: development.md
-  - Testing: testing.md
-  - Troubleshooting: troubleshooting.md
+  - Getting Started:
+      - Installation: installation.md
+      - Quickstart: getting-started.md
+      - Configuration: configuration.md
+  - User Guide:
+      - CLI Usage: usage.md
+      - Diagnostics: diagnostics.md
+      - Rules: rules.md
+      - Rule Inventory: rule_inventory.md
+      - Minimal Profile: minimal_profile.md
+      - JSON Output Contract: json_output_contract.md
+      - Handlers: handlers.md
+  - Examples:
+      - Basic Check: examples/basic_check.md
+      - CI Integration: examples/ci_integration.md
+      - Custom Rules: examples/custom_rules.md
   - API Reference: api.md
-  - Release Process: release_process.md
+  - Reference:
+      - Supported Versions: supported_versions.md
+      - Semver Policy: semver_policy.md
+  - Contributing:
+      - Development: development.md
+      - Testing: testing.md
+      - Guidelines: contributing.md
+  - Troubleshooting: troubleshooting.md
+  - FAQ: faq.md
   - Security: security.md
+  - Release Process: release_process.md
   - Changelog: changelog.md
-  - Contributing: contributing.md
+
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+      toc_depth: 3
+  - tables
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
+  - pymdownx.inlinehilite
 
 plugins:
   - search
@@ -41,3 +71,10 @@ plugins:
             show_signature: true
             show_root_full_path: false
             merge_init_into_class: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/yeongseon/azure-functions-doctor
+  copyright: |
+    © 2026 Yeongseon Choe – MIT Licensed
