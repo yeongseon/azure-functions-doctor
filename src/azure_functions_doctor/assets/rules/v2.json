@@ -6,7 +6,7 @@
     "label": "Programming model v2",
     "description": "Confirms the project uses the Azure Functions Python v2 decorator-based programming model (via @app. or @bp. decorators).",
     "type": "source_code_contains",
-    "required": true,
+    "required": false,
     "condition": {
       "keyword": "@app.|@bp.",
       "mode": "ast"
@@ -40,7 +40,7 @@
     "label": "Virtual environment",
     "description": "Checks if a virtual environment is activated (venv, conda, or uv).",
     "type": "any_of_exists",
-    "required": true,
+    "required": false,
     "condition": {
       "targets": [
         "VIRTUAL_ENV",
@@ -59,7 +59,7 @@
     "label": "Python executable",
     "description": "Checks if the Python executable path exists.",
     "type": "path_exists",
-    "required": true,
+    "required": false,
     "condition": {
       "target": "sys.executable"
     },

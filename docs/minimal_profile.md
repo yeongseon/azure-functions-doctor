@@ -139,7 +139,7 @@ Warnings are optional-rule failures. In built-in minimal profile, optional rules
 
 ### "Minimal bypasses model checks"
 
-It does not. The v2 programming model rule is required and always included in built-in minimal.
+It does not. The v2 programming model rule is optional (`required: false`) and not included in built-in minimal.
 
 ## Related docs
 

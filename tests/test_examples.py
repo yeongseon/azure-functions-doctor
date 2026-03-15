@@ -19,7 +19,6 @@ _ALWAYS_PASS_LABELS = {
     "host.json version",
     "requirements.txt",
     "azure-functions package",
-    "Programming model v2",
 }
 
 
@@ -115,9 +114,9 @@ class TestBrokenExamples:
             f"got {item_map.get('azure-functions package')!r}"
         )
 
-    def test_broken_no_v2_decorators_fails_programming_model_check(self) -> None:
+    def test_broken_no_v2_decorators_warns_programming_model_check(self) -> None:
         _, item_map = _run_example("broken-no-v2-decorators")
-        assert item_map.get("Programming model v2") == "fail", (
-            "broken-no-v2-decorators: expected 'Programming model v2' == 'fail', "
+        assert item_map.get("Programming model v2") == "warn", (
+            "broken-no-v2-decorators: expected 'Programming model v2' == 'warn', "
             f"got {item_map.get('Programming model v2')!r}"
         )

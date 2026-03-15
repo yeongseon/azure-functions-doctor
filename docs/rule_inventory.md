@@ -7,13 +7,14 @@ Rules are defined in `src/azure_functions_doctor/assets/rules/v2.json`.
 
 | Rule ID | Label | Category | Section | Type | Required | Profile |
 | --- | --- | --- | --- | --- | --- | --- |
-| `check_programming_model_v2` | Programming model v2 | project_structure | programming_model | `source_code_contains` | Yes | minimal, full |
+| `check_programming_model_v2` | Programming model v2 | project_structure | programming_model | `source_code_contains` | No | full |
 | `check_python_version` | Python version | environment | python_env | `compare_version` | Yes | minimal, full |
-| `check_venv` | Virtual environment | environment | python_env | `env_var_exists` | Yes | minimal, full |
-| `check_python_executable` | Python executable | environment | python_env | `path_exists` | Yes | minimal, full |
+| `check_venv` | Virtual environment | environment | python_env | `env_var_exists` | No | full |
+| `check_python_executable` | Python executable | environment | python_env | `path_exists` | No | full |
 | `check_requirements_txt` | requirements.txt | dependencies | python_env | `file_exists` | Yes | minimal, full |
 | `check_azure_functions_library` | azure-functions package | dependencies | python_env | `package_declared` | Yes | minimal, full |
 | `check_host_json` | host.json | structure | project_structure | `file_exists` | Yes | minimal, full |
+| `check_host_json_version` | host.json version | structure | project_structure | `host_json_version` | Yes | minimal, full |
 | `check_local_settings` | local.settings.json | structure | project_structure | `file_exists` | No | full |
 | `check_func_cli` | Azure Functions Core Tools (func) | tooling | tooling | `executable_exists` | No | full |
 | `check_func_core_tools_version` | Azure Functions Core Tools version | tooling | tooling | `compare_version` | No | full |
