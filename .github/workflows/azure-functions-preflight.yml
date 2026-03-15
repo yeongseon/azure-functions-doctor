@@ -10,10 +10,7 @@
 name: Azure Functions Pre-flight Check
 
 on:
-  push:
-    branches: ["main", "master"]
-  pull_request:
-    branches: ["main", "master"]
+  workflow_dispatch:
 
 jobs:
   preflight:
@@ -38,6 +35,6 @@ jobs:
 
       - name: Run azure-functions-doctor
         # Exit code 1 = required checks failed; exit code 0 = all required checks passed.
-        run: azure-functions-doctor doctor .
+        run: azure-functions-doctor doctor --path .
         # To use the minimal profile (required checks only):
-        # run: azure-functions-doctor doctor . --profile minimal
+        # run: azure-functions-doctor doctor --path . --profile minimal
