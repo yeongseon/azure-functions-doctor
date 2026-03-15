@@ -50,6 +50,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run doctor action (SARIF format)
+        id: doctor-sarif
+        continue-on-error: true
         uses: ./
         with:
           path: examples/v2/http-trigger

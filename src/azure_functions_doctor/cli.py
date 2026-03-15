@@ -197,12 +197,14 @@ def doctor(
                 "id": rule["id"],
                 "name": rule["label"],
                 "shortDescription": {"text": rule.get("description", rule["label"])},
-                "helpUri": rule.get("hint_url", ""),
                 "properties": {
                     "category": rule.get("category", ""),
                     "required": rule.get("required", False),
                 },
             }
+            hint_url = rule.get("hint_url", "")
+            if hint_url:
+                driver_rule["helpUri"] = hint_url
             driver_rules.append(driver_rule)
 
         sarif_results = []
