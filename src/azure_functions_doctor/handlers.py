@@ -158,6 +158,11 @@ class Rule(TypedDict, total=False):
     fix: str
     fix_command: str
     hint_url: str
+    source_type: Literal['ms_learn', 'derived', 'heuristic']
+    source_title: str
+    source_url: str
+    why_it_matters: str
+    symptoms: str
     check_order: int
 
 

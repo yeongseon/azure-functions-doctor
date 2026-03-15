@@ -30,6 +30,11 @@
     },
     "hint": "Use Python 3.10 or higher to match Azure Functions Doctor support.",
     "hint_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-reference-python#supported-python-versions",
+    "source_type": "ms_learn",
+    "source_title": "Azure Functions Python developer guide — Supported Python versions",
+    "source_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-reference-python#supported-python-versions",
+    "why_it_matters": "Azure Functions only supports Python 3.10+ for v2. Running an older interpreter causes immediate deployment failures and unsupported runtime errors.",
+    "symptoms": "Deployment fails with 'Python version not supported'; functions fail to start; 3.9 or earlier behaviours may cause silent type mismatches.",
     "fix_command": "pyenv install 3.10.16",
     "check_order": 1
   },
@@ -80,6 +85,11 @@
     },
     "hint": "Add a requirements.txt file to declare your dependencies.",
     "hint_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-reference-python#managing-dependencies",
+    "source_type": "ms_learn",
+    "source_title": "Azure Functions Python developer guide — Managing dependencies",
+    "source_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-reference-python#managing-dependencies",
+    "why_it_matters": "Azure Functions reads requirements.txt to install packages at deployment time. Without it, the runtime cannot resolve dependencies and the function app will fail to start.",
+    "symptoms": "ModuleNotFoundError at runtime; deployment pipeline fails with missing package errors; cold start crashes.",
     "fix_command": "pip freeze > requirements.txt",
     "check_order": 4
   },
@@ -97,6 +107,11 @@
     },
     "hint": "Add azure-functions to requirements.txt.",
     "hint_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-reference-python",
+    "source_type": "ms_learn",
+    "source_title": "Azure Functions Python developer guide",
+    "source_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-reference-python",
+    "why_it_matters": "The azure-functions SDK is the binding between user code and the Functions host. Without it, triggers and bindings cannot be parsed and the app will not start.",
+    "symptoms": "ImportError for azure.functions; function app fails to load; no triggers are registered.",
     "fix_command": "echo azure-functions >> requirements.txt",
     "check_order": 5
   },
@@ -129,6 +144,11 @@
     },
     "hint": "Add host.json to configure the Azure Functions host runtime.",
     "hint_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-host-json",
+    "source_type": "ms_learn",
+    "source_title": "Azure Functions host.json reference",
+    "source_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-host-json",
+    "why_it_matters": "host.json is required by the Azure Functions runtime to configure the host process. Without it the function app cannot start.",
+    "symptoms": "Function app fails to start locally or in Azure; 'Missing host.json' error in logs.",
     "check_order": 7
   },
   {
@@ -142,6 +162,11 @@
     "condition": {},
     "hint": "Add or correct \"version\": \"2.0\" in host.json.",
     "hint_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-host-json",
+    "source_type": "ms_learn",
+    "source_title": "Azure Functions host.json reference",
+    "source_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-host-json",
+    "why_it_matters": "The runtime version field gates which host features are enabled. An incorrect or missing version causes the host to fall back to v1 behaviour or refuse to start.",
+    "symptoms": "Runtime version mismatch errors; unexpected v1-style function loading; host startup failure.",
     "check_order": 8
   },
   {

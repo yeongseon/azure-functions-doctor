@@ -123,6 +123,28 @@
         "type": "integer",
         "description": "Display and execution order of the check.",
         "minimum": 0
+      },
+      "source_type": {
+        "type": "string",
+        "description": "Origin classification of this rule.",
+        "enum": ["ms_learn", "derived", "heuristic"]
+      },
+      "source_title": {
+        "type": "string",
+        "description": "Human-readable title of the primary documentation source."
+      },
+      "source_url": {
+        "type": "string",
+        "description": "Canonical URL for the primary documentation source.",
+        "format": "uri"
+      },
+      "why_it_matters": {
+        "type": "string",
+        "description": "Brief explanation of why this check matters in production."
+      },
+      "symptoms": {
+        "type": "string",
+        "description": "Observable symptoms when this check fails in production."
       }
     },
     "additionalProperties": false
