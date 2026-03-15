@@ -61,7 +61,9 @@
           "any_of_exists",
           "file_glob_check",
           "host_json_property",
-          "host_json_version"
+          "host_json_version",
+          "local_settings_security",
+          "host_json_extension_bundle_version"
         ]
       },
       "required": {

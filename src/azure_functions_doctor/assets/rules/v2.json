@@ -266,5 +266,31 @@
     "hint": "Add a .funcignore file to exclude test files, venv, and other non-deployment assets.",
     "hint_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local#funcignore",
     "check_order": 31
+  },
+  {
+    "id": "check_local_settings_git_tracked",
+    "category": "project_health",
+    "section": "security",
+    "label": "local.settings.json not git-tracked",
+    "description": "Checks that local.settings.json is not tracked by git, which could expose secrets in version control.",
+    "type": "local_settings_security",
+    "required": false,
+    "condition": {},
+    "hint": "Add local.settings.json to .gitignore to prevent accidental secret exposure in version control.",
+    "hint_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-develop-local#local-settings-file",
+    "check_order": 32
+  },
+  {
+    "id": "check_extension_bundle_v4",
+    "category": "configuration",
+    "section": "extensions",
+    "label": "extensionBundle v4 recommended",
+    "description": "Checks that extensionBundle in host.json uses the recommended v4 version range [4.*, 5.0.0).",
+    "type": "host_json_extension_bundle_version",
+    "required": false,
+    "condition": {},
+    "hint": "Update extensionBundle in host.json to use id 'Microsoft.Azure.Functions.ExtensionBundle' with version '[4.*, 5.0.0)'.",
+    "hint_url": "https://learn.microsoft.com/azure/azure-functions/functions-extension-bundles",
+    "check_order": 33
   }
 ]

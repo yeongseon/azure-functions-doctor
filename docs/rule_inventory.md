@@ -22,6 +22,9 @@ Rules are defined in `src/azure_functions_doctor/assets/rules/v2.json`.
 | `check_extension_bundle` | extensionBundle | configuration | extensions | `host_json_property` | No | full |
 | `check_asgi_wsgi_exposure` | ASGI/WSGI compatibility | framework | asgi_wsgi | `callable_detection` | No | full |
 | `check_unused_files` | Detect unused or invalid files | project_health | cleanup | `file_glob_check` | No | full |
+| `check_funcignore` | .funcignore | project_health | cleanup | `file_exists` | No | full |
+| `check_local_settings_git_tracked` | local.settings.json not git-tracked | project_health | security | `local_settings_security` | No | full |
+| `check_extension_bundle_v4` | extensionBundle v4 recommended | configuration | extensions | `host_json_extension_bundle_version` | No | full |
 
 ## Rule Types
 
@@ -40,6 +43,9 @@ Rules are defined in `src/azure_functions_doctor/assets/rules/v2.json`.
 | `any_of_exists` | Passes if any one of several targets (env vars, JSON properties) is present. |
 | `file_glob_check` | Matches file glob patterns to detect unwanted files in the project tree. |
 | `host_json_property` | Checks for a specific property in `host.json` via JSONPath. |
+| `host_json_version` | Checks that `host.json` declares `"version": "2.0"`. |
+| `local_settings_security` | Checks that `local.settings.json` is not tracked by git. |
+| `host_json_extension_bundle_version` | Checks that `extensionBundle` in `host.json` uses the recommended v4 range. |
 
 ## False-positive Risk
 

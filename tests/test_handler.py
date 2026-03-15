@@ -445,3 +445,127 @@ def test_host_json_version_fail_invalid_json(tmp_path: Path) -> None:
     rule = _make_rule("host_json_version", {})
     res = generic_handler(rule, tmp_path)
     assert res["status"] == "fail"
+
+
+def test_local_settings_security_not_present(tmp_path: Path) -> None:
+    """Test local_settings_security passes when local.settings.json does not exist."""
+    rule = _make_rule("local_settings_security", {})
+    res = generic_handler(rule, tmp_path)
+    assert res["status"] == "pass"
+    assert "not present" in res.get("detail", "").lower()
+
+
+def test_local_settings_security_not_tracked(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    """Test local_settings_security passes when local.settings.json is not git-tracked."""
+    import subprocess as _subprocess
+
+    settings = tmp_path / "local.settings.json"
+    settings.write_text('{"IsEncrypted": false}')
+
+    # Simulate git ls-files returning non-zero (file not tracked)
+    def fake_run(cmd: list[str], **kwargs: object) -> object:
+        class FakeResult:
+            returncode = 1
+        return FakeResult()
+
+    monkeypatch.setattr(_subprocess, "run", fake_run)
+    rule = _make_rule("local_settings_security", {})
+    res = generic_handler(rule, tmp_path)
+    assert res["status"] == "pass"
+    assert "not tracked" in res.get("detail", "").lower()
+
+
+def test_local_settings_security_tracked(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    """Test local_settings_security fails when local.settings.json is git-tracked."""
+    import subprocess as _subprocess
+
+    settings = tmp_path / "local.settings.json"
+    settings.write_text('{"IsEncrypted": false}')
+
+    # Simulate git ls-files returning zero (file is tracked)
+    def fake_run(cmd: list[str], **kwargs: object) -> object:
+        class FakeResult:
+            returncode = 0
+        return FakeResult()
+
+    monkeypatch.setattr(_subprocess, "run", fake_run)
+    rule = _make_rule("local_settings_security", {})
+    res = generic_handler(rule, tmp_path)
+    assert res["status"] == "fail"
+    assert ".gitignore" in res.get("detail", "")
+
+
+def test_local_settings_security_git_not_available(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    """Test local_settings_security passes gracefully when git is unavailable."""
+    import subprocess as _subprocess
+
+    settings = tmp_path / "local.settings.json"
+    settings.write_text('{"IsEncrypted": false}')
+
+    def fake_run(cmd: list[str], **kwargs: object) -> None:
+        raise FileNotFoundError("git not found")
+
+    monkeypatch.setattr(_subprocess, "run", fake_run)
+    rule = _make_rule("local_settings_security", {})
+    res = generic_handler(rule, tmp_path)
+    assert res["status"] == "pass"
+    assert "skipped" in res.get("detail", "").lower()
+
+
+def test_extension_bundle_v4_pass(tmp_path: Path) -> None:
+    """Test host_json_extension_bundle_version passes for a valid v4 bundle range."""
+    host = tmp_path / "host.json"
+    host.write_text(
+        '{"version": "2.0", "extensionBundle": '
+        '{"id": "Microsoft.Azure.Functions.ExtensionBundle", "version": "[4.*, 5.0.0)"}}'
+    )
+    rule = _make_rule("host_json_extension_bundle_version", {})
+    res = generic_handler(rule, tmp_path)
+    assert res["status"] == "pass"
+    assert "4" in res.get("detail", "")
+
+
+def test_extension_bundle_v4_fail_old_version(tmp_path: Path) -> None:
+    """Test host_json_extension_bundle_version fails for a v3 bundle range."""
+    host = tmp_path / "host.json"
+    host.write_text(
+        '{"version": "2.0", "extensionBundle": '
+        '{"id": "Microsoft.Azure.Functions.ExtensionBundle", "version": "[3.*, 4.0.0)"}}'
+    )
+    rule = _make_rule("host_json_extension_bundle_version", {})
+    res = generic_handler(rule, tmp_path)
+    assert res["status"] == "fail"
+    assert "below" in res.get("detail", "").lower() or "v4" in res.get("detail", "").lower()
+
+
+def test_extension_bundle_v4_fail_missing_bundle(tmp_path: Path) -> None:
+    """Test host_json_extension_bundle_version fails when extensionBundle is absent."""
+    host = tmp_path / "host.json"
+    host.write_text('{"version": "2.0"}')
+    rule = _make_rule("host_json_extension_bundle_version", {})
+    res = generic_handler(rule, tmp_path)
+    assert res["status"] == "fail"
+    detail = res.get("detail", "").lower()
+    assert "extensionbundle" in detail or "extension" in detail
+
+
+def test_extension_bundle_v4_fail_wrong_id(tmp_path: Path) -> None:
+    """Test host_json_extension_bundle_version fails when bundle id is not the recommended one."""
+    host = tmp_path / "host.json"
+    host.write_text(
+        '{"version": "2.0", "extensionBundle": {"id": "Custom.Bundle", "version": "[4.*, 5.0.0)"}}'
+    )
+    rule = _make_rule("host_json_extension_bundle_version", {})
+    res = generic_handler(rule, tmp_path)
+    assert res["status"] == "fail"
+    assert "Custom.Bundle" in res.get("detail", "")
+
+
+def test_extension_bundle_v4_fail_missing_host_json(tmp_path: Path) -> None:
+    """Test host_json_extension_bundle_version fails when host.json is absent."""
+    rule = _make_rule("host_json_extension_bundle_version", {})
+    res = generic_handler(rule, tmp_path)
+    assert res["status"] == "fail"
+    assert "not found" in res.get("detail", "").lower()

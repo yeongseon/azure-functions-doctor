@@ -136,6 +136,8 @@ class Rule(TypedDict, total=False):
         "file_glob_check",
         "host_json_property",
         "host_json_version",
+        "local_settings_security",
+        "host_json_extension_bundle_version",
     ]
     label: str
     category: str
@@ -169,6 +171,8 @@ class HandlerRegistry:
             "file_glob_check": self._handle_file_glob_check,
             "host_json_property": self._handle_host_json_property,
             "host_json_version": self._handle_host_json_version,
+            "local_settings_security": self._handle_local_settings_security,
+            "host_json_extension_bundle_version": self._handle_host_json_extension_bundle_version,
         }
 
     def handle(self, rule: Rule, path: Path) -> dict[str, str]:
@@ -561,6 +565,95 @@ class HandlerRegistry:
         )
 
 
+
+
+    def _handle_local_settings_security(self, rule: Rule, path: Path) -> dict[str, str]:
+        """Check that local.settings.json is not tracked by git (security risk)."""
+        import subprocess  # nosec B404
+
+        settings_path = path / "local.settings.json"
+        if not settings_path.exists():
+            return _create_result("pass", "local.settings.json not present; check skipped")
+
+        # Check if the file is tracked by git
+        try:
+            result = subprocess.run(  # nosec B603 B607
+                ["git", "-C", str(path), "ls-files", "--error-unmatch", str(settings_path)],
+                capture_output=True,
+                timeout=10,
+            )
+            tracked = result.returncode == 0
+        except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+            # git not available or not a git repo — skip check
+            return _create_result(
+                "pass",
+                "git not available; local.settings.json git-tracking check skipped",
+            )
+
+        if tracked:
+            return _create_result(
+                "fail",
+                "local.settings.json is tracked by git and may expose secrets"
+                " — add it to .gitignore",
+            )
+        return _create_result("pass", "local.settings.json is not tracked by git")
+
+    def _handle_host_json_extension_bundle_version(self, rule: Rule, path: Path) -> dict[str, str]:
+        """Check that extensionBundle in host.json uses the recommended v4 range."""
+        host_path = path / "host.json"
+        if not host_path.exists():
+            return _create_result("fail", "host.json not found")
+        try:
+            host_data = json.loads(host_path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            return _handle_specific_exceptions("reading host.json", exc)
+
+        if not isinstance(host_data, dict):
+            return _create_result("fail", "host.json is not a JSON object")
+
+        bundle = host_data.get("extensionBundle")
+        if bundle is None:
+            return _create_result("fail", "extensionBundle not configured in host.json")
+
+        if not isinstance(bundle, dict):
+            return _create_result("fail", "extensionBundle in host.json is not an object")
+
+        bundle_id = bundle.get("id", "")
+        bundle_version = bundle.get("version", "")
+
+        # Recommended bundle: id=Microsoft.Azure.Functions.ExtensionBundle, version=[4.*, 5.0.0)
+        recommended_id = "Microsoft.Azure.Functions.ExtensionBundle"
+        if bundle_id != recommended_id:
+            return _create_result(
+                "fail",
+                f"extensionBundle id '{bundle_id}' is not the recommended '{recommended_id}'",
+            )
+
+        # Check that the version range starts with [4.
+        version_str = str(bundle_version)
+        if version_str.startswith("[4."):
+            return _create_result(
+                "pass",
+                f"extensionBundle uses recommended v4 range: {version_str}",
+            )
+
+        # Detect older major versions
+        import re as _re
+        major_match = _re.search(r"\[(\d+)\.", version_str)
+        if major_match:
+            major = int(major_match.group(1))
+            if major < 4:
+                return _create_result(
+                    "fail",
+                    f"extensionBundle version '{version_str}' is below"
+                    " recommended v4 range — upgrade to [4.*, 5.0.0)",
+                )
+
+        return _create_result(
+            "fail",
+            f"extensionBundle version '{version_str}' does not match"
+            " recommended v4 range [4.*, 5.0.0)",
+        )
 # Global registry instance
 _registry = HandlerRegistry()
 
