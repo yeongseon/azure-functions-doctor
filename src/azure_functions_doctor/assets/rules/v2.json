@@ -101,6 +101,22 @@
     "check_order": 5
   },
   {
+    "id": "check_azure_functions_worker",
+    "category": "dependencies",
+    "section": "python_env",
+    "label": "azure-functions-worker not pinned",
+    "description": "Warns if azure-functions-worker is directly declared in requirements.txt. The Azure Functions platform manages the worker runtime; pinning it can cause deployment failures.",
+    "type": "package_forbidden",
+    "required": false,
+    "condition": {
+      "package": "azure-functions-worker",
+      "file": "requirements.txt"
+    },
+    "hint": "Remove azure-functions-worker from requirements.txt. The Azure Functions platform manages the worker runtime automatically.",
+    "hint_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-reference-python#managing-dependencies",
+    "check_order": 6
+  },
+  {
     "id": "check_host_json",
     "category": "structure",
     "section": "project_structure",

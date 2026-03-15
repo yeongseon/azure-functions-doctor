@@ -13,6 +13,7 @@ Rules are defined in `src/azure_functions_doctor/assets/rules/v2.json`.
 | `check_python_executable` | Python executable | environment | python_env | `path_exists` | No | full |
 | `check_requirements_txt` | requirements.txt | dependencies | python_env | `file_exists` | Yes | minimal, full |
 | `check_azure_functions_library` | azure-functions package | dependencies | python_env | `package_declared` | Yes | minimal, full |
+| `check_azure_functions_worker` | azure-functions-worker not pinned | dependencies | python_env | `package_forbidden` | No | full |
 | `check_host_json` | host.json | structure | project_structure | `file_exists` | Yes | minimal, full |
 | `check_host_json_version` | host.json version | structure | project_structure | `host_json_version` | Yes | minimal, full |
 | `check_local_settings` | local.settings.json | structure | project_structure | `file_exists` | No | full |
@@ -37,6 +38,7 @@ Rules are defined in `src/azure_functions_doctor/assets/rules/v2.json`.
 | `path_exists` | Checks whether a filesystem path (e.g. `sys.executable`) exists. |
 | `package_installed` | Checks whether a Python package is importable in the current environment. |
 | `package_declared` | Checks whether a package name appears in a dependency file. |
+| `package_forbidden` | Checks that a platform-managed package is NOT declared in a dependency file. |
 | `source_code_contains` | Scans Python source files for a keyword or AST pattern. |
 | `conditional_exists` | Checks for a JSON property only when a related condition is detected. |
 | `callable_detection` | Detects whether the project exposes an ASGI or WSGI callable. |

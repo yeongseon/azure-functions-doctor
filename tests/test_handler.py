@@ -569,3 +569,47 @@ def test_extension_bundle_v4_fail_missing_host_json(tmp_path: Path) -> None:
     res = generic_handler(rule, tmp_path)
     assert res["status"] == "fail"
     assert "not found" in res.get("detail", "").lower()
+
+
+def test_package_forbidden_pass(tmp_path: Path) -> None:
+    """package_forbidden passes when the forbidden package is NOT in requirements.txt."""
+    req = tmp_path / "requirements.txt"
+    req.write_text("azure-functions\n")
+    condition: Condition = {"package": "azure-functions-worker", "file": "requirements.txt"}
+    rule = _make_rule("package_forbidden", condition)
+    res = generic_handler(rule, tmp_path)
+    assert res["status"] == "pass"
+    assert "azure-functions-worker" in res.get("detail", "")
+
+
+def test_package_forbidden_fail(tmp_path: Path) -> None:
+    """package_forbidden fails when the forbidden package IS in requirements.txt."""
+    req = tmp_path / "requirements.txt"
+    req.write_text("azure-functions\nazure-functions-worker==1.0\n")
+    condition = cast(
+        Condition, {"package": "azure-functions-worker", "file": "requirements.txt"}
+    )
+    rule = _make_rule("package_forbidden", condition)
+    res = generic_handler(rule, tmp_path)
+    assert res["status"] == "fail"
+    assert "azure-functions-worker" in res.get("detail", "")
+
+
+def test_package_forbidden_no_requirements_file(tmp_path: Path) -> None:
+    """package_forbidden fails when the requirements file is missing."""
+    condition_2: Condition = {"package": "azure-functions-worker", "file": "requirements.txt"}
+    rule = _make_rule("package_forbidden", condition_2)
+    res = generic_handler(rule, tmp_path)
+    assert res["status"] == "fail"
+    assert "not found" in res.get("detail", "").lower()
+
+
+def test_package_forbidden_missing_package_field(tmp_path: Path) -> None:
+    """package_forbidden fails gracefully when condition is missing the package field."""
+    req = tmp_path / "requirements.txt"
+    req.write_text("azure-functions\n")
+    rule = _make_rule("package_forbidden", {"file": "requirements.txt"})  # no 'package' key
+    res = generic_handler(rule, tmp_path)
+    assert res["status"] == "fail"
+    assert "Missing" in res.get("detail", "")
+

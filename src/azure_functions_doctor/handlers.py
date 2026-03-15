@@ -124,6 +124,8 @@ class Condition(TypedDict, total=False):
     targets: list[str]
     patterns: list[str]
     pypi: str
+    package: str
+    file: str
 
 
 class Rule(TypedDict, total=False):
@@ -144,6 +146,7 @@ class Rule(TypedDict, total=False):
         "host_json_version",
         "local_settings_security",
         "host_json_extension_bundle_version",
+        "package_forbidden",
     ]
     label: str
     category: str
@@ -179,6 +182,7 @@ class HandlerRegistry:
             "host_json_version": self._handle_host_json_version,
             "local_settings_security": self._handle_local_settings_security,
             "host_json_extension_bundle_version": self._handle_host_json_extension_bundle_version,
+            "package_forbidden": self._handle_package_forbidden,
         }
 
     def handle(self, rule: Rule, path: Path) -> dict[str, str]:
@@ -372,6 +376,36 @@ class HandlerRegistry:
             "pass" if declared else "fail",
             f"Package '{package_name}' {'declared' if declared else 'not declared'} in {req_file}",
         )
+
+    def _handle_package_forbidden(self, rule: Rule, path: Path) -> dict[str, str]:
+        """Warn when a package that should NOT be pinned appears in requirements.txt."""
+        condition = rule.get("condition", {}) or {}
+        package_name_obj = condition.get("package") or condition.get("target")
+        req_file_obj = condition.get("file", "requirements.txt")
+        if not isinstance(package_name_obj, str):
+            return _create_result("fail", "Missing 'package' in condition")
+        package_name = package_name_obj
+        req_file = str(req_file_obj)
+        req_path = path / Path(req_file)
+        if not req_path.exists():
+            return _create_result("fail", f"{req_path} not found")
+        try:
+            content = req_path.read_text(encoding="utf-8").splitlines()
+        except Exception as exc:
+            return _handle_specific_exceptions(f"reading {req_file}", exc)
+        normalized = [
+            re.split(pattern=r"[=<>!~]", string=line.strip(), maxsplit=1)[0].lower()
+            for line in content
+            if line.strip() and not line.strip().startswith("#")
+        ]
+        declared = package_name.lower() in normalized
+        if declared:
+            return _create_result(
+                "fail",
+                f"Package '{package_name}' should not be declared in {req_file} "
+                "(managed by the platform)",
+            )
+        return _create_result("pass", f"Package '{package_name}' not declared in {req_file}")
 
     def _handle_conditional_exists(self, rule: Rule, path: Path) -> dict[str, str]:
         """Handle host.json checks that only matter when a related feature is detected."""

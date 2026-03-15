@@ -48,6 +48,7 @@ These checks run in both `full` and `minimal` profiles.
 | Programming model v2 | Detect decorator-based Azure Functions usage (heuristic). |
 | Virtual environment | Confirm local development is isolated. |
 | Python executable | Confirm Python is available and resolvable. |
+| azure-functions-worker not pinned | Warn if azure-functions-worker is declared in requirements.txt. |
 | `local.settings.json` | Flag missing local settings for development. |
 | Azure Functions Core Tools | Recommend local tooling presence. |
 | Core Tools version | Recommend Functions Core Tools v4+. |
@@ -64,6 +65,7 @@ These checks run in both `full` and `minimal` profiles.
 | Programming model v2 | `check_programming_model_v2` | `source_code_contains` | Project source does not expose `@app.` decorators in AST mode. |
 | Virtual environment | `check_venv` | `env_var_exists` | `VIRTUAL_ENV` is not set. |
 | Python executable | `check_python_executable` | `path_exists` | `sys.executable` is empty or points to a missing path. |
+| azure-functions-worker not pinned | `check_azure_functions_worker` | `package_forbidden` | `azure-functions-worker` is declared in `requirements.txt`. |
 | `local.settings.json` | `check_local_settings` | `file_exists` | Local settings file is absent for local execution scenarios. |
 | Azure Functions Core Tools | `check_func_cli` | `executable_exists` | `func` executable is not available on `PATH`. |
 | Core Tools version | `check_func_core_tools_version` | `compare_version` | Detected Core Tools version is lower than `4.0`. |
