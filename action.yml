@@ -1,0 +1,168 @@
+name: Azure Functions Doctor
+description: >
+  Run azure-functions-doctor diagnostics on an Azure Functions Python v2 project.
+  Checks project health, outputs structured reports, and optionally uploads SARIF
+  to GitHub Code Scanning.
+
+branding:
+  icon: activity
+  color: blue
+
+inputs:
+  path:
+    description: Path to the Azure Functions project directory
+    required: false
+    default: "."
+  profile:
+    description: "Rule profile: 'minimal' (required checks only) or 'full' (all checks)"
+    required: false
+    default: "minimal"
+  format:
+    description: "Output format: 'json', 'sarif', 'junit', or 'table'"
+    required: false
+    default: "json"
+  output:
+    description: Path to save the report file
+    required: false
+    default: "doctor-report.json"
+  python-version:
+    description: Python version to use for running the doctor
+    required: false
+    default: "3.12"
+  install-project-deps:
+    description: Install project requirements.txt before running checks
+    required: false
+    default: "false"
+  upload-artifact:
+    description: Upload the report as a GitHub Actions artifact
+    required: false
+    default: "true"
+  artifact-name:
+    description: Name of the uploaded artifact
+    required: false
+    default: "doctor-report"
+  upload-sarif:
+    description: Upload SARIF report to GitHub Code Scanning (requires format=sarif and security-events:write permission)
+    required: false
+    default: "false"
+  sarif-category:
+    description: Category label for the SARIF upload
+    required: false
+    default: "azure-functions-doctor"
+  fail-on-warn:
+    description: Exit with code 1 if any warnings are found (in addition to failures)
+    required: false
+    default: "false"
+  version:
+    description: "Version of azure-functions-doctor to install (e.g. '0.15.1' or 'latest')"
+    required: false
+    default: "latest"
+
+outputs:
+  exit-code:
+    description: Exit code from the doctor run (0 = pass, 1 = failures found)
+    value: ${{ steps.run-doctor.outputs.exit_code }}
+  report-path:
+    description: Absolute path to the generated report file
+    value: ${{ steps.run-doctor.outputs.report_path }}
+  failed-count:
+    description: Number of failed checks
+    value: ${{ steps.run-doctor.outputs.failed_count }}
+  warned-count:
+    description: Number of warned checks
+    value: ${{ steps.run-doctor.outputs.warned_count }}
+  passed-count:
+    description: Number of passed checks
+    value: ${{ steps.run-doctor.outputs.passed_count }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install azure-functions-doctor
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        if [ "${{ inputs.version }}" = "latest" ]; then
+          pip install azure-functions-doctor
+        else
+          pip install "azure-functions-doctor==${{ inputs.version }}"
+        fi
+
+    - name: Install project dependencies
+      if: inputs.install-project-deps == 'true'
+      shell: bash
+      run: |
+        if [ -f "${{ inputs.path }}/requirements.txt" ]; then
+          pip install -r "${{ inputs.path }}/requirements.txt"
+        fi
+
+    - name: Run azure-functions-doctor
+      id: run-doctor
+      shell: bash
+      run: |
+        set +e
+        azure-functions doctor \
+          --path "${{ inputs.path }}" \
+          --profile "${{ inputs.profile }}" \
+          --format "${{ inputs.format }}" \
+          --output "${{ inputs.output }}"
+        DOCTOR_EXIT=$?
+
+        echo "exit_code=${DOCTOR_EXIT}" >> "$GITHUB_OUTPUT"
+        echo "report_path=$(realpath ${{ inputs.output }})" >> "$GITHUB_OUTPUT"
+
+        # Parse counts from JSON report if format is json
+        if [ "${{ inputs.format }}" = "json" ] && [ -f "${{ inputs.output }}" ]; then
+          FAILED=$(python3 -c "
+        import json, sys
+        data = json.load(open('${{ inputs.output }}'))
+        items = [i for s in data.get('results', []) for i in s.get('items', [])]
+        print(sum(1 for i in items if i.get('status') == 'fail'))
+        " 2>/dev/null || echo "0")
+          WARNED=$(python3 -c "
+        import json, sys
+        data = json.load(open('${{ inputs.output }}'))
+        items = [i for s in data.get('results', []) for i in s.get('items', [])]
+        print(sum(1 for i in items if i.get('status') == 'warn'))
+        " 2>/dev/null || echo "0")
+          PASSED=$(python3 -c "
+        import json, sys
+        data = json.load(open('${{ inputs.output }}'))
+        items = [i for s in data.get('results', []) for i in s.get('items', [])]
+        print(sum(1 for i in items if i.get('status') == 'pass'))
+        " 2>/dev/null || echo "0")
+          echo "failed_count=${FAILED}" >> "$GITHUB_OUTPUT"
+          echo "warned_count=${WARNED}" >> "$GITHUB_OUTPUT"
+          echo "passed_count=${PASSED}" >> "$GITHUB_OUTPUT"
+        else
+          echo "failed_count=0" >> "$GITHUB_OUTPUT"
+          echo "warned_count=0" >> "$GITHUB_OUTPUT"
+          echo "passed_count=0" >> "$GITHUB_OUTPUT"
+        fi
+
+        # Fail-on-warn logic
+        if [ "${{ inputs.fail-on-warn }}" = "true" ] && [ "${WARNED}" != "0" ] && [ "${WARNED}" != "" ]; then
+          exit 1
+        fi
+
+        exit $DOCTOR_EXIT
+
+    - name: Upload report artifact
+      if: inputs.upload-artifact == 'true' && always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ inputs.output }}
+        if-no-files-found: warn
+
+    - name: Upload SARIF to GitHub Code Scanning
+      if: inputs.upload-sarif == 'true' && inputs.format == 'sarif' && always()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ inputs.output }}
+        category: ${{ inputs.sarif-category }}

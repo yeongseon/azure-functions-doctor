@@ -179,6 +179,158 @@ steps:
 - Treating warnings as failures without clear team policy
 - Parsing display-only fields instead of status fields
 
+## Azure DevOps Pipelines
+
+Add a pipeline step to gate deployments on Azure Functions project health:
+
+```yaml
+# azure-pipelines.yml
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: "3.12"
+      addToPath: true
+
+  - script: |
+      python -m pip install --upgrade pip
+      pip install azure-functions-doctor
+    displayName: Install azure-functions-doctor
+
+  - script: |
+      set +e
+      azure-functions doctor \
+        --profile minimal \
+        --format json \
+        --output $(Build.ArtifactStagingDirectory)/doctor.json
+      echo "##vso[task.setvariable variable=DOCTOR_EXIT_CODE]$?"
+    displayName: Run azure-functions-doctor
+
+  - task: PublishBuildArtifacts@1
+    condition: always()
+    inputs:
+      pathToPublish: $(Build.ArtifactStagingDirectory)/doctor.json
+      artifactName: doctor-report
+    displayName: Publish doctor report
+
+  - script: |
+      if [ "$(DOCTOR_EXIT_CODE)" != "0" ]; then
+        echo "##vso[task.logissue type=error]azure-functions-doctor found required failures"
+        exit 1
+      fi
+    displayName: Fail pipeline on required failures
+```
+
+For SARIF output, replace `--format json` with `--format sarif --output doctor.sarif` and publish that artifact instead.
+
+## Pre-commit hook
+
+Run doctor as a local pre-commit check to catch issues before push:
+
+```yaml
+# .pre-commit-config.yaml
+repos:
+  - repo: local
+    hooks:
+      - id: azure-functions-doctor
+        name: Azure Functions Doctor
+        language: system
+        entry: azure-functions doctor --profile minimal
+        pass_filenames: false
+        always_run: true
+```
+
+Install and run:
+
+```bash
+pip install pre-commit azure-functions-doctor
+pre-commit install
+pre-commit run azure-functions-doctor
+```
+
+This runs the required-checks profile on every commit attempt. Use `--profile minimal` to keep the hook fast and focused on blocking issues only.
+
+## VS Code task
+
+Run doctor from the VS Code command palette via a workspace task:
+
+```json
+// .vscode/tasks.json
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Azure Functions Doctor",
+      "type": "shell",
+      "command": "azure-functions doctor --profile minimal --format json --output doctor.json",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    }
+  ]
+}
+```
+
+Run it with **Terminal → Run Task → Azure Functions Doctor**. The JSON report is written to `doctor.json` in the workspace root for inspection.
+
+## SARIF upload to GitHub Code Scanning
+
+Upload doctor results as SARIF to surface findings in the GitHub Security tab:
+
+```yaml
+      - name: Run doctor (SARIF output)
+        id: doctor
+        run: |
+          set +e
+          azure-functions doctor \
+            --profile minimal \
+            --format sarif \
+            --output doctor.sarif
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Upload SARIF to GitHub Code Scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: doctor.sarif
+          category: azure-functions-doctor
+
+      - name: Fail job on required failures
+        if: steps.doctor.outputs.exit_code != '0'
+        run: exit 1
+```
+
+The SARIF report includes:
+
+- `ruleId` mapped to the canonical rule identifier (e.g. `check_host_json_exists`)
+- `level` set to `error` for required failures, `warning` for optional checks
+- `locations` pointing to the project root
+- `properties.hint` with the actionable fix suggestion
+- `driver.rules` array listing all rules with description and category
+
+Requires `security-events: write` permission on the job:
+
+```yaml
+jobs:
+  doctor:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+```
+
 ## Related docs
 
 - [Configuration](../configuration.md)

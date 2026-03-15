@@ -1,0 +1,76 @@
+name: Action Integration Test
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  test-action-healthy:
+    name: Test action on healthy example
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run doctor action on healthy example
+        id: doctor
+        uses: ./
+        with:
+          path: examples/v2/http-trigger
+          profile: minimal
+          format: json
+          output: doctor-healthy.json
+          python-version: "3.12"
+          upload-artifact: "true"
+          artifact-name: doctor-healthy-report
+
+      - name: Verify outputs
+        run: |
+          echo "Exit code: ${{ steps.doctor.outputs.exit-code }}"
+          echo "Passed: ${{ steps.doctor.outputs.passed-count }}"
+          echo "Failed: ${{ steps.doctor.outputs.failed-count }}"
+          echo "Warned: ${{ steps.doctor.outputs.warned-count }}"
+          echo "Report: ${{ steps.doctor.outputs.report-path }}"
+          test -f doctor-healthy.json || (echo "Report file not found" && exit 1)
+
+  test-action-sarif:
+    name: Test action with SARIF output
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run doctor action (SARIF format)
+        uses: ./
+        with:
+          path: examples/v2/http-trigger
+          profile: full
+          format: sarif
+          output: doctor.sarif
+          python-version: "3.12"
+          upload-artifact: "true"
+          artifact-name: doctor-sarif-report
+          upload-sarif: "true"
+          sarif-category: azure-functions-doctor-integration-test
+
+      - name: Verify SARIF file
+        run: |
+          test -f doctor.sarif || (echo "SARIF file not found" && exit 1)
+          python3 -c "
+          import json
+          data = json.load(open('doctor.sarif'))
+          assert data.get('version') == '2.1.0', 'Expected SARIF version 2.1.0'
+          runs = data.get('runs', [])
+          assert len(runs) == 1, 'Expected exactly 1 run'
+          driver = runs[0]['tool']['driver']
+          assert driver['name'] == 'azure-functions-doctor', 'Wrong driver name'
+          assert 'rules' in driver, 'Missing driver.rules'
+          print('SARIF validation passed')
+          "

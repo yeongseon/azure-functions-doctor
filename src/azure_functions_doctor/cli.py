@@ -187,20 +187,52 @@ def doctor(
         raise typer.Exit(1 if fail_count > 0 else 0)
 
     if format == "sarif":
+        # Build label → rule mapping for enriched ruleId and metadata
+        label_to_rule = {r["label"]: r for r in loaded_rules}
+
+        # Build driver.rules from the full loaded ruleset
+        driver_rules = []
+        for rule in loaded_rules:
+            driver_rule: dict[str, object] = {
+                "id": rule["id"],
+                "name": rule["label"],
+                "shortDescription": {"text": rule.get("description", rule["label"])},
+                "helpUri": rule.get("hint_url", ""),
+                "properties": {
+                    "category": rule.get("category", ""),
+                    "required": rule.get("required", False),
+                },
+            }
+            driver_rules.append(driver_rule)
+
         sarif_results = []
         for section in results:
             for item in section["items"]:
                 status = item.get("status")
                 if status == "pass":
                     continue
+                label = item.get("label", "")
+                matched_rule = label_to_rule.get(label)
+                rule_id = matched_rule["id"] if matched_rule else label
                 level = "error" if status == "fail" else "warning"
-                sarif_results.append(
-                    {
-                        "ruleId": item.get("label", ""),
-                        "message": {"text": item.get("value", "")},
-                        "level": level,
-                    }
-                )
+                sarif_result: dict[str, object] = {
+                    "ruleId": rule_id,
+                    "message": {"text": item.get("value", "")},
+                    "level": level,
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uri": str(resolved_path),
+                                    "uriBaseId": "%SRCROOT%",
+                                }
+                            }
+                        }
+                    ],
+                }
+                if item.get("hint"):
+                    sarif_result["properties"] = {"hint": item["hint"]}
+                sarif_results.append(sarif_result)
 
         sarif_output = {
             "version": "2.1.0",
@@ -211,6 +243,8 @@ def doctor(
                         "driver": {
                             "name": "azure-functions-doctor",
                             "version": __version__,
+                            "informationUri": "https://github.com/yeongseon/azure-functions-doctor",
+                            "rules": driver_rules,
                         }
                     },
                     "results": sarif_results,

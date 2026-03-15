@@ -13,20 +13,24 @@
 Read this in: [한국어](README.ko.md) | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
 
 
-Azure Functions Doctor is a diagnostic CLI for projects built on the **Azure Functions Python v2 programming model**.
-
-It checks a local project for common issues such as:
-
-- unsupported Python versions
-- missing `host.json` or `requirements.txt`
-- missing `azure-functions` dependency
-- missing virtual environments
-- missing Azure Functions Core Tools
-- incomplete local development setup
+**Azure Functions Doctor** is the pre-deploy health gate for **Azure Functions Python v2** projects — a diagnostic CLI that catches configuration issues, missing dependencies, and environment problems before they cause runtime failures in production.
 
 ## Why Use It
 
-Setting up an Azure Functions Python project involves multiple configuration files, dependencies, and tooling. Missing any one of them leads to confusing runtime errors. `azure-functions-doctor` checks your project against a curated ruleset and reports issues before they reach production.
+Deploying a broken Azure Functions app is expensive: the worker starts, the host reads config, and only then does it surface the issue — in a production log. `azure-functions-doctor` moves that failure left.
+
+Common issues it catches before deployment:
+
+- Python version mismatch with the Azure Functions runtime
+- Missing `host.json` or misconfigured `extensionBundle`
+- `azure-functions` package not declared in `requirements.txt`
+- v2 programming model decorators not detected (wrong project structure)
+- Azure Functions Core Tools not installed or outdated
+- Virtual environment not activated or missing
+- Application Insights key not configured (optional but recommended)
+- Durable Functions host configuration incomplete
+
+Run it locally, in CI, or as a pre-commit hook.
 
 ## Scope
 
@@ -34,6 +38,8 @@ This repository targets the decorator-based Azure Functions Python v2 programmin
 
 - Supported model: `func.FunctionApp()` with decorators such as `@app.route()`
 - Unsupported model: legacy `function.json`-based Python v1 projects
+
+Use `azure-functions-doctor` as part of a pre-deployment checklist alongside [azure-functions-logging](https://github.com/yeongseon/azure-functions-logging) for observability.
 
 ## Installation
 
@@ -78,6 +84,40 @@ Output JSON for CI:
 ```bash
 azure-functions doctor --format json
 ```
+
+## CI Integration
+
+Use `azure-functions-doctor` as a CI gate to block deployments on required failures.
+
+### GitHub Actions (CLI)
+
+```yaml
+- name: Run azure-functions-doctor
+  run: |
+    pip install azure-functions-doctor
+    azure-functions doctor --profile minimal --format json --output doctor.json
+
+- name: Upload report
+  if: always()
+  uses: actions/upload-artifact@v4
+  with:
+    name: doctor-report
+    path: doctor.json
+```
+
+### Official GitHub Action
+
+```yaml
+- uses: yeongseon/azure-functions-doctor@v1
+  with:
+    path: .
+    profile: minimal
+    format: sarif
+    output: doctor.sarif
+    upload-sarif: "true"
+```
+
+See [docs/examples/ci_integration.md](docs/examples/ci_integration.md) for Azure DevOps, pre-commit, VS Code, and SARIF upload examples.
 
 ## Demo
 
@@ -128,12 +168,13 @@ The default ruleset includes checks for:
 - [docs/rules.md](docs/rules.md)
 - [docs/diagnostics.md](docs/diagnostics.md)
 - [docs/development.md](docs/development.md)
+- [docs/examples/ci_integration.md](docs/examples/ci_integration.md)
 
 ## Ecosystem
 
 - [azure-functions-validation](https://github.com/yeongseon/azure-functions-validation) — Request and response validation
 - [azure-functions-openapi](https://github.com/yeongseon/azure-functions-openapi) — OpenAPI and Swagger UI
-- [azure-functions-logging](https://github.com/yeongseon/azure-functions-logging) — Structured logging
+- [azure-functions-logging](https://github.com/yeongseon/azure-functions-logging) — Invocation-aware observability helper
 - [azure-functions-scaffold](https://github.com/yeongseon/azure-functions-scaffold) — Project scaffolding
 - [azure-functions-python-cookbook](https://github.com/yeongseon/azure-functions-python-cookbook) — Recipes and examples
 
