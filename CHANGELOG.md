@@ -1,5 +1,26 @@
 # Changelog
 
+All notable changes to this project will be documented in this file.
+
+## [0.16.0] - 2026-03-15
+
+### Added
+
+- Official GitHub Action, CI examples, and README repositioning
+- `local.settings.json` security check and extension bundle v4 validation
+- Harden diagnostics and expand rule coverage
+- v2 examples overhaul with complete project structure and expanded tests
+- Warning for `azure-functions-worker` dependency
+- Source metadata fields to core required rules
+
+### Fixed
+
+- Map `warn` status to `<skipped>` instead of `<failure>` in JUnit output
+- Add `continue-on-error` to SARIF test and fix empty `helpUri` in SARIF driver rules
+- Use relative URI in SARIF locations and fix action integration test
+- Correct CLI invocation in preflight workflow
+
+
 - bump version to 0.15.1 — tooling unification, documentation overhaul, translated READMEs
 
 - bump version to 0.15.0 (02cda2ae8437c80e537890cf44306a0bed906976)
