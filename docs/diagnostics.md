@@ -25,30 +25,29 @@ These checks run in both `full` and `minimal` profiles.
 
 | Check | Purpose |
 | --- | --- |
-| Programming model v2 | Detect decorator-based Azure Functions usage. |
 | Python version | Ensure Python 3.10 or newer. |
-| Virtual environment | Confirm local development is isolated. |
-| Python executable | Confirm Python is available and resolvable. |
 | `requirements.txt` | Ensure dependency declarations exist. |
 | `azure-functions` package | Ensure the Functions library is declared. |
 | `host.json` | Ensure the project includes host configuration. |
+| `host.json` version | Ensure host.json declares `"version": "2.0"`. |
 
 ### Required Check Details
 
 | Label | Rule ID | Handler Type | Fails When |
 | --- | --- | --- | --- |
-| Programming model v2 | `check_programming_model_v2` | `source_code_contains` | Project source does not expose `@app.` decorators in AST mode. |
 | Python version | `check_python_version` | `compare_version` | Current interpreter is lower than `3.10`. |
-| Virtual environment | `check_venv` | `env_var_exists` | `VIRTUAL_ENV` is not set. |
-| Python executable | `check_python_executable` | `path_exists` | `sys.executable` is empty or points to a missing path. |
 | `requirements.txt` | `check_requirements_txt` | `file_exists` | `requirements.txt` is missing at project root. |
 | `azure-functions` package | `check_azure_functions_library` | `package_declared` | `azure-functions` is not declared in `requirements.txt`. |
 | `host.json` | `check_host_json` | `file_exists` | `host.json` is missing at project root. |
+| `host.json` version | `check_host_json_version` | `host_json_version` | `host.json` does not declare `"version": "2.0"`. |
 
 ## Optional Checks
 
 | Check | Purpose |
 | --- | --- |
+| Programming model v2 | Detect decorator-based Azure Functions usage (heuristic). |
+| Virtual environment | Confirm local development is isolated. |
+| Python executable | Confirm Python is available and resolvable. |
 | `local.settings.json` | Flag missing local settings for development. |
 | Azure Functions Core Tools | Recommend local tooling presence. |
 | Core Tools version | Recommend Functions Core Tools v4+. |
@@ -62,6 +61,9 @@ These checks run in both `full` and `minimal` profiles.
 
 | Label | Rule ID | Handler Type | Warns When |
 | --- | --- | --- | --- |
+| Programming model v2 | `check_programming_model_v2` | `source_code_contains` | Project source does not expose `@app.` decorators in AST mode. |
+| Virtual environment | `check_venv` | `env_var_exists` | `VIRTUAL_ENV` is not set. |
+| Python executable | `check_python_executable` | `path_exists` | `sys.executable` is empty or points to a missing path. |
 | `local.settings.json` | `check_local_settings` | `file_exists` | Local settings file is absent for local execution scenarios. |
 | Azure Functions Core Tools | `check_func_cli` | `executable_exists` | `func` executable is not available on `PATH`. |
 | Core Tools version | `check_func_core_tools_version` | `compare_version` | Detected Core Tools version is lower than `4.0`. |
@@ -70,7 +72,6 @@ These checks run in both `full` and `minimal` profiles.
 | `extensionBundle` | `check_extension_bundle` | `host_json_property` | `$.extensionBundle` key is not present in `host.json`. |
 | ASGI/WSGI compatibility | `check_asgi_wsgi_exposure` | `callable_detection` | No ASGI/WSGI app exposure patterns are detected. |
 | Unwanted files | `check_unused_files` | `file_glob_check` | Common deploy-time junk patterns are found. |
-
 ## Status Mapping
 
 - `pass`: check succeeded
