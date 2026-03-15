@@ -26,24 +26,25 @@ This means `minimal` behavior adapts to your custom rules file if you provide on
 
 ## Built-in minimal rule set (current)
 
-With built-in `v2.json`, minimal includes these 7 checks:
+With built-in `v2.json`, minimal includes these 5 checks:
 
-1. `check_programming_model_v2`
-2. `check_python_version`
-3. `check_venv`
-4. `check_python_executable`
-5. `check_requirements_txt`
-6. `check_azure_functions_library`
-7. `check_host_json`
+1. `check_python_version`
+2. `check_requirements_txt`
+3. `check_azure_functions_library`
+4. `check_host_json`
+5. `check_host_json_version`
 
-These represent core project viability requirements.
+These represent the minimum structural requirements for a valid Azure Functions Python v2 project.
 
 ## Full vs minimal comparison
 
 | Dimension | `full` profile | `minimal` profile |
 | --- | --- | --- |
 | Rule scope | Required + optional | Required only |
-| Built-in count | 15 rules | 7 rules |
+| Built-in count | 20 rules | 5 rules |
+| Warning volume | Higher | Lower |
+| CI suitability | Useful for report artifacts | Best for hard gating |
+| Local guidance depth | High | Baseline only |
 | Warning volume | Higher | Lower |
 | CI suitability | Useful for report artifacts | Best for hard gating |
 | Local guidance depth | High | Baseline only |
@@ -52,14 +53,20 @@ These represent core project viability requirements.
 
 Optional checks excluded by default include:
 
+- Programming model v2 detection (`check_programming_model_v2`)
+- Virtual environment activation (`check_venv`)
+- Python executable path (`check_python_executable`)
+- `azure-functions-worker` pin warning
 - `local.settings.json` presence
 - Core Tools availability/version
 - Durable host config checks
 - Application Insights signal checks
 - `extensionBundle` host property
 - ASGI/WSGI callable heuristics
-- cleanup pattern checks
-
+- Cleanup pattern checks
+- `.funcignore` presence
+- `local.settings.json` git-tracking check
+- Extension bundle v4 recommendation
 These remain available in full profile.
 
 ## Command examples
