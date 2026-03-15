@@ -18,7 +18,13 @@ logger = get_logger(__name__)
 
 
 def _source_contains_ast(source: str, identifier: str) -> bool:
-    """Return True when the source contains a decorator like `@identifier.xxx`."""
+    """Return True when the source contains a decorator like ``@identifier.xxx``.
+
+    ``identifier`` may be a pipe-separated list (e.g. ``"app|bp"``) to match
+    any of the given names, which covers both ``@app.route()`` and the
+    Blueprint-style ``@bp.route()``.
+    """
+    identifiers = set(identifier.split("|"))
     try:
         tree = ast.parse(source)
     except SyntaxError:
@@ -28,7 +34,7 @@ def _source_contains_ast(source: str, identifier: str) -> bool:
         # @app.route() is ast.Call(func=Attribute(...)); @app.route is ast.Attribute
         node: ast.expr = dec.func if isinstance(dec, ast.Call) else dec
         if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
-            return node.value.id == identifier
+            return node.value.id in identifiers
         return False
 
     for node in ast.walk(tree):
@@ -315,7 +321,10 @@ class HandlerRegistry:
 
         found = False
         if mode == "ast":
-            ast_identifier = keyword.strip().lstrip("@").rstrip(".")
+            # Support pipe-separated identifiers like "@app.|@bp." so that both
+            # standard (@app.route) and Blueprint-style (@bp.route) are recognised.
+            raw_parts = keyword.strip().split("|")
+            ast_identifier = "|".join(p.strip().lstrip("@").rstrip(".") for p in raw_parts)
             if not ast_identifier:
                 return _create_result("fail", "Invalid 'keyword' for AST mode")
             for _py_file, content in _iter_project_py_contents(path):

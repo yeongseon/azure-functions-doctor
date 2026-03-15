@@ -4,11 +4,11 @@
     "category": "project_structure",
     "section": "programming_model",
     "label": "Programming model v2",
-    "description": "Confirms the project appears to use the Azure Functions Python v2 decorator-based programming model.",
+    "description": "Confirms the project uses the Azure Functions Python v2 decorator-based programming model (via @app. or @bp. decorators).",
     "type": "source_code_contains",
     "required": true,
     "condition": {
-      "keyword": "@app.",
+      "keyword": "@app.|@bp.",
       "mode": "ast"
     },
     "hint": "Use func.FunctionApp() and decorator-based triggers such as @app.route().",
@@ -42,7 +42,11 @@
     "type": "any_of_exists",
     "required": true,
     "condition": {
-      "targets": ["VIRTUAL_ENV", "CONDA_PREFIX", "UV_PROJECT_ENVIRONMENT"]
+      "targets": [
+        "VIRTUAL_ENV",
+        "CONDA_PREFIX",
+        "UV_PROJECT_ENVIRONMENT"
+      ]
     },
     "hint": "Activate a virtual environment using: 'source venv/bin/activate'.",
     "hint_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-best-practices?tabs=python#use-virtual-environments",

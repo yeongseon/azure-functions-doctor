@@ -1,5 +1,6 @@
-import azure.functions as func
 import logging
+
+import azure.functions as func
 
 app = func.FunctionApp()
 
@@ -27,6 +28,7 @@ def HttpExample(req: func.HttpRequest) -> func.HttpResponse:  # noqa: N802 (Azur
             status_code=200,
         )
     return func.HttpResponse(
-        "This v2 HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
+        "This v2 HTTP triggered function executed successfully. "
+        "Pass a name in the query string or request body for a personalized response.",
         status_code=200,
     )
