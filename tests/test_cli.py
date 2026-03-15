@@ -95,10 +95,18 @@ def test_cli_junit_output() -> None:
     assert root.attrib.get("name") == "func-doctor"
     tests = int(root.attrib.get("tests", "0"))
     failures = int(root.attrib.get("failures", "0"))
+    skipped = int(root.attrib.get("skipped", "0"))
     testcases = root.findall("testcase")
     assert tests == len(testcases)
     assert failures <= tests
+    assert skipped <= tests
     assert all(case.attrib.get("classname") for case in testcases)
     assert all(case.attrib.get("name") for case in testcases)
+    # warn items must produce <skipped>, not <failure>
+    for case in testcases:
+        failure_els = case.findall("failure")
+        skipped_els = case.findall("skipped")
+        msg = "testcase should have at most one status child"
+        assert len(failure_els) + len(skipped_els) <= 1, msg
     expected_exit = 1 if failures > 0 else 0
     assert result.exit_code == expected_exit

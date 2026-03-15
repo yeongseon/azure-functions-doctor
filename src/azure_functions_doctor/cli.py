@@ -261,11 +261,13 @@ def doctor(
 
         tests = 0
         failures = 0
+        skipped = 0
         suite = ET.Element(
             "testsuite",
             name="func-doctor",
             tests="0",
             failures="0",
+            skipped="0",
             time=f"{duration_ms / 1000:.3f}",
         )
 
@@ -276,13 +278,18 @@ def doctor(
                     suite, "testcase", classname=section["title"], name=item.get("label", "")
                 )
                 status = item.get("status")
-                if status != "pass":
+                if status == "fail":
                     failures += 1
                     failure = ET.SubElement(case, "failure", message=item.get("value", ""))
                     failure.text = item.get("hint", "")
+                elif status == "warn":
+                    skipped += 1
+                    skipped_el = ET.SubElement(case, "skipped", message=item.get("value", ""))
+                    skipped_el.text = item.get("hint", "")
 
         suite.set("tests", str(tests))
         suite.set("failures", str(failures))
+        suite.set("skipped", str(skipped))
         junit_output = ET.tostring(suite, encoding="utf-8", xml_declaration=True).decode("utf-8")
         _write_output(junit_output, output, "JUnit")
         raise typer.Exit(1 if fail_count > 0 else 0)
