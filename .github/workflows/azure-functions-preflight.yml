@@ -38,6 +38,6 @@ jobs:
 
       - name: Run azure-functions-doctor
         # Exit code 1 = required checks failed; exit code 0 = all required checks passed.
-        run: azure-functions-doctor --path .
+        run: azure-functions-doctor doctor .
         # To use the minimal profile (required checks only):
-        # run: azure-functions-doctor --path . --profile minimal
+        # run: azure-functions-doctor doctor . --profile minimal
