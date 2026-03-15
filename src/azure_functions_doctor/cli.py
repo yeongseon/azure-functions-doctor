@@ -223,7 +223,7 @@ def doctor(
                         {
                             "physicalLocation": {
                                 "artifactLocation": {
-                                    "uri": str(resolved_path),
+                                    "uri": path.replace("\\", "/").rstrip("/") + "/",
                                     "uriBaseId": "%SRCROOT%",
                                 }
                             }

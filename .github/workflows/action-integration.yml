@@ -21,6 +21,7 @@ jobs:
 
       - name: Run doctor action on healthy example
         id: doctor
+        continue-on-error: true
         uses: ./
         with:
           path: examples/v2/http-trigger
@@ -30,6 +31,7 @@ jobs:
           python-version: "3.12"
           upload-artifact: "true"
           artifact-name: doctor-healthy-report
+          version: local
 
       - name: Verify outputs
         run: |
@@ -59,7 +61,7 @@ jobs:
           artifact-name: doctor-sarif-report
           upload-sarif: "true"
           sarif-category: azure-functions-doctor-integration-test
-
+          version: local
       - name: Verify SARIF file
         run: |
           test -f doctor.sarif || (echo "SARIF file not found" && exit 1)

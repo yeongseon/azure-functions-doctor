@@ -89,6 +89,8 @@ runs:
         python -m pip install --upgrade pip
         if [ "${{ inputs.version }}" = "latest" ]; then
           pip install azure-functions-doctor
+        elif [ "${{ inputs.version }}" = "local" ]; then
+          pip install -e .
         else
           pip install "azure-functions-doctor==${{ inputs.version }}"
         fi
