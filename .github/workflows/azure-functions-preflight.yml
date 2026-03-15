@@ -1,0 +1,43 @@
+# azure-functions-preflight.yml
+#
+# Example GitHub Actions workflow that runs azure-functions-doctor as a
+# pre-deployment health check for Azure Functions Python v2 projects.
+#
+# Usage:
+#   Copy this file into your repository's .github/workflows/ directory.
+#   Adjust the `working-directory` and Python version as needed.
+
+name: Azure Functions Pre-flight Check
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+    branches: ["main", "master"]
+
+jobs:
+  preflight:
+    name: Run azure-functions-doctor
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install azure-functions-doctor
+          # Also install project dependencies so package checks pass
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Run azure-functions-doctor
+        # Exit code 1 = required checks failed; exit code 0 = all required checks passed.
+        run: azure-functions-doctor --path .
+        # To use the minimal profile (required checks only):
+        # run: azure-functions-doctor --path . --profile minimal

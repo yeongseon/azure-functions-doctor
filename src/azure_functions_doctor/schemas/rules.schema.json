@@ -60,7 +60,8 @@
           "executable_exists",
           "any_of_exists",
           "file_glob_check",
-          "host_json_property"
+          "host_json_property",
+          "host_json_version"
         ]
       },
       "required": {

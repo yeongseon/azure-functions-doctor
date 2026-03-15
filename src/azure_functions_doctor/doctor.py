@@ -65,18 +65,56 @@ class Doctor:
         return "v2"
 
     def _has_v2_decorators(self) -> bool:
-        """Check if the project uses v2 decorators (@app.*)."""
-        python_files = list(self.project_path.rglob("*.py"))
+        """Check if the project uses v2 decorators using AST-based detection.
 
+        Finds all FunctionApp() assignments to determine the app variable name,
+        then checks for decorators of the form ``@<varname>.<method>`` via the AST.
+        Falls back to checking the conventional ``app`` identifier when no
+        assignment is found.
+        """
+        import ast as _ast
+
+        python_files = list(self.project_path.rglob("*.py"))
         for py_file in python_files:
             try:
-                with py_file.open(encoding="utf-8") as f:
-                    content = f.read()
-                    if "@app." in content:
-                        return True
+                source = py_file.read_text(encoding="utf-8")
             except (OSError, UnicodeDecodeError):
-                # Skip files that can't be read
                 continue
+
+            try:
+                tree = _ast.parse(source)
+            except SyntaxError:
+                continue
+
+            # Collect all variable names assigned a FunctionApp() call.
+            app_names: set[str] = set()
+            for node in _ast.walk(tree):
+                if isinstance(node, _ast.Assign):
+                    if (
+                        isinstance(node.value, _ast.Call)
+                        and isinstance(node.value.func, _ast.Attribute)
+                        and node.value.func.attr == "FunctionApp"
+                    ):
+                        for target in node.targets:
+                            if isinstance(target, _ast.Name):
+                                app_names.add(target.id)
+
+            # If no FunctionApp assignment found, default to the conventional name.
+            if not app_names:
+                app_names = {"app"}
+
+            def _decorator_uses_app(dec: _ast.expr, names: set[str] = app_names) -> bool:
+                node: _ast.expr = dec.func if isinstance(dec, _ast.Call) else dec
+                if isinstance(node, _ast.Attribute) and isinstance(node.value, _ast.Name):
+                    return node.value.id in names
+                return False
+
+            for ast_node in _ast.walk(tree):
+                if not isinstance(ast_node, (_ast.FunctionDef, _ast.ClassDef)):
+                    continue
+                for dec in ast_node.decorator_list:
+                    if _decorator_uses_app(dec):
+                        return True
 
         return False
 

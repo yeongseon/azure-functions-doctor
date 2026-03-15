@@ -1,4 +1,5 @@
 import ast
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -134,6 +135,7 @@ class Rule(TypedDict, total=False):
         "any_of_exists",
         "file_glob_check",
         "host_json_property",
+        "host_json_version",
     ]
     label: str
     category: str
@@ -166,6 +168,7 @@ class HandlerRegistry:
             "any_of_exists": self._handle_any_of_exists,
             "file_glob_check": self._handle_file_glob_check,
             "host_json_property": self._handle_host_json_property,
+            "host_json_version": self._handle_host_json_version,
         }
 
     def handle(self, rule: Rule, path: Path) -> dict[str, str]:
@@ -293,15 +296,10 @@ class HandlerRegistry:
             return _create_result("fail", "Missing package name")
 
         import_path_str: str = str(target)
-
-        try:
-            __import__(import_path_str)
+        spec = importlib.util.find_spec(import_path_str)
+        if spec is not None:
             return _create_result("pass", f"Module '{import_path_str}' is installed")
-        except ImportError as exc:
-            return _create_result("fail", f"Module '{import_path_str}' is not installed: {exc}")
-        except Exception as exc:
-            return _handle_exception(f"importing module '{import_path_str}'", exc)
-
+        return _create_result("fail", f"Module '{import_path_str}' is not installed")
     def _handle_source_code_contains(self, rule: Rule, path: Path) -> dict[str, str]:
         """Handle source code keyword search checks (string or AST mode)."""
         condition = rule.get("condition", {}) or {}
@@ -541,6 +539,26 @@ class HandlerRegistry:
             else:
                 return _create_result("fail", f"host.json property '{jsonpath}' not found")
         return _create_result("pass", f"host.json contains '{jsonpath}'")
+
+    def _handle_host_json_version(self, rule: Rule, path: Path) -> dict[str, str]:
+        """Check that host.json declares \"version\": \"2.0\"."""
+        host_path = path / "host.json"
+        if not host_path.exists():
+            return _create_result("fail", "host.json not found")
+        try:
+            host_data = json.loads(host_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            msg = f"host.json is not valid JSON: {exc}"
+            return _create_result("fail", msg, internal_error=True)
+        except Exception as exc:
+            return _handle_specific_exceptions("reading host.json", exc)
+        version = host_data.get("version") if isinstance(host_data, dict) else None
+        if version == "2.0":
+            return _create_result("pass", 'host.json version is "2.0"')
+        return _create_result(
+            "fail",
+            f'host.json version is {version!r}, expected "2.0"',
+        )
 
 
 # Global registry instance

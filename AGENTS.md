@@ -12,7 +12,7 @@
 - Keep diagnostics deterministic and user-facing messages actionable.
 - Prefer extending existing rule patterns over introducing one-off flows.
 - If a CLI option or exit code changes, update docs and tests in the same change.
-- Preserve Python 3.9+ compatibility declared in `pyproject.toml`.
+- Preserve Python 3.10+ compatibility declared in `pyproject.toml`.
 
 ## Validation
 - `make test`

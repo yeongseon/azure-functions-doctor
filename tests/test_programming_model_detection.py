@@ -135,3 +135,44 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
 
             doctor = Doctor(str(temp_path))
             assert doctor.programming_model == "v2"
+
+    def test_has_v2_decorators_custom_variable_name(self) -> None:
+        """Test AST detection works even when FunctionApp is assigned to a non-'app' variable."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            python_file = temp_path / "function_app.py"
+            python_file.write_text("""
+import azure.functions as func
+
+fa = func.FunctionApp()
+
+@fa.route(route="test", auth_level=func.AuthLevel.Anonymous)
+def test_function(req: func.HttpRequest) -> func.HttpResponse:
+    return func.HttpResponse("Hello")
+""")
+            doctor = Doctor(str(temp_path))
+            assert doctor.programming_model == "v2"
+            assert doctor._has_v2_decorators() is True
+
+    def test_has_v2_decorators_comment_not_counted_ast(self) -> None:
+        """Test that @app. in a comment is NOT detected by AST mode."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            python_file = temp_path / "main.py"
+            python_file.write_text("""
+# @app.route() -- not a real decorator
+x = 1
+""")
+            doctor = Doctor(str(temp_path))
+            # Should still return v2 (default), but _has_v2_decorators must be False
+            assert doctor._has_v2_decorators() is False
+
+    def test_has_v2_decorators_syntax_error_file_skipped(self) -> None:
+        """Test that files with SyntaxErrors are gracefully skipped."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            bad_file = temp_path / "broken.py"
+            bad_file.write_text("def (invalid syntax!!!")
+            doctor = Doctor(str(temp_path))
+            # No valid decorators found; should return False without crashing
+            assert doctor._has_v2_decorators() is False

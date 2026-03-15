@@ -38,11 +38,11 @@
     "category": "environment",
     "section": "python_env",
     "label": "Virtual environment",
-    "description": "Checks if a virtual environment is activated.",
-    "type": "env_var_exists",
+    "description": "Checks if a virtual environment is activated (venv, conda, or uv).",
+    "type": "any_of_exists",
     "required": true,
     "condition": {
-      "target": "VIRTUAL_ENV"
+      "targets": ["VIRTUAL_ENV", "CONDA_PREFIX", "UV_PROJECT_ENVIRONMENT"]
     },
     "hint": "Activate a virtual environment using: 'source venv/bin/activate'.",
     "hint_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-best-practices?tabs=python#use-virtual-environments",
@@ -112,6 +112,19 @@
     "check_order": 7
   },
   {
+    "id": "check_host_json_version",
+    "category": "structure",
+    "section": "project_structure",
+    "label": "host.json version",
+    "description": "Checks that host.json declares \"version\": \"2.0\" as required by the v2 runtime.",
+    "type": "host_json_version",
+    "required": true,
+    "condition": {},
+    "hint": "Add or correct \"version\": \"2.0\" in host.json.",
+    "hint_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-host-json",
+    "check_order": 8
+  },
+  {
     "id": "check_local_settings",
     "category": "structure",
     "section": "project_structure",
@@ -123,7 +136,7 @@
       "target": "local.settings.json"
     },
     "hint": "Create local.settings.json for local development if needed.",
-    "check_order": 8
+    "check_order": 9
   },
   {
     "id": "check_func_cli",
@@ -238,5 +251,20 @@
     },
     "hint": "Remove or exclude unwanted files from deployment to reduce package size and avoid accidental secrets.",
     "check_order": 30
+  },
+  {
+    "id": "check_funcignore",
+    "category": "project_health",
+    "section": "cleanup",
+    "label": ".funcignore",
+    "description": "Checks if a .funcignore file is present to control what gets deployed.",
+    "type": "file_exists",
+    "required": false,
+    "condition": {
+      "target": ".funcignore"
+    },
+    "hint": "Add a .funcignore file to exclude test files, venv, and other non-deployment assets.",
+    "hint_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local#funcignore",
+    "check_order": 31
   }
 ]

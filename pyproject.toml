@@ -10,7 +10,6 @@ dynamic = ["version"]
 dependencies = [
     "jsonschema",
     "packaging",
-    "requests",
     "rich",
     "typer",
 ]
@@ -46,7 +45,6 @@ dev = [
     "pytest",
     "pytest-cov",
     "ruff==0.15.5",
-    "types-requests",
 ]
 docs = [
     "mkdocs<2.0",

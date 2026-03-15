@@ -375,3 +375,73 @@ def test_host_json_property_pass_and_fail(tmp_path: Path) -> None:
     host.write_text(json.dumps({}))
     res2 = generic_handler(rule, tmp_path)
     assert res2["status"] == "fail"
+
+
+def test_package_installed_uses_find_spec_no_side_effects() -> None:
+    """Test that package_installed uses importlib.util.find_spec (no import side-effects)."""
+    import importlib.util
+    from unittest.mock import patch
+
+    call_log: list[str] = []
+
+    original_find_spec = importlib.util.find_spec
+
+    def spy_find_spec(name: str, *args: object, **kwargs: object) -> object:
+        call_log.append(name)
+        return original_find_spec(name, *args, **kwargs)  # type: ignore[arg-type]
+
+    with patch("importlib.util.find_spec", side_effect=spy_find_spec):
+        rule: Rule = {
+            "type": "package_installed",
+            "condition": {"target": "os"},
+        }
+        result = generic_handler(rule, Path("."))
+
+    assert result["status"] == "pass"
+    assert "os" in call_log
+
+
+def test_host_json_version_pass(tmp_path: Path) -> None:
+    """Test host_json_version passes when host.json has version 2.0."""
+    host = tmp_path / "host.json"
+    host.write_text('{"version": "2.0", "extensionBundle": {}}')
+    rule = _make_rule("host_json_version", {})
+    res = generic_handler(rule, tmp_path)
+    assert res["status"] == "pass"
+    assert '"2.0"' in res.get("detail", "")
+
+
+def test_host_json_version_fail_wrong_version(tmp_path: Path) -> None:
+    """Test host_json_version fails when host.json has wrong version."""
+    host = tmp_path / "host.json"
+    host.write_text('{"version": "1.0"}')
+    rule = _make_rule("host_json_version", {})
+    res = generic_handler(rule, tmp_path)
+    assert res["status"] == "fail"
+    assert "1.0" in res.get("detail", "")
+
+
+def test_host_json_version_fail_missing_version(tmp_path: Path) -> None:
+    """Test host_json_version fails when host.json lacks the version field."""
+    host = tmp_path / "host.json"
+    host.write_text('{"extensionBundle": {}}')
+    rule = _make_rule("host_json_version", {})
+    res = generic_handler(rule, tmp_path)
+    assert res["status"] == "fail"
+
+
+def test_host_json_version_fail_missing_file(tmp_path: Path) -> None:
+    """Test host_json_version fails when host.json is absent."""
+    rule = _make_rule("host_json_version", {})
+    res = generic_handler(rule, tmp_path)
+    assert res["status"] == "fail"
+    assert "not found" in res.get("detail", "")
+
+
+def test_host_json_version_fail_invalid_json(tmp_path: Path) -> None:
+    """Test host_json_version fails gracefully when host.json is not valid JSON."""
+    host = tmp_path / "host.json"
+    host.write_text("this is not json {{{")
+    rule = _make_rule("host_json_version", {})
+    res = generic_handler(rule, tmp_path)
+    assert res["status"] == "fail"
