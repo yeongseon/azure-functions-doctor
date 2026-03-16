@@ -33,6 +33,7 @@ nav:
       - Custom Rules: examples/custom_rules.md
   - API Reference: api.md
   - Reference:
+      - Architecture: architecture.md
       - Supported Versions: supported_versions.md
       - Semver Policy: semver_policy.md
   - Contributing:
