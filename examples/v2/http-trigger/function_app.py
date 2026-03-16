@@ -5,7 +5,7 @@ import azure.functions as func
 app = func.FunctionApp()
 
 
-@app.route(route="HttpExample", auth_level=func.AuthLevel.Anonymous)
+@app.route(route="HttpExample", auth_level=func.AuthLevel.ANONYMOUS)
 def HttpExample(req: func.HttpRequest) -> func.HttpResponse:  # noqa: N802 (Azure style name retained)
     """Basic HTTP trigger function (Programming Model v2).
 

@@ -87,17 +87,21 @@ jobs:
         run: |
           func azure functionapp publish "${{ steps.names.outputs.app }}" --python --build remote
 
-      - name: Wait for app to start and diagnose
+      - name: Restart app and wait for functions to load
         run: |
-          APP_URL="https://${{ steps.names.outputs.app }}.azurewebsites.net"
-          echo "Waiting 60s for app startup..."
+          APP="${{ steps.names.outputs.app }}"
+          RG="${{ steps.names.outputs.rg }}"
+          APP_URL="https://${APP}.azurewebsites.net"
+          echo "Restarting function app to force function discovery..."
+          az functionapp restart --name "$APP" --resource-group "$RG"
+          echo "Waiting 60s for worker to initialize..."
           sleep 60
           echo "Probing app status:"
-          for i in 1 2 3 4 5; do
+          for i in 1 2 3 4 5 6 7 8 9 10; do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${APP_URL}/api/HttpExample?name=probe" || echo "curl-failed")
             echo "  attempt $i: ${APP_URL}/api/HttpExample -> ${STATUS}"
             [ "$STATUS" = "200" ] && break
-            sleep 10
+            sleep 15
           done
       - name: Run e2e tests
         run: pytest tests/e2e -v --no-cov --html=e2e-report/report.html --self-contained-html
