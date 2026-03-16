@@ -25,7 +25,7 @@ SKIP_REASON = "E2E_BASE_URL not set — skipping real-Azure e2e tests"
 def warmup() -> None:
     if not BASE_URL:
         return
-    deadline = time.time() + 120
+    deadline = time.time() + 300
     while time.time() < deadline:
         try:
             r = requests.get(f"{BASE_URL}/api/HttpExample", timeout=10)
@@ -34,7 +34,7 @@ def warmup() -> None:
         except requests.RequestException:
             pass
         time.sleep(3)
-    pytest.fail("Warmup failed: /api/HttpExample did not respond within 120 s")
+    pytest.fail("Warmup failed: /api/HttpExample did not respond within 300 s")
 
 
 @pytest.mark.skipif(not BASE_URL, reason=SKIP_REASON)
