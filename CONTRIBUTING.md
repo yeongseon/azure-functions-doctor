@@ -106,7 +106,7 @@ New to open source? Here are some good first issues to get started:
 We maintain high code quality standards:
 
 ### Tools We Use
-* **Formatter:** `ruff` - Consistent code formatting
+* **Formatter:** `ruff format` - Consistent code formatting (line-length 100)
 * **Linter:** `ruff` - Fast Python linter
 * **Type checker:** `mypy` - Static type checking
 * **Import sorting:** `ruff` - Consistent import ordering
@@ -121,7 +121,7 @@ We maintain high code quality standards:
 
 ### Before Submitting
 ```bash
-make format      # Format code with ruff
+make format      # Format code with ruff format
 make lint        # Lint with ruff
 make typecheck   # Type check with mypy
 make test        # Run tests
