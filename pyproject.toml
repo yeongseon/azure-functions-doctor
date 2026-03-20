@@ -46,14 +46,14 @@ dev = [
     "pre-commit",
     "pytest",
     "pytest-cov",
-    "ruff==0.15.5",
+    "ruff==0.15.6",
     "requests",
     "types-requests",
 ]
 docs = [
     "mkdocs<2.0",
     "mkdocs-material<10.0",
-    "mkdocstrings[python]<1.0",
+    "mkdocstrings[python]<2.0",
 ]
 
 [project.scripts]
@@ -133,7 +133,7 @@ source = ["src/azure_functions_doctor"]
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
-fail_under = 88
+fail_under = 90
 
 [tool.bandit]
 exclude_dirs = ["tests"]
