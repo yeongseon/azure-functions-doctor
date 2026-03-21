@@ -4,14 +4,24 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.16.1] - 2026-03-21
+
 ### Added
 
 - Real Azure end-to-end test workflow (`e2e-azure.yml`) deploying to Consumption plan (`koreacentral`)
 - `docs/testing.md` — Real Azure E2E Tests section
+- Extended handler registry coverage tests
 
 ### Changed
 
-- GitHub Actions versions upgraded to Node.js 24 compatible: `checkout@v6`, `setup-python@v6`, `upload-artifact@v7`, `azure/login@v2.3.0`
+- GitHub Actions versions upgraded to Node.js 24 compatible versions
+- Repository consistency fixes (AGENTS.md, .gitignore standardization)
+
+### Fixed
+
+- Correct `AuthLevel.Anonymous` → `ANONYMOUS` and add restart step for function discovery
+- Post-deploy wait and status probe for Consumption cold-start diagnosis
+
 ## [0.16.0] - 2026-03-15
 
 ### Added
@@ -680,4 +690,3 @@ Add SARIF and JUnit output (fe04a752bdfeeadaf08c22bf3dfa36ad6334fc17)
 - initial project setup with CLI, Makefile, docs, and packaging (a39efbd9a2d2b953905b6ce3925badab2b44c117)
 
 - Initial commit (457425ebde591e34042116d1e5f92ac7006a03cd)
-
