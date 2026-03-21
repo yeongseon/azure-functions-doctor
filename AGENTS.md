@@ -18,3 +18,4 @@
 - `make test`
 - `make lint`
 - `make typecheck`
+- `make build`
