@@ -3,7 +3,7 @@
 [![PyPI](https://img.shields.io/pypi/v/azure-functions-doctor.svg)](https://pypi.org/project/azure-functions-doctor/)
 [![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](https://pypi.org/project/azure-functions-doctor/)
 [![CI](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/ci-test.yml/badge.svg)](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/ci-test.yml)
-[![Release](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/release.yml/badge.svg)](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/release.yml)
+[![Release](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/publish-pypi.yml/badge.svg)](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/publish-pypi.yml)
 [![Security Scans](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/security.yml/badge.svg)](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/security.yml)
 [![codecov](https://codecov.io/gh/yeongseon/azure-functions-doctor/branch/main/graph/badge.svg)](https://codecov.io/gh/yeongseon/azure-functions-doctor)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://pre-commit.com/)
@@ -12,25 +12,30 @@
 
 Read this in: [한국어](README.ko.md) | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
 
-
 **Azure Functions Doctor** is the pre-deploy health gate for **Azure Functions Python v2** projects — a diagnostic CLI that catches configuration issues, missing dependencies, and environment problems before they cause runtime failures in production.
 
-## Why Use It
+---
 
-Deploying a broken Azure Functions app is expensive: the worker starts, the host reads config, and only then does it surface the issue — in a production log. `azure-functions-doctor` moves that failure left.
+Part of the **Azure Functions Python DX Toolkit**
+→ Bring FastAPI-like developer experience to Azure Functions
 
-Common issues it catches before deployment:
+## Why this exists
 
-- Python version mismatch with the Azure Functions runtime
-- Missing `host.json` or misconfigured `extensionBundle`
-- `azure-functions` package not declared in `requirements.txt`
-- v2 programming model decorators not detected (wrong project structure)
-- Azure Functions Core Tools not installed or outdated
-- Virtual environment not activated or missing
-- Application Insights key not configured (optional but recommended)
-- Durable Functions host configuration incomplete
+Deploying a broken Azure Functions app is expensive — the worker starts, the host reads config, and only then does it surface the issue in a production log. Common problems that slip through:
 
-Run it locally, in CI, or as a pre-commit hook.
+- **Missing dependencies** — `azure-functions` not in `requirements.txt`, discovered only at cold start
+- **Invalid configuration** — `host.json` misconfigured, `extensionBundle` missing or outdated
+- **Runtime incompatibilities** — Python version mismatch with Azure Functions runtime
+- **Silent failures** — no virtual environment, Core Tools not installed, Application Insights key missing
+
+`azure-functions-doctor` moves that failure left — catch it locally or in CI, not in production.
+
+## What it does
+
+- **14+ diagnostic checks** — Python version, dependencies, host.json, Core Tools, Durable Functions, and more
+- **Multiple output formats** — table, JSON, SARIF, JUnit for CI integration
+- **Profile support** — `minimal` or `full` rulesets depending on your needs
+- **Official GitHub Action** — `yeongseon/azure-functions-doctor@v1` for CI gates
 
 ## Scope
 
@@ -161,6 +166,14 @@ The default ruleset includes checks for:
 - Hatch for development workflows
 - Azure Functions Core Tools v4+ recommended for local runs
 
+## When to use
+
+- Before deploying an Azure Functions app (local pre-flight check)
+- In CI/CD pipelines as a deployment gate
+- When onboarding a new developer to catch environment setup issues
+- After upgrading Python version or Azure Functions runtime
+- As a pre-commit hook for configuration validation
+
 ## Documentation
 
 - [docs/index.md](docs/index.md)
@@ -172,11 +185,16 @@ The default ruleset includes checks for:
 
 ## Ecosystem
 
-- [azure-functions-validation](https://github.com/yeongseon/azure-functions-validation) — Request and response validation
-- [azure-functions-openapi](https://github.com/yeongseon/azure-functions-openapi) — OpenAPI and Swagger UI
-- [azure-functions-logging](https://github.com/yeongseon/azure-functions-logging) — Invocation-aware observability helper
-- [azure-functions-scaffold](https://github.com/yeongseon/azure-functions-scaffold) — Project scaffolding
-- [azure-functions-python-cookbook](https://github.com/yeongseon/azure-functions-python-cookbook) — Recipes and examples
+Part of the **Azure Functions Python DX Toolkit**:
+
+| Package | Role |
+|---------|------|
+| [azure-functions-validation](https://github.com/yeongseon/azure-functions-validation) | Request and response validation |
+| [azure-functions-openapi](https://github.com/yeongseon/azure-functions-openapi) | OpenAPI spec and Swagger UI |
+| [azure-functions-logging](https://github.com/yeongseon/azure-functions-logging) | Structured logging and observability |
+| **azure-functions-doctor** | Pre-deploy diagnostic CLI |
+| [azure-functions-scaffold](https://github.com/yeongseon/azure-functions-scaffold) | Project scaffolding |
+| [azure-functions-python-cookbook](https://github.com/yeongseon/azure-functions-python-cookbook) | Recipes and examples |
 
 ## Disclaimer
 
