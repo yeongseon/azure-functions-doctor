@@ -7,7 +7,12 @@ from typing import Optional, TypedDict
 
 from jsonschema import ValidationError, validate
 
-from azure_functions_doctor.handlers import Rule, generic_handler
+from azure_functions_doctor.handlers import (
+    Rule,
+    _iter_project_py_contents,
+    _source_contains_ast,
+    generic_handler,
+)
 from azure_functions_doctor.logging_config import get_logger, log_rule_execution
 
 logger = get_logger(__name__)
@@ -56,66 +61,21 @@ class Doctor:
         """Detect the Azure Functions programming model version.
 
         The doctor targets only the Azure Functions Python v2 programming
-        model. Projects without decorators still default to "v2" so the
+        model.  Projects without decorators still default to \"v2\" so the
         doctor can report missing v2 signals as regular diagnostics.
         """
-        if self._has_v2_decorators():
-            return "v2"
-
         return "v2"
 
     def _has_v2_decorators(self) -> bool:
         """Check if the project uses v2 decorators using AST-based detection.
 
-        Finds all FunctionApp() assignments to determine the app variable name,
-        then checks for decorators of the form ``@<varname>.<method>`` via the AST.
-        Falls back to checking the conventional ``app`` identifier when no
-        assignment is found.
+        Uses the shared ``_source_contains_ast`` helper (which auto-discovers
+        ``FunctionApp`` / ``Blueprint`` aliases) and the project file iterator
+        that respects excluded directories.
         """
-        import ast as _ast
-
-        python_files = list(self.project_path.rglob("*.py"))
-        for py_file in python_files:
-            try:
-                source = py_file.read_text(encoding="utf-8")
-            except (OSError, UnicodeDecodeError):
-                continue
-
-            try:
-                tree = _ast.parse(source)
-            except SyntaxError:
-                continue
-
-            # Collect all variable names assigned a FunctionApp() call.
-            app_names: set[str] = set()
-            for node in _ast.walk(tree):
-                if isinstance(node, _ast.Assign):
-                    if (
-                        isinstance(node.value, _ast.Call)
-                        and isinstance(node.value.func, _ast.Attribute)
-                        and node.value.func.attr == "FunctionApp"
-                    ):
-                        for target in node.targets:
-                            if isinstance(target, _ast.Name):
-                                app_names.add(target.id)
-
-            # If no FunctionApp assignment found, default to the conventional name.
-            if not app_names:
-                app_names = {"app"}
-
-            def _decorator_uses_app(dec: _ast.expr, names: set[str] = app_names) -> bool:
-                node: _ast.expr = dec.func if isinstance(dec, _ast.Call) else dec
-                if isinstance(node, _ast.Attribute) and isinstance(node.value, _ast.Name):
-                    return node.value.id in names
-                return False
-
-            for ast_node in _ast.walk(tree):
-                if not isinstance(ast_node, (_ast.FunctionDef, _ast.ClassDef)):
-                    continue
-                for dec in ast_node.decorator_list:
-                    if _decorator_uses_app(dec):
-                        return True
-
+        for _py_file, content in _iter_project_py_contents(self.project_path):
+            if _source_contains_ast(content, "app"):
+                return True
         return False
 
     def load_rules(self) -> list[Rule]:
