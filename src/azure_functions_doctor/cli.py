@@ -106,6 +106,13 @@ def doctor(
     rules: Annotated[
         Optional[Path], typer.Option(help="Optional path to a custom rules file")
     ] = None,
+    summary_json: Annotated[
+        Optional[Path],
+        typer.Option(
+            "--summary-json",
+            help="Write a JSON summary of counts (passed/warned/failed) to this path",
+        ),
+    ] = None,
 ) -> None:
     """
     Run diagnostics on an Azure Functions application.
@@ -118,6 +125,7 @@ def doctor(
         output: Optional file path to save output result.
         profile: Optional rule profile ('minimal' or 'full').
         rules: Optional path to a custom rules file.
+        summary_json: Path to write a JSON summary with passed/warned/failed counts.
     """
     # Validate inputs before proceeding
     _validate_inputs(path, format, output)
@@ -174,6 +182,19 @@ def doctor(
                 fail_count += 1
             else:
                 warning_count += 1  # unknown treated as warning
+
+    # Write summary JSON sidecar when --summary-json is specified (format-independent)
+    if summary_json is not None:
+        summary_data = {
+            "passed": passed_count,
+            "warned": warning_count,
+            "failed": fail_count,
+        }
+        try:
+            summary_json.parent.mkdir(parents=True, exist_ok=True)
+            summary_json.write_text(json.dumps(summary_data), encoding="utf-8")
+        except (OSError, PermissionError) as exc:
+            logger.warning(f"Failed to write summary JSON to {summary_json}: {exc}")
 
     if format == "json":
         generated_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")

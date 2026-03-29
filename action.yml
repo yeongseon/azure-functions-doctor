@@ -108,47 +108,34 @@ runs:
       shell: bash
       run: |
         set +e
+        SUMMARY_FILE=$(mktemp /tmp/doctor-summary-XXXXXX.json)
         azure-functions doctor \
           --path "${{ inputs.path }}" \
           --profile "${{ inputs.profile }}" \
           --format "${{ inputs.format }}" \
-          --output "${{ inputs.output }}"
+          --output "${{ inputs.output }}" \
+          --summary-json "${SUMMARY_FILE}"
         DOCTOR_EXIT=$?
 
         echo "exit_code=${DOCTOR_EXIT}" >> "$GITHUB_OUTPUT"
-        echo "report_path=$(realpath ${{ inputs.output }})" >> "$GITHUB_OUTPUT"
+        echo "report_path=$(realpath "${{ inputs.output }}")" >> "$GITHUB_OUTPUT"
 
-        # Parse counts from JSON report if format is json
-        if [ "${{ inputs.format }}" = "json" ] && [ -f "${{ inputs.output }}" ]; then
-          FAILED=$(python3 -c "
-        import json, sys
-        data = json.load(open('${{ inputs.output }}'))
-        items = [i for s in data.get('results', []) for i in s.get('items', [])]
-        print(sum(1 for i in items if i.get('status') == 'fail'))
-        " 2>/dev/null || echo "0")
-          WARNED=$(python3 -c "
-        import json, sys
-        data = json.load(open('${{ inputs.output }}'))
-        items = [i for s in data.get('results', []) for i in s.get('items', [])]
-        print(sum(1 for i in items if i.get('status') == 'warn'))
-        " 2>/dev/null || echo "0")
-          PASSED=$(python3 -c "
-        import json, sys
-        data = json.load(open('${{ inputs.output }}'))
-        items = [i for s in data.get('results', []) for i in s.get('items', [])]
-        print(sum(1 for i in items if i.get('status') == 'pass'))
-        " 2>/dev/null || echo "0")
-          echo "failed_count=${FAILED}" >> "$GITHUB_OUTPUT"
-          echo "warned_count=${WARNED}" >> "$GITHUB_OUTPUT"
-          echo "passed_count=${PASSED}" >> "$GITHUB_OUTPUT"
-        else
-          echo "failed_count=0" >> "$GITHUB_OUTPUT"
-          echo "warned_count=0" >> "$GITHUB_OUTPUT"
-          echo "passed_count=0" >> "$GITHUB_OUTPUT"
+        # Parse counts from the format-independent summary JSON
+        FAILED=0
+        WARNED=0
+        PASSED=0
+        if [ -f "${SUMMARY_FILE}" ]; then
+          FAILED=$(python3 -c "import json; d=json.load(open('${SUMMARY_FILE}')); print(d.get('failed',0))" 2>/dev/null || echo "0")
+          WARNED=$(python3 -c "import json; d=json.load(open('${SUMMARY_FILE}')); print(d.get('warned',0))" 2>/dev/null || echo "0")
+          PASSED=$(python3 -c "import json; d=json.load(open('${SUMMARY_FILE}')); print(d.get('passed',0))" 2>/dev/null || echo "0")
+          rm -f "${SUMMARY_FILE}"
         fi
+        echo "failed_count=${FAILED}" >> "$GITHUB_OUTPUT"
+        echo "warned_count=${WARNED}" >> "$GITHUB_OUTPUT"
+        echo "passed_count=${PASSED}" >> "$GITHUB_OUTPUT"
 
         # Fail-on-warn logic
-        if [ "${{ inputs.fail-on-warn }}" = "true" ] && [ "${WARNED}" != "0" ] && [ "${WARNED}" != "" ]; then
+        if [ "${{ inputs.fail-on-warn }}" = "true" ] && [ "${WARNED}" != "0" ]; then
           exit 1
         fi
 
