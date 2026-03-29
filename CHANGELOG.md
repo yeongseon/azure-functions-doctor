@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.16.2] - 2026-03-29
+
+### Fixed
+
+- Resolve 6 confirmed bugs: #95, #96, #97, #98, #99, #100 (#101)
+
+### Internal
+
+- Update README with Azure Functions Python DX Toolkit branding
+- Rename publish environment from production to release
+- Unify CI/CD workflow configurations
+
 ## [0.16.1] - 2026-03-21
 
 ### Added

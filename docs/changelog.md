@@ -9,6 +9,12 @@ All notable changes to this project will be documented in this file.
 
 ## Full Version History
 
+### v0.16.2 (2026-03-29)
+- Fix 6 confirmed bugs: #95, #96, #97, #98, #99, #100 (#101)
+- Update README with Azure Functions Python DX Toolkit branding
+- Rename publish environment from production to release
+- Unify CI/CD workflow configurations
+
 ### v0.15.1 (2026-03-14)
 - Unified tooling: Ruff (lint + format), pre-commit hooks, standardized Makefile
 - Comprehensive documentation overhaul (MkDocs site with standardized nav)
