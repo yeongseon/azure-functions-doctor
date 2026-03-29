@@ -46,8 +46,18 @@ def setup_logging(
     # Get or create the main application logger
     logger = logging.getLogger(DEFAULT_LOGGER_NAME)
 
-    # Avoid duplicate handlers if already configured
+    # If already configured, update level and formatter on existing handlers
     if logger.handlers:
+        logger.setLevel(numeric_level)
+        if format_style == "structured":
+            formatter = logging.Formatter(
+                fmt="%(asctime)s [%(levelname)8s] %(name)s: %(message)s", datefmt="%H:%M:%S"
+            )
+        else:  # simple
+            formatter = logging.Formatter("%(levelname)s: %(message)s")
+        for handler in logger.handlers:
+            handler.setLevel(numeric_level)
+            handler.setFormatter(formatter)
         return logger
 
     logger.setLevel(numeric_level)
