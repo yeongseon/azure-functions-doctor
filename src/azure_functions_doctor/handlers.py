@@ -8,6 +8,7 @@ import shutil
 import sys
 from typing import Iterator, List, Literal, Optional, TypedDict, Union
 
+from packaging.requirements import InvalidRequirement, Requirement
 from packaging.version import InvalidVersion
 from packaging.version import parse as parse_version
 
@@ -17,14 +18,49 @@ from azure_functions_doctor.target_resolver import resolve_target_value
 logger = get_logger(__name__)
 
 
+def _discover_functionapp_aliases(source: str) -> set[str]:
+    """Extract variable names assigned a ``FunctionApp()`` or ``Blueprint()`` call.
+
+    Scans AST assignments like ``app = func.FunctionApp()`` and
+    ``bp = Blueprint()`` to discover alias names used for decorators.
+    Returns the set of discovered names, or ``{"app"}`` when none are found.
+    """
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return {"app"}
+
+    names: set[str] = set()
+    target_attrs = {"FunctionApp", "Blueprint"}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign) and isinstance(node.value, ast.Call):
+            func_node = node.value.func
+            attr_name: str | None = None
+            if isinstance(func_node, ast.Attribute):
+                attr_name = func_node.attr
+            elif isinstance(func_node, ast.Name):
+                attr_name = func_node.id
+            if attr_name in target_attrs:
+                for target in node.targets:
+                    if isinstance(target, ast.Name):
+                        names.add(target.id)
+    return names or {"app"}
+
+
 def _source_contains_ast(source: str, identifier: str) -> bool:
     """Return True when the source contains a decorator like ``@identifier.xxx``.
 
     ``identifier`` may be a pipe-separated list (e.g. ``"app|bp"``) to match
     any of the given names, which covers both ``@app.route()`` and the
     Blueprint-style ``@bp.route()``.
+
+    Additionally, ``FunctionApp()`` and ``Blueprint()`` variable assignments are
+    discovered automatically so that custom aliases (e.g. ``fa = func.FunctionApp()``)
+    are recognised even when they are not listed in ``identifier``.
     """
     identifiers = set(identifier.split("|"))
+    # Merge in dynamically-discovered aliases
+    identifiers |= _discover_functionapp_aliases(source)
     try:
         tree = ast.parse(source)
     except SyntaxError:
@@ -73,6 +109,45 @@ def _read_project_python_file(py_file: Path) -> Optional[str]:
     except (MemoryError, OSError, ValueError) as exc:
         logger.debug(f"Skip {py_file}: {exc}")
         return None
+
+
+def _parse_requirements_names(content: str) -> set[str]:
+    """Extract normalized package names from requirements.txt content.
+
+    Handles extras (``requests[security]``), environment markers (``;``),
+    URL installs (``@``), pip directives (``-r``, ``-e``), and inline comments.
+    """
+    names: set[str] = set()
+    for raw_line in content.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        # Skip -r / -c / --requirement / --constraint includes
+        if line.startswith(("-r ", "-c ", "--requirement", "--constraint")):
+            continue
+        # Handle editable installs: -e git+...#egg=name
+        if line.startswith(("-e ", "--editable")):
+            egg_match = re.search(r"#egg=([^&\s]+)", line)
+            if egg_match:
+                names.add(egg_match.group(1).lower())
+            continue
+        # Skip other pip flags (--find-links, --index-url, etc.)
+        if line.startswith("-"):
+            continue
+        # Strip inline comments
+        line = line.split("#")[0].strip()
+        if not line:
+            continue
+        try:
+            req = Requirement(line)
+            names.add(req.name.lower())
+        except InvalidRequirement:
+            # Fall back to a simple split for unparseable lines
+            name = re.split(r"[=<>!~;\[\]@]", line, maxsplit=1)[0].strip().lower()
+            if name:
+                names.add(name)
+    return names
+
 
 
 def _create_result(status: str, detail: str, internal_error: bool = False) -> dict[str, str]:
@@ -147,6 +222,7 @@ class Rule(TypedDict, total=False):
         "local_settings_security",
         "host_json_extension_bundle_version",
         "package_forbidden",
+        "package_declared",
     ]
     label: str
     category: str
@@ -368,14 +444,10 @@ class HandlerRegistry:
         if not req_path.exists():
             return _create_result("fail", f"{req_path} not found")
         try:
-            content = req_path.read_text(encoding="utf-8").splitlines()
+            content = req_path.read_text(encoding="utf-8")
         except Exception as exc:
             return _handle_specific_exceptions(f"reading {req_file}", exc)
-        normalized = [
-            re.split(pattern=r"[=<>!~]", string=line.strip(), maxsplit=1)[0].lower()
-            for line in content
-            if line.strip() and not line.strip().startswith("#")
-        ]
+        normalized = _parse_requirements_names(content)
         declared = package_name.lower() in normalized
         return _create_result(
             "pass" if declared else "fail",
@@ -395,14 +467,10 @@ class HandlerRegistry:
         if not req_path.exists():
             return _create_result("fail", f"{req_path} not found")
         try:
-            content = req_path.read_text(encoding="utf-8").splitlines()
+            content = req_path.read_text(encoding="utf-8")
         except Exception as exc:
             return _handle_specific_exceptions(f"reading {req_file}", exc)
-        normalized = [
-            re.split(pattern=r"[=<>!~]", string=line.strip(), maxsplit=1)[0].lower()
-            for line in content
-            if line.strip() and not line.strip().startswith("#")
-        ]
+        normalized = _parse_requirements_names(content)
         declared = package_name.lower() in normalized
         if declared:
             return _create_result(
@@ -475,8 +543,9 @@ class HandlerRegistry:
     def _handle_callable_detection(self, rule: Rule, path: Path) -> dict[str, str]:
         """Detect ASGI/WSGI callable exposure in source files (basic heuristics)."""
         patterns = [
+            r"\bAsgiMiddleware\s*\(|\bWsgiMiddleware\s*\(",
+            r"\bAsgiFunctionApp\s*\(|\bWsgiFunctionApp\s*\(",
             r"\bFastAPI\s*\(|\bStarlette\s*\(|\bFlask\s*\(|\bQuart\s*\(",
-            r"\bapp\s*=",
             r"ASGIApp|WSGIApp|asgi_app|wsgi_app",
         ]
 
