@@ -118,7 +118,7 @@ runs:
         DOCTOR_EXIT=$?
 
         echo "exit_code=${DOCTOR_EXIT}" >> "$GITHUB_OUTPUT"
-        echo "report_path=$(realpath ${{ inputs.output }})" >> "$GITHUB_OUTPUT"
+        echo "report_path=$(realpath "${{ inputs.output }}")" >> "$GITHUB_OUTPUT"
 
         # Parse counts from the format-independent summary JSON
         FAILED=0

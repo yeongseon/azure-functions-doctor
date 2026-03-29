@@ -58,6 +58,13 @@ def setup_logging(
         for handler in logger.handlers:
             handler.setLevel(numeric_level)
             handler.setFormatter(formatter)
+        # Honor enable_console_output: remove StreamHandlers when disabled
+        if not enable_console_output:
+            for handler in list(logger.handlers):
+                if isinstance(handler, logging.StreamHandler):
+                    logger.removeHandler(handler)
+                    handler.close()
+        logger.propagate = False
         return logger
 
     logger.setLevel(numeric_level)

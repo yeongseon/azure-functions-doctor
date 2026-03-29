@@ -61,7 +61,7 @@ class Doctor:
         """Detect the Azure Functions programming model version.
 
         The doctor targets only the Azure Functions Python v2 programming
-        model.  Projects without decorators still default to \"v2\" so the
+        model.  Projects without decorators still default to "v2" so the
         doctor can report missing v2 signals as regular diagnostics.
         """
         return "v2"

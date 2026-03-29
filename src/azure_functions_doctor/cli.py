@@ -125,6 +125,7 @@ def doctor(
         output: Optional file path to save output result.
         profile: Optional rule profile ('minimal' or 'full').
         rules: Optional path to a custom rules file.
+        summary_json: Path to write a JSON summary with passed/warned/failed counts.
     """
     # Validate inputs before proceeding
     _validate_inputs(path, format, output)

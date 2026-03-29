@@ -9,6 +9,7 @@ import sys
 from typing import Iterator, List, Literal, Optional, TypedDict, Union
 
 from packaging.requirements import InvalidRequirement, Requirement
+from packaging.utils import canonicalize_name
 from packaging.version import InvalidVersion
 from packaging.version import parse as parse_version
 
@@ -129,7 +130,7 @@ def _parse_requirements_names(content: str) -> set[str]:
         if line.startswith(("-e ", "--editable")):
             egg_match = re.search(r"#egg=([^&\s]+)", line)
             if egg_match:
-                names.add(egg_match.group(1).lower())
+                names.add(canonicalize_name(egg_match.group(1)))
             continue
         # Skip other pip flags (--find-links, --index-url, etc.)
         if line.startswith("-"):
@@ -140,12 +141,12 @@ def _parse_requirements_names(content: str) -> set[str]:
             continue
         try:
             req = Requirement(line)
-            names.add(req.name.lower())
+            names.add(canonicalize_name(req.name))
         except InvalidRequirement:
             # Fall back to a simple split for unparseable lines
-            name = re.split(r"[=<>!~;\[\]@]", line, maxsplit=1)[0].strip().lower()
+            name = re.split(r"[=<>!~;\[\]@]", line, maxsplit=1)[0].strip()
             if name:
-                names.add(name)
+                names.add(canonicalize_name(name))
     return names
 
 
@@ -448,7 +449,7 @@ class HandlerRegistry:
         except Exception as exc:
             return _handle_specific_exceptions(f"reading {req_file}", exc)
         normalized = _parse_requirements_names(content)
-        declared = package_name.lower() in normalized
+        declared = canonicalize_name(package_name) in normalized
         return _create_result(
             "pass" if declared else "fail",
             f"Package '{package_name}' {'declared' if declared else 'not declared'} in {req_file}",
@@ -471,7 +472,7 @@ class HandlerRegistry:
         except Exception as exc:
             return _handle_specific_exceptions(f"reading {req_file}", exc)
         normalized = _parse_requirements_names(content)
-        declared = package_name.lower() in normalized
+        declared = canonicalize_name(package_name) in normalized
         if declared:
             return _create_result(
                 "fail",
