@@ -576,7 +576,11 @@ class HandlerRegistry:
         target = condition.get("target")
         if not target:
             return _create_result("fail", "Missing 'target' for executable_exists")
-        found = shutil.which(target) is not None
+        # Build candidate list: for "python" also try "python3" (macOS/Linux)
+        candidates = [target]
+        if target == "python":
+            candidates.append("python3")
+        found = any(shutil.which(c) is not None for c in candidates)
         if found:
             # Concise style: "<name> detected"
             return _create_result("pass", f"{target} detected")

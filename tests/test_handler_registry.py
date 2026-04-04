@@ -6,6 +6,8 @@ import tempfile
 from typing import Any, cast
 from unittest.mock import patch
 
+from pytest import MonkeyPatch
+
 from azure_functions_doctor.handlers import HandlerRegistry, Rule
 
 
@@ -1163,6 +1165,84 @@ def test_executable_exists_missing_target() -> None:
     assert result["status"] == "fail"
     assert "Missing 'target'" in result["detail"]
 
+
+def test_executable_exists_python3_fallback(monkeypatch: MonkeyPatch) -> None:
+    """Test python target falls back to python3 when python is not on PATH."""
+    registry = HandlerRegistry()
+    rule: Rule = {
+        "id": "test_python3_fallback",
+        "type": "executable_exists",
+        "condition": {
+            "target": "python",
+        },
+    }
+
+    # Simulate: 'python' not found, 'python3' found
+    def fake_which(name: str) -> str | None:
+        return "/usr/bin/python3" if name == "python3" else None
+
+    monkeypatch.setattr("shutil.which", fake_which)
+    result = registry.handle(rule, Path("."))
+    assert result["status"] == "pass"
+    assert "python detected" in result["detail"]
+
+
+def test_executable_exists_python_no_fallback_needed(monkeypatch: MonkeyPatch) -> None:
+    """Test python target found directly — no fallback triggered."""
+    registry = HandlerRegistry()
+    rule: Rule = {
+        "id": "test_python_direct",
+        "type": "executable_exists",
+        "condition": {
+            "target": "python",
+        },
+    }
+
+    def fake_which(name: str) -> str | None:
+        return "/usr/bin/python" if name == "python" else None
+
+    monkeypatch.setattr("shutil.which", fake_which)
+    result = registry.handle(rule, Path("."))
+    assert result["status"] == "pass"
+    assert "python detected" in result["detail"]
+
+
+def test_executable_exists_python_neither_found(monkeypatch: MonkeyPatch) -> None:
+    """Test python target fails when neither python nor python3 on PATH."""
+    registry = HandlerRegistry()
+    rule: Rule = {
+        "id": "test_python_neither",
+        "type": "executable_exists",
+        "condition": {
+            "target": "python",
+        },
+    }
+
+    monkeypatch.setattr("shutil.which", lambda name: None)
+    result = registry.handle(rule, Path("."))
+    assert result["status"] == "fail"
+    assert "not found" in result["detail"]
+
+
+def test_executable_exists_non_python_no_fallback(monkeypatch: MonkeyPatch) -> None:
+    """Test non-python target does NOT trigger python3 fallback."""
+    registry = HandlerRegistry()
+    rule: Rule = {
+        "id": "test_non_python_no_fallback",
+        "type": "executable_exists",
+        "condition": {
+            "target": "func",
+        },
+    }
+
+    # python3 exists but should NOT be tried for 'func'
+    def fake_which(name: str) -> str | None:
+        return "/usr/bin/python3" if name == "python3" else None
+
+    monkeypatch.setattr("shutil.which", fake_which)
+    result = registry.handle(rule, Path("."))
+    assert result["status"] == "fail"
+    assert "not found" in result["detail"]
 
 def test_callable_detection_found() -> None:
     """Test _handle_callable_detection with pattern found."""
