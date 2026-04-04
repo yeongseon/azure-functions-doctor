@@ -1244,6 +1244,105 @@ def test_executable_exists_non_python_no_fallback(monkeypatch: MonkeyPatch) -> N
     assert result["status"] == "fail"
     assert "not found" in result["detail"]
 
+def test_executable_exists_python3_tries_python(monkeypatch: MonkeyPatch) -> None:
+    """Test python3 target falls back to python when python3 is not on PATH."""
+    registry = HandlerRegistry()
+    rule: Rule = {
+        "id": "test_python3_tries_python",
+        "type": "executable_exists",
+        "condition": {
+            "target": "python3",
+        },
+    }
+
+    # Simulate: 'python3' not found, 'python' found
+    def fake_which(name: str) -> str | None:
+        return "/usr/bin/python" if name == "python" else None
+
+    monkeypatch.setattr("shutil.which", fake_which)
+    result = registry.handle(rule, Path("."))
+    assert result["status"] == "pass"
+    assert "python3 detected" in result["detail"]
+
+
+def test_executable_exists_python_tries_py_on_windows(monkeypatch: MonkeyPatch) -> None:
+    """Test python target falls back to py on Windows when python/python3 not found."""
+    registry = HandlerRegistry()
+    rule: Rule = {
+        "id": "test_python_tries_py_windows",
+        "type": "executable_exists",
+        "condition": {
+            "target": "python",
+        },
+    }
+
+    # Simulate Windows platform and 'py' available
+    def fake_which(name: str) -> str | None:
+        return "C:\\Python\\py.exe" if name == "py" else None
+
+    monkeypatch.setattr("sys.platform", "win32")
+    monkeypatch.setattr("shutil.which", fake_which)
+    # Force reimport/re-evaluation by reloading the module or accessing the dict directly
+    # Note: Since _PYTHON_CANDIDATES is evaluated at module load time, we need to patch it directly
+    from azure_functions_doctor.handlers import _PYTHON_CANDIDATES
+    monkeypatch.setitem(_PYTHON_CANDIDATES, "python", ["python", "python3", "py"])
+    
+    result = registry.handle(rule, Path("."))
+    assert result["status"] == "pass"
+    assert "python detected" in result["detail"]
+
+
+def test_executable_exists_python3_tries_py_on_windows(monkeypatch: MonkeyPatch) -> None:
+    """Test python3 target falls back to py on Windows when python3/python not found."""
+    registry = HandlerRegistry()
+    rule: Rule = {
+        "id": "test_python3_tries_py_windows",
+        "type": "executable_exists",
+        "condition": {
+            "target": "python3",
+        },
+    }
+
+    # Simulate Windows platform and only 'py' available
+    def fake_which(name: str) -> str | None:
+        return "C:\\Python\\py.exe" if name == "py" else None
+
+    monkeypatch.setattr("sys.platform", "win32")
+    monkeypatch.setattr("shutil.which", fake_which)
+    from azure_functions_doctor.handlers import _PYTHON_CANDIDATES
+    monkeypatch.setitem(_PYTHON_CANDIDATES, "python3", ["python3", "python", "py"])
+
+    result = registry.handle(rule, Path("."))
+    assert result["status"] == "pass"
+    assert "python3 detected" in result["detail"]
+
+def test_executable_exists_unknown_target_no_fallback(monkeypatch: MonkeyPatch) -> None:
+    """Test unknown target (e.g., node) only tries itself, no fallback."""
+    registry = HandlerRegistry()
+    rule: Rule = {
+        "id": "test_node_no_fallback",
+        "type": "executable_exists",
+        "condition": {
+            "target": "node",
+        },
+    }
+
+    call_count = {"count": 0}
+    tried_names = []
+
+    def fake_which(name: str) -> str | None:
+        call_count["count"] += 1
+        tried_names.append(name)
+        return None
+
+    monkeypatch.setattr("shutil.which", fake_which)
+    result = registry.handle(rule, Path("."))
+    assert result["status"] == "fail"
+    assert "node not found" in result["detail"]
+    # Verify that only 'node' was tried, no fallback
+    assert tried_names == ["node"]
+
+
 def test_callable_detection_found() -> None:
     """Test _handle_callable_detection with pattern found."""
     registry = HandlerRegistry()

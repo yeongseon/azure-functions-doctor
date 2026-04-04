@@ -18,6 +18,12 @@ from azure_functions_doctor.target_resolver import resolve_target_value
 
 logger = get_logger(__name__)
 
+# Platform-aware candidates for executables (for symmetric fallback)
+_PYTHON_CANDIDATES: dict[str, list[str]] = {
+    "python": ["python", "python3"] + (["py"] if sys.platform == "win32" else []),
+    "python3": ["python3", "python"] + (["py"] if sys.platform == "win32" else []),
+}
+
 
 def _discover_functionapp_aliases(source: str) -> set[str]:
     """Extract variable names assigned a ``FunctionApp()`` or ``Blueprint()`` call.
@@ -576,10 +582,8 @@ class HandlerRegistry:
         target = condition.get("target")
         if not target:
             return _create_result("fail", "Missing 'target' for executable_exists")
-        # Build candidate list: for "python" also try "python3" (macOS/Linux)
-        candidates = [target]
-        if target == "python":
-            candidates.append("python3")
+        # Use candidate map for symmetric fallback
+        candidates = _PYTHON_CANDIDATES.get(target, [target])
         found = any(shutil.which(c) is not None for c in candidates)
         if found:
             # Concise style: "<name> detected"
