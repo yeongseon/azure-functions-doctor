@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 # Platform-aware candidates for executables (for symmetric fallback)
 _PYTHON_CANDIDATES: dict[str, list[str]] = {
     "python": ["python", "python3"] + (["py"] if sys.platform == "win32" else []),
-    "python3": ["python3", "python"],
+    "python3": ["python3", "python"] + (["py"] if sys.platform == "win32" else []),
 }
 
 

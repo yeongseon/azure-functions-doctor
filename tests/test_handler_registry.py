@@ -1292,6 +1292,30 @@ def test_executable_exists_python_tries_py_on_windows(monkeypatch: MonkeyPatch) 
     assert "python detected" in result["detail"]
 
 
+def test_executable_exists_python3_tries_py_on_windows(monkeypatch: MonkeyPatch) -> None:
+    """Test python3 target falls back to py on Windows when python3/python not found."""
+    registry = HandlerRegistry()
+    rule: Rule = {
+        "id": "test_python3_tries_py_windows",
+        "type": "executable_exists",
+        "condition": {
+            "target": "python3",
+        },
+    }
+
+    # Simulate Windows platform and only 'py' available
+    def fake_which(name: str) -> str | None:
+        return "C:\\Python\\py.exe" if name == "py" else None
+
+    monkeypatch.setattr("sys.platform", "win32")
+    monkeypatch.setattr("shutil.which", fake_which)
+    from azure_functions_doctor.handlers import _PYTHON_CANDIDATES
+    monkeypatch.setitem(_PYTHON_CANDIDATES, "python3", ["python3", "python", "py"])
+
+    result = registry.handle(rule, Path("."))
+    assert result["status"] == "pass"
+    assert "python3 detected" in result["detail"]
+
 def test_executable_exists_unknown_target_no_fallback(monkeypatch: MonkeyPatch) -> None:
     """Test unknown target (e.g., node) only tries itself, no fallback."""
     registry = HandlerRegistry()
