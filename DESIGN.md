@@ -47,3 +47,35 @@ This project does not aim to:
 - New checks require tests and example coverage when applicable.
 - Output format changes are user-facing behavior changes.
 - Experimental checks or flags must be clearly labeled in code and docs.
+
+## High-Level Architecture
+
+```mermaid
+flowchart TD
+    CLI["cli.py\nTyper CLI"]
+    DOC["doctor.py\nDiagnostic runner"]
+    RULES[("assets/\nRule inventory")]
+    HDLR["handlers.py\nType-based dispatch"]
+    TR["target_resolver.py\nVersion resolution"]
+    RES["Structured results\nSectionResult + CheckResult"]
+
+    CLI --> DOC
+    DOC --> RULES
+    DOC --> HDLR
+    HDLR --> TR
+    DOC --> RES
+```
+
+## Sources
+
+- [Azure Functions Python developer reference](https://learn.microsoft.com/en-us/azure/azure-functions/functions-reference-python)
+- [Azure Functions host.json reference](https://learn.microsoft.com/en-us/azure/azure-functions/functions-host-json)
+- [Supported languages in Azure Functions](https://learn.microsoft.com/en-us/azure/azure-functions/supported-languages)
+
+## See Also
+
+- [azure-functions-validation — Architecture](https://github.com/yeongseon/azure-functions-validation) — Request/response validation pipeline
+- [azure-functions-openapi — Architecture](https://github.com/yeongseon/azure-functions-openapi) — OpenAPI spec generation
+- [azure-functions-logging — Architecture](https://github.com/yeongseon/azure-functions-logging) — Structured logging with contextvars
+- [azure-functions-scaffold — Architecture](https://github.com/yeongseon/azure-functions-scaffold) — Project scaffolding CLI
+- [azure-functions-langgraph — Architecture](https://github.com/yeongseon/azure-functions-langgraph) — LangGraph agent deployment
