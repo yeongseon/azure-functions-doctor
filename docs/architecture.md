@@ -22,7 +22,7 @@ Core modules and responsibilities:
 - `config.py`: configuration management (reserved for future use; not yet in the runtime path).
 - `target_resolver.py`: resolves runtime values (Python version, Core Tools version) for version-comparison checks.
 - `logging_config.py`: internal logging setup.
-- `schemas/`: JSON schema definitions for rule assets and output contracts.
+- `schemas/`: JSON schema definitions for rule assets.
 - `assets/`: built-in rule inventory (e.g. `rules/v2.json`).
 
 ## Public API Boundary
@@ -35,6 +35,27 @@ Public symbols intentionally kept small:
 
 CLI is the primary consumer. Python import use is for programmatic embedding only.
 
+## Module Boundaries
+
+```mermaid
+flowchart TD
+    CLI["cli.py\nTyper CLI"]
+    DOC["doctor.py\nDoctor runner"]
+    HDLR["handlers.py\nRule dispatch + generic_handler"]
+    TR["target_resolver.py\nVersion resolution"]
+    RULES[("assets/\nRule inventory")]
+    SCHEMAS[("schemas/\nJSON schemas")]
+    LOG["logging_config.py\nInternal logging"]
+
+    CLI --> DOC
+    DOC --> HDLR
+    DOC --> RULES
+    DOC --> SCHEMAS
+    HDLR --> TR
+    CLI --> LOG
+    DOC --> LOG
+```
+
 ## Diagnostic Pipeline
 
 `Doctor.run_all_checks()` is the entrypoint for a full diagnostic scan.
@@ -46,7 +67,7 @@ Execution flow:
 3. Apply profile filter if `--profile` is given.
 4. Dispatch each rule to its handler by the rule's `type` field.
 5. Aggregate `SectionResult` list with per-item `CheckResult` entries.
-6. Return structured result dict with overall pass/fail status.
+6. Return `list[SectionResult]` — overall pass/fail status is derived later by the CLI.
 
 ```mermaid
 sequenceDiagram
@@ -75,8 +96,8 @@ sequenceDiagram
 
 Rules are data, not code:
 
-- Each rule is a JSON object with `id`, `category`, `label`, `check`, and optional `hint`.
-- Handlers interpret the `check` field against the target project.
+- Each rule is a JSON object with `id`, `category`, `label`, `type`, `condition`, and optional `hint`.
+- Handlers dispatch on the rule's `type` field and evaluate `condition` against the target project.
 - New checks can be added without touching Python logic.
 
 See [Rule Inventory](rule_inventory.md) and [RULE_POLICY](RULE_POLICY.md) for the full rule catalogue.
@@ -97,11 +118,33 @@ CI pipelines can rely on these codes directly. See [JSON Output Contract](json_o
 
 Profiles allow subsets of rules:
 
-- Profiles are TOML files that list rule IDs to include or exclude.
-- `--minimal` selects the built-in minimal profile.
-- Custom profiles enable per-team or per-environment gate configurations.
+- Profile is a string selector (`minimal` or `full`), not a file-based system. `minimal` keeps only rules where `required=True` in the rule asset; `full` (the default) runs all rules.
+- `--profile minimal` restricts the scan to required rules only.
+- Custom profile names raise `ValueError`; only `minimal` and `full` are accepted.
 
 See [Configuration](configuration.md) and [Minimal Profile](minimal_profile.md).
+
+## Key Design Decisions
+
+### 1. JSON rule assets over hardcoded checks
+
+Every diagnostic check is defined as a JSON object in the rule inventory (`assets/rules/v2.json`). New checks are added by appending rule data — no Python handler changes required unless a new rule `type` is introduced.
+
+### 2. HandlerRegistry type-based dispatch
+
+`handlers.py` maintains a `HandlerRegistry` that maps rule `type` strings to handler functions. The `Doctor` runner dispatches each rule to its handler by type, enabling extensibility without modifying dispatch logic.
+
+### 3. Exit code contract
+
+`cli.py` sets exit code 1 explicitly when any check fails. Exit code 0 results from explicit `typer.Exit(0)` in structured-output paths and normal return in table mode. Exit code 2 is not explicitly coded — it is the default behaviour of Typer/Click when invoked with invalid arguments.
+
+### 4. String-based profile selection
+
+Profiles are not file-based. The `--profile` flag accepts `minimal` or `full` (default). `minimal` filters rules to those where `required=True` in the rule asset (`Doctor.run_all_checks()`). This avoids external profile file management while covering the common use case of gating CI on required rules only.
+
+### 5. Typer CLI framework
+
+The CLI uses Typer for argument parsing, help generation, and shell completion. This was chosen over argparse/Click for its decorator-driven API and automatic type inference from Python type hints.
 
 ## Related Documents
 
@@ -110,27 +153,6 @@ See [Configuration](configuration.md) and [Minimal Profile](minimal_profile.md).
 - [Rules](rules.md)
 - [Diagnostics](diagnostics.md)
 - [Troubleshooting](troubleshooting.md)
-
-## Module Boundaries
-
-```mermaid
-flowchart TD
-    CLI["cli.py\nTyper CLI"]
-    DOC["doctor.py\nDoctor runner"]
-    HDLR["handlers.py\nRule dispatch + generic_handler"]
-    TR["target_resolver.py\nVersion resolution"]
-    RULES[("assets/\nRule inventory")]
-    SCHEMAS[("schemas/\nJSON schemas")]
-    LOG["logging_config.py\nInternal logging"]
-
-    CLI --> DOC
-    DOC --> HDLR
-    DOC --> RULES
-    DOC --> SCHEMAS
-    HDLR --> TR
-    CLI --> LOG
-    DOC --> LOG
-```
 
 ## Sources
 
