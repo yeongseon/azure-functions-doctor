@@ -88,7 +88,7 @@ sequenceDiagram
         TR-->>HDLR: resolved value
         HDLR-->>DOC: CheckResult
     end
-    DOC-->>CLI: SectionResult[] + pass/fail status
+    DOC-->>CLI: list[SectionResult]
     CLI-->>Dev: formatted output (table/json/sarif/junit)
 ```
 
@@ -108,7 +108,7 @@ The CLI follows a strict exit code contract:
 
 | Exit code | Meaning |
 |---|---|
-| `0` | All checks passed |
+| `0` | No checks failed |
 | `1` | One or more checks failed |
 | `2` | Usage error (bad arguments) |
 
