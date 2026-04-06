@@ -162,8 +162,8 @@ The CLI uses Typer for argument parsing, help generation, and shell completion. 
 
 ## See Also
 
-- [azure-functions-validation — Architecture](https://github.com/yeongseon/azure-functions-validation) — Request/response validation pipeline
-- [azure-functions-openapi — Architecture](https://github.com/yeongseon/azure-functions-openapi) — OpenAPI spec generation
+- [azure-functions-validation — Architecture](https://github.com/yeongseon/azure-functions-validation) — Request/response validation and serialization
+- [azure-functions-openapi — Architecture](https://github.com/yeongseon/azure-functions-openapi) — API documentation and spec generation
 - [azure-functions-logging — Architecture](https://github.com/yeongseon/azure-functions-logging) — Structured logging with contextvars
 - [azure-functions-scaffold — Architecture](https://github.com/yeongseon/azure-functions-scaffold) — Project scaffolding CLI
-- [azure-functions-langgraph — Architecture](https://github.com/yeongseon/azure-functions-langgraph) — LangGraph agent deployment
+- [azure-functions-langgraph — Architecture](https://github.com/yeongseon/azure-functions-langgraph) — LangGraph runtime exposure for Azure Functions

@@ -46,6 +46,14 @@ This repository targets the decorator-based Azure Functions Python v2 programmin
 
 Use `azure-functions-doctor` as part of a pre-deployment checklist alongside [azure-functions-logging](https://github.com/yeongseon/azure-functions-logging) for observability.
 
+## What this package does not do
+
+This package does not own:
+
+- **Fixing issues** — it diagnoses configuration problems but does not auto-fix them
+- **API documentation** — use [`azure-functions-openapi`](https://github.com/yeongseon/azure-functions-openapi) for API documentation and spec generation
+- **Request validation** — use [`azure-functions-validation`](https://github.com/yeongseon/azure-functions-validation) for Pydantic-based request/response validation
+
 ## Installation
 
 From PyPI:
@@ -185,15 +193,19 @@ The default ruleset includes checks for:
 
 ## Ecosystem
 
-Part of the **Azure Functions Python DX Toolkit**:
+This package is part of the **Azure Functions Python DX Toolkit**.
+
+**Design principle:** `azure-functions-doctor` owns pre-deploy diagnostics. It does not fix issues or generate code — it surfaces actionable findings so developers can fix them. Runtime behavior belongs to [`azure-functions-openapi`](https://github.com/yeongseon/azure-functions-openapi) (API documentation and spec generation), [`azure-functions-validation`](https://github.com/yeongseon/azure-functions-validation) (request/response validation), and [`azure-functions-langgraph`](https://github.com/yeongseon/azure-functions-langgraph) (LangGraph runtime exposure).
 
 | Package | Role |
 |---------|------|
-| [azure-functions-validation](https://github.com/yeongseon/azure-functions-validation) | Request and response validation |
-| [azure-functions-openapi](https://github.com/yeongseon/azure-functions-openapi) | OpenAPI spec and Swagger UI |
+| [azure-functions-validation](https://github.com/yeongseon/azure-functions-validation) | Request/response validation and serialization |
+| [azure-functions-openapi](https://github.com/yeongseon/azure-functions-openapi) | OpenAPI spec generation and Swagger UI |
+| [azure-functions-langgraph](https://github.com/yeongseon/azure-functions-langgraph) | LangGraph deployment adapter for Azure Functions |
 | [azure-functions-logging](https://github.com/yeongseon/azure-functions-logging) | Structured logging and observability |
 | **azure-functions-doctor** | Pre-deploy diagnostic CLI |
 | [azure-functions-scaffold](https://github.com/yeongseon/azure-functions-scaffold) | Project scaffolding |
+| [azure-functions-durable-graph](https://github.com/yeongseon/azure-functions-durable-graph) | Manifest-first graph runtime with Durable Functions *(planned)* |
 | [azure-functions-python-cookbook](https://github.com/yeongseon/azure-functions-python-cookbook) | Recipes and examples |
 
 ## Disclaimer
