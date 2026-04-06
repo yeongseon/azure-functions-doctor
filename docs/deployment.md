@@ -1,35 +1,82 @@
-# Deployment Guide
-This guide follows the LangGraph deployment-guide style, but for `azure-functions-doctor` the sequence is diagnostics first, deployment second. You will run doctor on healthy and broken examples, generate machine-readable reports, then deploy the healthy Azure Functions app. Outputs are representative examples, not guaranteed byte-for-byte.
+# Deploy to Azure
 
-## Prerequisites
-| Requirement | Minimum | Notes |
+This guide walks you through deploying an Azure Functions Python app with a diagnostics-first workflow.
+You will run `azure-functions-doctor` first, confirm the project is healthy, then provision Azure resources and publish.
+
+## Who this guide is for
+
+You write Python and use `pip`, but Azure is new to you.
+This guide is for first-time Azure users who want copy-paste commands and clear checkpoints.
+
+## What you are deploying
+
+`azure-functions-doctor` is a CLI diagnostics tool, not a runtime framework.
+It checks Azure Functions project health before deployment so you catch problems early.
+
+In this guide you will:
+
+- Run doctor on a healthy sample project (`examples/v2/http-trigger`)
+- Compare that with a broken sample (`examples/v2/broken-missing-host-json`)
+- Generate text, JSON, SARIF, and JUnit outputs for local and CI use
+- Deploy only after checks pass
+
+## Azure concepts you need for this guide
+
+> New to Azure plans? Read [Choose an Azure Functions Hosting Plan](choose-a-plan.md).
+
+| Term | What it means |
+|---|---|
+| **Function App** | Your deployed Azure Functions application (like a cloud-hosted Python app). |
+| **Hosting plan** | Compute model that controls scaling, cold starts, timeout, and cost. |
+| **Resource Group** | A container for related Azure resources; delete it to clean up everything. |
+| **Storage Account** | Required backing resource for Azure Functions state and operations. |
+
+## Recommended plan for this repo
+
+| | |
+|---|---|
+| **Default plan** | Flex Consumption |
+| **Why** | Lowest friction for first deployment, scale-to-zero, and enough timeout for typical Python HTTP samples. |
+| **Switch to Premium if** | You need faster cold starts, always-warm instances, or very large dependency footprints. |
+
+## Before you start
+
+| Requirement | How to check | Install if missing |
 |---|---|---|
-| Azure subscription | Active | Use `<YOUR_SUBSCRIPTION_ID>` |
-| Azure CLI (`az`) | Current | `az --version` |
-| Azure Functions Core Tools (`func`) | v4 | `func --version` |
-| Python | 3.10+ | Runtime shown is Python 3.11 |
-| Azure Functions Doctor | 0.16.2 | Install from PyPI |
+| Azure account | [portal.azure.com](https://portal.azure.com) | [Create free account](https://azure.microsoft.com/free/) |
+| Azure CLI | `az --version` | [Install Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) |
+| Azure Functions Core Tools v4 | `func --version` | [Install Core Tools](https://learn.microsoft.com/azure/azure-functions/functions-run-local#install-the-azure-functions-core-tools) |
+| Python 3.10-3.13 | `python3 --version` | [python.org](https://www.python.org/downloads/) |
+| Doctor CLI v0.16.2 | `pip show azure-functions-doctor` | `python3 -m pip install azure-functions-doctor==0.16.2` |
 
-## Install CLI
+Install doctor if needed:
+
 ```bash
-python -m pip install --upgrade pip
-pip install azure-functions-doctor==0.16.2
-```
-Representative output:
-```bash
-Requirement already satisfied: pip in ./.venv/lib/python3.11/site-packages (25.0)
-Collecting azure-functions-doctor==0.16.2
-Downloading azure_functions_doctor-0.16.2-py3-none-any.whl
-Installing collected packages: azure-functions-doctor
-Successfully installed azure-functions-doctor-0.16.2
+python3 -m pip install --upgrade pip
+python3 -m pip install azure-functions-doctor==0.16.2
 ```
 
-## Section 1: Pre-deploy diagnostics on healthy project
-Use `--profile minimal` for canonical deterministic pass output.
+## Read these warnings before provisioning
+
+1. Storage account names must be globally unique (lowercase letters and numbers only, 3-24 characters).
+2. Keep all resources in the same Azure region to avoid avoidable latency and provisioning issues.
+3. Local settings do not auto-sync to Azure; use app settings after deployment when needed.
+4. First publish can take a few minutes because Azure performs a remote build for Python dependencies.
+5. Deleting local files does not delete Azure resources; remove the resource group to stop billing.
+6. Doctor validates your function project, not your Azure subscription state; permission, quota, policy, and region availability issues can still fail deployment.
+
+## Run doctor before you deploy
+
+This is the core workflow for this repository: diagnose first, deploy second.
+
+Healthy project check:
+
 ```bash
 azure-functions doctor examples/v2/http-trigger --profile minimal
 ```
-Representative output:
+
+Representative text output:
+
 ```text
 Azure Functions Doctor
 Path: /data/GitHub/azure-functions-doctor/examples/v2/http-trigger
@@ -47,14 +94,15 @@ Doctor summary (to see all details, run azure-functions doctor -v):
   0 fails, 0 warnings, 5 passed
 Exit code: 0
 ```
-Summary format is `{fail_count} fails, {warning_count} warnings, {passed_count} passed`. Exit code is `0` when there are no failures.
 
-## Section 2: Diagnostics on broken projects
-Run diagnostics against the broken sample missing `host.json`.
+Broken project detection (missing `host.json`):
+
 ```bash
-azure-functions doctor examples/v2/broken-missing-host-json
+azure-functions doctor examples/v2/broken-missing-host-json --profile minimal
 ```
-Representative output:
+
+Representative text output:
+
 ```text
 Azure Functions Doctor
 Path: /data/GitHub/azure-functions-doctor/examples/v2/broken-missing-host-json
@@ -72,33 +120,39 @@ Doctor summary (to see all details, run azure-functions doctor -v):
   2 fails, 0 warnings, 3 passed
 Exit code: 1
 ```
-Exit code is `1` when one or more required checks fail.
 
-## Section 3: Machine-readable output formats
-### JSON
+Machine-readable output formats:
+
 ```bash
-azure-functions doctor examples/v2/http-trigger --format json --profile minimal
+# JSON
+azure-functions doctor examples/v2/http-trigger --profile minimal --format json --output doctor-report.json
+
+# SARIF (for code scanning / security tooling)
+azure-functions doctor examples/v2/http-trigger --profile minimal --format sarif --output doctor-report.sarif
+
+# JUnit (for CI test dashboards)
+azure-functions doctor examples/v2/http-trigger --profile minimal --format junit --output doctor-report.xml
+
+# Summary JSON sidecar (quick pass/fail counts)
+azure-functions doctor examples/v2/http-trigger --profile minimal --summary-json doctor-summary.json
 ```
-Representative output:
+
+Representative JSON output (`doctor-report.json`):
+
 ```json
 {
   "metadata": {
     "tool_version": "0.16.2",
-    "generated_at": "2025-01-15T10:30:00Z",
-    "target_path": "/path/to/examples/v2/http-trigger"
+    "target_path": "/data/GitHub/azure-functions-doctor/examples/v2/http-trigger"
   },
   "results": [
     {
-      "title": "...",
-      "category": "...",
+      "title": "Python Env",
       "status": "pass",
       "items": [
         {
-          "label": "...",
-          "value": "...",
-          "status": "pass",
-          "hint": "...",
-          "hint_url": "..."
+          "label": "Python version",
+          "status": "pass"
         }
       ]
     }
@@ -106,11 +160,8 @@ Representative output:
 }
 ```
 
-### SARIF
-```bash
-azure-functions doctor examples/v2/http-trigger --format sarif --profile minimal
-```
-Representative output:
+Representative SARIF output (`doctor-report.sarif`):
+
 ```json
 {
   "version": "2.1.0",
@@ -120,18 +171,7 @@ Representative output:
       "tool": {
         "driver": {
           "name": "azure-functions-doctor",
-          "version": "0.16.2",
-          "informationUri": "https://github.com/yeongseon/azure-functions-doctor",
-          "rules": [
-            {
-              "id": "check_python_version",
-              "name": "Python version"
-            },
-            {
-              "id": "check_host_json",
-              "name": "host.json"
-            }
-          ]
+          "version": "0.16.2"
         }
       },
       "results": []
@@ -139,160 +179,262 @@ Representative output:
   ]
 }
 ```
-When all checks pass, SARIF `results` is empty because doctor includes only non-pass items in SARIF output.
 
-### JUnit
-```bash
-azure-functions doctor examples/v2/http-trigger --format junit --profile minimal
-```
-Representative output:
+Representative JUnit output (`doctor-report.xml`):
+
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <testsuite name="func-doctor" tests="5" failures="0" skipped="0" time="0.021">
   <testcase classname="Python Env" name="Python version" />
-  <testcase classname="Python Env" name="requirements.txt" />
-  <testcase classname="Python Env" name="azure-functions package" />
   <testcase classname="Project Structure" name="host.json" />
-  <testcase classname="Project Structure" name="host.json version" />
 </testsuite>
 ```
-JUnit root element is `<testsuite name="func-doctor" ...>`.
 
-### Summary JSON sidecar
-```bash
-azure-functions doctor examples/v2/http-trigger --profile minimal --summary-json doctor-summary.json
-```
-Representative output file:
+Representative summary sidecar content:
+
 ```json
 {"passed":5,"warned":0,"failed":0}
 ```
 
-## Section 4: Deploy the healthy example
-Deploy `examples/v2/http-trigger` after diagnostics are clean.
+When checks fail, doctor exits with code `1`. Use that exit code to block deployment.
 
-### Prepare dependencies
+## Deploy the healthy example
+
+This section deploys `examples/v2/http-trigger` on Flex Consumption.
+
+### Step 1 — Set deployment variables
+
 ```bash
-python -m pip install --upgrade pip
-pip install -r examples/v2/http-trigger/requirements.txt
-```
-Representative output:
-```bash
-Requirement already satisfied: pip in ./.venv/lib/python3.11/site-packages (25.0)
-Collecting azure-functions
-Successfully installed azure-functions-1.21.0
+SUBSCRIPTION_ID="00000000-0000-0000-0000-000000000000"
+RESOURCE_GROUP="rg-doctor-http"
+LOCATION="koreacentral"
+STORAGE_ACCOUNT="stdoctorhttp$(date +%s | tail -c 6)"
+FUNCTIONAPP_NAME="func-doctor-http"
 ```
 
-### Provision Azure resources
+### Step 2 — Sign in and select subscription
+
 ```bash
-az account set --subscription <YOUR_SUBSCRIPTION_ID>
-az group create --name <YOUR_RESOURCE_GROUP> --location eastus
+az login
+az account set --subscription "$SUBSCRIPTION_ID"
 ```
-Representative output:
-```json
-{"name":"<YOUR_RESOURCE_GROUP>","location":"eastus","properties":{"provisioningState":"Succeeded"}}
+
+### Step 3 — Confirm Flex region support
+
+```bash
+az functionapp list-flexconsumption-locations -o table
 ```
+
+### Step 4 — Re-run doctor on the healthy sample (deployment gate)
+
+```bash
+azure-functions doctor examples/v2/http-trigger --profile minimal
+```
+
+Proceed only if the command exits with `0`.
+
+### Step 5 — Create resource group
+
+```bash
+az group create --name "$RESOURCE_GROUP" --location "$LOCATION"
+```
+
+### Step 6 — Create storage account
 
 ```bash
 az storage account create \
-  --name <YOUR_STORAGE_ACCOUNT> \
-  --resource-group <YOUR_RESOURCE_GROUP> \
-  --location eastus \
-  --sku Standard_LRS \
-  --kind StorageV2
+  --name "$STORAGE_ACCOUNT" \
+  --resource-group "$RESOURCE_GROUP" \
+  --location "$LOCATION" \
+  --sku Standard_LRS
 ```
-Representative output:
-```json
-{"name":"<YOUR_STORAGE_ACCOUNT>","kind":"StorageV2","provisioningState":"Succeeded"}
-```
+
+### Step 7 — Create Function App (Flex Consumption)
 
 ```bash
 az functionapp create \
-  --name <YOUR_FUNCTION_APP_NAME> \
-  --resource-group <YOUR_RESOURCE_GROUP> \
-  --storage-account <YOUR_STORAGE_ACCOUNT> \
-  --consumption-plan-location eastus \
+  --name "$FUNCTIONAPP_NAME" \
+  --resource-group "$RESOURCE_GROUP" \
+  --storage-account "$STORAGE_ACCOUNT" \
+  --flexconsumption-location "$LOCATION" \
   --runtime python \
-  --runtime-version 3.11 \
-  --functions-version 4
-```
-Representative output:
-```json
-{"name":"<YOUR_FUNCTION_APP_NAME>","defaultHostName":"<YOUR_FUNCTION_APP_NAME>.azurewebsites.net","state":"Running"}
+  --runtime-version 3.11
 ```
 
-### Publish
-From `examples/v2/http-trigger`:
+### Step 8 — Publish the healthy example
+
 ```bash
-func azure functionapp publish <YOUR_FUNCTION_APP_NAME> --python
-```
-Representative output:
-```text
-Getting site publishing info...
-Starting the function app deployment...
-Uploading package...
-Deployment completed successfully.
-Syncing triggers...
-Functions in <YOUR_FUNCTION_APP_NAME>:
-    HttpExample - [httpTrigger]
-        Invoke url: https://<YOUR_FUNCTION_APP_NAME>.azurewebsites.net/api/HttpExample
-Deployment successful.
+func azure functionapp publish "$FUNCTIONAPP_NAME" --python --source examples/v2/http-trigger
 ```
 
-### Verify endpoint behavior
+If your Core Tools version does not support `--source`, run this equivalent command instead:
+
 ```bash
-export BASE_URL="https://<YOUR_FUNCTION_APP_NAME>.azurewebsites.net"
+(cd examples/v2/http-trigger && func azure functionapp publish "$FUNCTIONAPP_NAME" --python)
 ```
-`GET /api/HttpExample?name=Azure`:
+
+### Step 9 — Verify the deployed endpoint
+
 ```bash
+BASE_URL="https://$FUNCTIONAPP_NAME.azurewebsites.net"
 curl -i "$BASE_URL/api/HttpExample?name=Azure"
-```
-Representative response:
-```text
-HTTP/1.1 200 OK
-Content-Type: text/plain; charset=utf-8
-
-Hello, Azure. This v2 HTTP triggered function executed successfully.
-```
-
-`GET /api/HttpExample`:
-```bash
 curl -i "$BASE_URL/api/HttpExample"
 ```
-Representative response:
-```text
-HTTP/1.1 200 OK
-Content-Type: text/plain; charset=utf-8
 
-This v2 HTTP triggered function executed successfully. Pass a name in the query string or request body for a personalized response.
-```
-Both responses are plain text with HTTP `200`.
+Expected behavior: both calls return HTTP `200` with plain-text responses.
 
-## CI integration
-Run doctor before publish in CI:
-```bash
-azure-functions doctor . --format junit --output doctor-results.xml --profile minimal
-```
-Representative CI sequence:
-```bash
-azure-functions doctor . --format junit --output doctor-results.xml --profile minimal
-func azure functionapp publish <YOUR_FUNCTION_APP_NAME> --python
-```
-If required checks fail, doctor exits `1` and deployment should not continue.
+## Use doctor in CI
 
-## Cleanup
+Run diagnostics before publish, and fail the pipeline when doctor finds required check failures.
+
+Example GitHub Actions workflow:
+
+```yaml
+name: deploy-with-doctor
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  verify-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install azure-functions-doctor==0.16.2
+
+      - name: Run doctor (text)
+        run: azure-functions doctor . --profile minimal
+
+      - name: Run doctor (JSON)
+        run: azure-functions doctor . --profile minimal --format json --output doctor-report.json
+
+      - name: Run doctor (SARIF)
+        run: azure-functions doctor . --profile minimal --format sarif --output doctor-report.sarif
+
+      - name: Run doctor (JUnit)
+        run: azure-functions doctor . --profile minimal --format junit --output doctor-report.xml
+
+      - name: Run doctor (summary sidecar)
+        run: azure-functions doctor . --profile minimal --summary-json doctor-summary.json
+
+      - name: Publish
+        if: success()
+        run: func azure functionapp publish "$FUNCTIONAPP_NAME" --python
+```
+
+## If you need a different plan
+
+This guide uses Flex Consumption by default. If you need Premium or Dedicated, keep the same diagnostics workflow and replace only the Function App provisioning commands.
+
+See [Choose an Azure Functions Hosting Plan](choose-a-plan.md) for plan-by-plan command blocks.
+
+## Troubleshooting
+
+### Doctor says pass, but deployment fails
+
+| Symptom | Usually means | How to fix |
+|---|---|---|
+| `AuthorizationFailed` or `SubscriptionNotFound` | Subscription/permissions issue | Confirm account and subscription: `az account show`, then `az account set --subscription "$SUBSCRIPTION_ID"` |
+| `StorageAccountAlreadyTaken` | Storage account name collision | Generate a new globally unique value for `$STORAGE_ACCOUNT` |
+| `LocationNotAvailableForResourceType` | Flex unavailable in that region | Check available regions: `az functionapp list-flexconsumption-locations -o table` |
+| Publish fails with remote build errors | Azure-side build issue or missing dependency metadata | Verify `requirements.txt`, retry publish, then inspect deployment logs |
+
+Doctor validates project structure and configuration; it does not validate Azure account state, RBAC, quota, policies, or regional service availability.
+
+### Doctor says fail, but project works locally
+
+| Symptom | Usually means | How to fix |
+|---|---|---|
+| Missing `host.json` or invalid schema warning | Local run path is different from deployment path | Run doctor against the exact folder being deployed |
+| Dependency check failures | Local environment has packages installed globally/venv, but project metadata is incomplete | Pin required packages in `requirements.txt` and rerun doctor |
+| Fails on one machine, passes in CI | Environment drift | Use `--profile minimal`, compare versions, and keep Python/CLI versions aligned |
+
+Useful verification commands:
+
 ```bash
-az group delete --name <YOUR_RESOURCE_GROUP> --yes --no-wait
+python3 --version
+az --version
+func --version
+pip show azure-functions-doctor
+azure-functions doctor . --profile minimal -v
 ```
-Representative output:
-```text
-{"status":"Accepted"}
+
+### Before opening an issue
+
+If you're stuck, please include the following when opening a GitHub issue:
+
+```bash
+# 1. Azure CLI version
+az --version
+
+# 2. Functions Core Tools version
+func --version
+
+# 3. Python version
+python --version
+
+# 4. Doctor version
+pip show azure-functions-doctor
+
+# 5. Doctor output on your project
+azure-functions doctor . -v
+
+# 6. Function App status (if deployed)
+az functionapp show \
+  --name "$FUNCTIONAPP_NAME" \
+  --resource-group "$RESOURCE_GROUP" \
+  --query "{state:state, runtime:siteConfig.linuxFxVersion}"
+
+# 7. Recent logs (if deployed)
+func azure functionapp logstream "$FUNCTIONAPP_NAME"
 ```
+
+
+
+---
+
+## Clean up resources
+
+Delete the resource group to remove all related Azure resources and stop billing.
+
+```bash
+az group delete --name "$RESOURCE_GROUP" --yes --no-wait
+```
+
+Confirm cleanup:
+
+```bash
+az group show --name "$RESOURCE_GROUP"
+```
+
+If deletion has completed, the command returns a not-found error.
 
 ## Sources
-- [Azure Functions Python quickstart](https://learn.microsoft.com/en-us/azure/azure-functions/create-first-function-cli-python)
-- [Azure Functions Core Tools publish reference](https://learn.microsoft.com/en-us/azure/azure-functions/functions-core-tools-reference#func-azure-functionapp-publish)
-- [SARIF specification reference](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html)
+
+- [Azure Functions Python quickstart](https://learn.microsoft.com/azure/azure-functions/create-first-function-cli-python)
+- [Azure Functions Core Tools reference](https://learn.microsoft.com/azure/azure-functions/functions-core-tools-reference)
+- [Azure Functions hosting plans](https://learn.microsoft.com/azure/azure-functions/functions-scale)
+- [Flex Consumption plan](https://learn.microsoft.com/azure/azure-functions/flex-consumption-plan)
+- [SARIF v2.1.0 specification](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html)
+- [JUnit XML format reference](https://llg.cubic.org/docs/junit/)
 
 ## See Also
+
+- [Choose an Azure Functions Hosting Plan](choose-a-plan.md) — Plan selection guide with decision tree
+- [README](../README.md)
+- [Examples: healthy HTTP trigger](../examples/v2/http-trigger)
+- [Examples: broken missing host.json](../examples/v2/broken-missing-host-json)
 - [`azure-functions-scaffold`](https://github.com/yeongseon/azure-functions-scaffold)
+- [`azure-functions-validation`](https://github.com/yeongseon/azure-functions-validation)
+- [`azure-functions-openapi`](https://github.com/yeongseon/azure-functions-openapi)
 - [`azure-functions-logging`](https://github.com/yeongseon/azure-functions-logging)
+- [`azure-functions-langgraph`](https://github.com/yeongseon/azure-functions-langgraph)
