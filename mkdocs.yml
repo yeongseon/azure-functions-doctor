@@ -27,6 +27,9 @@ nav:
       - Minimal Profile: minimal_profile.md
       - JSON Output Contract: json_output_contract.md
       - Handlers: handlers.md
+  - Deployment:
+      - Choose a Plan: choose-a-plan.md
+      - Deploy to Azure: deployment.md
   - Examples:
       - Basic Check: examples/basic_check.md
       - CI Integration: examples/ci_integration.md
