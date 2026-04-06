@@ -98,6 +98,40 @@ Output JSON for CI:
 azure-functions doctor --format json
 ```
 
+### Sample output (excerpt)
+
+```bash
+azure-functions-doctor doctor --path ./examples/v2/http-trigger
+```
+
+```text
+Azure Functions Doctor
+Path: ./examples/v2/http-trigger
+
+Programming Model
+[✓] Programming model v2: Keyword '@app.|@bp.' found in source code (AST)
+
+Python Env
+[✓] Python version: Python 3.10.12 (>=3.10)
+[✓] requirements.txt: requirements.txt exists
+[✓] azure-functions package: Package 'azure-functions' declared in requirements.txt
+
+Project Structure
+[✓] host.json: host.json exists
+[✓] host.json version: host.json version is "2.0"
+
+Tooling
+[✓] Azure Functions Core Tools (func): func detected
+
+...
+
+Doctor summary:
+  0 fails, 5 warnings, 15 passed
+Exit code: 0
+```
+
+The same command runs in CI pipelines — see [CI Integration](#ci-integration) below and [docs/deployment.md](docs/deployment.md) for details.
+
 ## CI Integration
 
 Use `azure-functions-doctor` as a CI gate to block deployments on required failures.
