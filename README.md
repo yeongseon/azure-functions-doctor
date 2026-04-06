@@ -52,7 +52,7 @@ This package does not own:
 
 - **Fixing issues** — it diagnoses configuration problems but does not auto-fix them
 - **API documentation** — use [`azure-functions-openapi`](https://github.com/yeongseon/azure-functions-openapi) for API documentation and spec generation
-- **Request validation** — use [`azure-functions-validation`](https://github.com/yeongseon/azure-functions-validation) for Pydantic-based request/response validation
+- **Request validation** — use [`azure-functions-validation`](https://github.com/yeongseon/azure-functions-validation) for request/response validation and serialization
 
 ## Installation
 
