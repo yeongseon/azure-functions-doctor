@@ -58,7 +58,7 @@ python3 -m pip install azure-functions-doctor==0.16.2
 
 ## Read these warnings before provisioning
 
-1. Storage account names must be globally unique (lowercase letters and numbers only, 3-24 characters).
+1. Storage account names must be globally unique (lowercase letters and numbers only, 3–24 characters).
 2. Keep all resources in the same Azure region to avoid avoidable latency and provisioning issues.
 3. Local settings do not auto-sync to Azure; use app settings after deployment when needed.
 4. First publish can take a few minutes because Azure performs a remote build for Python dependencies.
