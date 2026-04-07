@@ -242,6 +242,23 @@ This package is part of the **Azure Functions Python DX Toolkit**.
 | [azure-functions-durable-graph](https://github.com/yeongseon/azure-functions-durable-graph) | Manifest-first graph runtime with Durable Functions *(planned)* |
 | [azure-functions-python-cookbook](https://github.com/yeongseon/azure-functions-python-cookbook) | Recipes and examples |
 
+## For AI Coding Assistants
+
+This repository includes `llms.txt` and `llms-full.txt` for LLM-friendly documentation:
+
+- **`llms.txt`** — Concise index of package info, CLI commands, quick start, and ecosystem overview
+- **`llms-full.txt`** — Comprehensive API reference with output formats, diagnostic rules, custom rules, and CI integration patterns
+
+When working with this codebase, LLM assistants should:
+
+1. **Use `llms.txt` for quick reference** — package version (0.16.2), Python requirements (>=3.10,<3.15), CLI entry points
+2. **Refer to `llms-full.txt` for implementation details** — output contracts, rule structure, custom rule patterns, handler types
+3. **Check `src/azure_functions_doctor/cli.py`** — authoritative source for CLI options and validation
+4. **Review `src/azure_functions_doctor/assets/rules/v2.json`** — complete ruleset with check definitions
+5. **Consult `src/azure_functions_doctor/handlers.py`** — diagnostic rule handlers and pattern matchers
+
+For bug reports, feature requests, or documentation improvements, please open an issue or pull request on GitHub.
+
 ## Disclaimer
 
 This project is an independent community project and is not affiliated with,

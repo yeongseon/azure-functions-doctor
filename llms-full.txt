@@ -1,0 +1,494 @@
+# azure-functions-doctor — Full LLM Reference
+
+> Pre-deploy diagnostic CLI for Azure Functions Python v2 projects.
+
+## Package Info
+
+- PyPI: `pip install azure-functions-doctor`
+- Version: 0.16.2
+- Python: >=3.10, <3.15
+- License: MIT
+- Docs: https://yeongseon.github.io/azure-functions-doctor/
+- Repository: https://github.com/yeongseon/azure-functions-doctor
+- Azure Functions programming model: v2 decorator-based
+
+## Installation
+
+```bash
+pip install azure-functions-doctor
+```
+
+## CLI Entry Points
+
+All three commands are aliases to the same CLI:
+
+```bash
+azure-functions doctor [OPTIONS]
+azure-functions-doctor doctor [OPTIONS]
+fdoctor doctor [OPTIONS]
+```
+
+## Command: doctor
+
+Runs diagnostics on an Azure Functions Python v2 application.
+
+### Syntax
+
+```bash
+azure-functions doctor [OPTIONS]
+```
+
+### Options
+
+#### Path Arguments
+
+- `--path TEXT` (default: `.`)
+  - Path to the Azure Functions app directory
+  - Can be absolute or relative path
+  - Must be an existing directory with read permissions
+  - Example: `--path ./my-func-app` or `--path /home/user/projects/my-app`
+
+#### Output Formatting
+
+- `--format TEXT` (default: `table`)
+  - Output format: `table`, `json`, `sarif`, or `junit`
+  - **table**: Human-readable console output with icons and colors
+  - **json**: Structured JSON with metadata, results, and rules info
+  - **sarif**: SARIF 2.1.0 format for GitHub Security tab integration
+  - **junit**: JUnit XML format for CI/CD pipeline reporting
+  - Example: `--format json` or `--format sarif`
+
+- `--output PATH` (optional)
+  - File path to save output (instead of printing to stdout)
+  - Parent directories are created automatically
+  - Works with all `--format` options
+  - Example: `--output results.json` or `--output /tmp/doctor-results.sarif`
+
+#### Rule Configuration
+
+- `--profile TEXT` (optional)
+  - Rule profile: `minimal` or `full`
+  - **minimal**: Load only required rules (required=true). Faster, focused on blockers.
+  - **full** (default): Load all rules including recommended best practices
+  - Example: `--profile minimal` for required checks only
+
+- `--rules PATH` (optional)
+  - Path to custom rules JSON file (overrides built-in rules)
+  - Custom rules must comply with `azure_functions_doctor.schemas.rules.schema.json`
+  - File must exist and be readable
+  - Example: `--rules ./my-custom-rules.json`
+
+#### Summary Output
+
+- `--summary-json PATH` (optional)
+  - Write a JSON summary of counts to a separate file
+  - Summary format: `{"passed": N, "warned": M, "failed": K}`
+  - Created in addition to regular output (format-independent)
+  - Parent directories created automatically
+  - Example: `--summary-json summary.json`
+
+#### Verbosity and Debugging
+
+- `--verbose` / `-v` (flag)
+  - Show detailed hints for failed checks
+  - When enabled, prints "fix:" suggestions for each failure
+  - Useful for interactive local debugging
+  - Example: `--verbose` or `-v`
+
+- `--debug` (flag)
+  - Enable debug logging to stderr (structured JSON format)
+  - Logs rule execution, timing, and diagnostic details
+  - Separate from stdout output (safe for JSON/SARIF piping)
+  - Example: `--debug`
+
+### Examples
+
+**Basic check (current directory, table output):**
+```bash
+azure-functions doctor
+```
+
+**Verbose output for debugging:**
+```bash
+azure-functions doctor --verbose
+```
+
+**Required checks only (minimal profile):**
+```bash
+azure-functions doctor --profile minimal
+```
+
+**JSON output for CI integration:**
+```bash
+azure-functions doctor --format json
+```
+
+**Save JSON to file with debug logging:**
+```bash
+azure-functions doctor --format json --output diagnostics.json --debug
+```
+
+**SARIF output for GitHub Security tab:**
+```bash
+azure-functions doctor --format sarif --output sarif.json
+```
+
+**Custom rules with summary:**
+```bash
+azure-functions doctor --rules ./custom-rules.json --summary-json summary.json
+```
+
+**JUnit output for CI/CD:**
+```bash
+azure-functions doctor --format junit --output test-results.xml
+```
+
+**Full diagnostics with all options:**
+```bash
+azure-functions doctor \
+  --path ./my-app \
+  --profile full \
+  --format json \
+  --output results.json \
+  --summary-json summary.json \
+  --verbose \
+  --debug 2>debug.log
+```
+
+## Output Formats
+
+### Table Format (Default)
+
+Human-readable console output with ASCII icons and color:
+
+```
+Azure Functions Doctor   
+Path: /path/to/app
+
+Programming Model
+  [✓] Programming model v2
+  [!] Another check
+
+Python Env
+  [✓] Python version: 3.12 running
+  [✗] Virtual environment
+
+Doctor summary (to see all details, run azure-functions doctor -v):
+  1 fail, 1 warning, 8 passed
+Exit code: 1
+```
+
+### JSON Format
+
+Structured output with metadata, results, and rule information:
+
+```json
+{
+  "metadata": {
+    "tool_version": "0.16.2",
+    "generated_at": "2025-04-07T10:30:00Z",
+    "target_path": "/path/to/app"
+  },
+  "results": [
+    {
+      "title": "Programming Model",
+      "category": "project_structure",
+      "status": "fail",
+      "items": [
+        {
+          "label": "Programming model v2",
+          "value": "No decorators found",
+          "status": "warn",
+          "hint": "Use func.FunctionApp() and decorator-based triggers",
+          "hint_url": "https://..."
+        }
+      ]
+    }
+  ]
+}
+```
+
+Exit code: 0 if no required checks failed, 1 otherwise.
+
+### SARIF Format
+
+Static Analysis Results Format (SARIF 2.1.0) compatible with GitHub Security tab:
+
+```json
+{
+  "version": "2.1.0",
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "azure-functions-doctor",
+          "version": "0.16.2",
+          "informationUri": "https://github.com/yeongseon/azure-functions-doctor",
+          "rules": [...]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "check_python_version",
+          "message": {"text": "Python 3.9 detected"},
+          "level": "error",
+          "locations": [...]
+        }
+      ]
+    }
+  ]
+}
+```
+
+### JUnit Format
+
+XML test report format for CI/CD pipeline compatibility:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<testsuite name="func-doctor" tests="15" failures="2" skipped="1" time="0.234">
+  <testcase classname="Programming Model" name="Programming model v2"/>
+  <testcase classname="Python Env" name="Python version">
+    <failure message="Python 3.9 detected">
+      Use Python 3.10 or higher to match Azure Functions runtime.
+    </failure>
+  </testcase>
+  <testcase classname="Dependencies" name="requirements.txt">
+    <skipped message="Optional check"/>
+  </testcase>
+</testsuite>
+```
+
+### Summary JSON Format
+
+Sidecar JSON summary of counts (when `--summary-json` specified):
+
+```json
+{
+  "passed": 12,
+  "warned": 1,
+  "failed": 2
+}
+```
+
+## Diagnostic Rules Reference
+
+### Built-in Rules (v2 Ruleset)
+
+Rule structure (as returned in JSON format):
+
+```json
+{
+  "id": "check_python_version",
+  "category": "environment",
+  "section": "python_env",
+  "label": "Python version",
+  "description": "Checks if the current Python version is 3.10 or higher.",
+  "type": "compare_version",
+  "required": true,
+  "condition": {
+    "target": "python",
+    "operator": ">=",
+    "value": "3.10"
+  },
+  "hint": "Use Python 3.10 or higher...",
+  "hint_url": "https://...",
+  "check_order": 1
+}
+```
+
+### Rule Types
+
+Handlers for different check types:
+
+- **source_code_contains** — AST-based pattern matching for source code
+- **compare_version** — Version comparison (python, azure-functions, etc.)
+- **any_of_exists** — Environment variable or path existence
+- **path_exists** — File or directory path checks
+- **file_exists** — Specific file existence
+- **package_declared** — Package in requirements.txt
+- **package_forbidden** — Package must NOT be in requirements.txt
+- **json_schema** — host.json or other JSON file schema validation
+- **json_path_exists** — Specific key in JSON file
+- **json_contains** — JSON file contains specific value
+- **regex_in_file** — Regex pattern match in file content
+- **executable_available** — CLI tool availability (e.g., func, docker)
+
+### Rule Status Mapping
+
+Rule handler result → Canonical status:
+
+| Handler Result | Required Rule | Optional Rule |
+|---|---|---|
+| pass | pass | pass |
+| fail | fail | warn |
+| error | fail | warn |
+
+Exit code is 1 if any required checks fail.
+
+### Sections (Categories)
+
+Rules are grouped by section for organization:
+
+- **programming_model** — v2 decorator detection
+- **python_env** — Python version, venv, requirements.txt, dependencies
+- **project_structure** — host.json, function files layout
+- **host_config** — extensionBundle, functionTimeout settings
+- **durable_functions** — Durable Functions specific configuration
+- **application_insights** — Monitoring and telemetry setup
+- **triggers** — Trigger configuration and validation
+- **core_tools** — Azure Functions Core Tools availability
+
+## Custom Rules
+
+Custom rules are JSON files that follow the schema:
+
+```json
+[
+  {
+    "id": "my_custom_check",
+    "category": "custom",
+    "section": "my_section",
+    "label": "My Check",
+    "description": "Description of what this checks",
+    "type": "source_code_contains",
+    "required": true,
+    "condition": {
+      "keyword": "my_pattern",
+      "mode": "ast"
+    },
+    "hint": "How to fix this issue",
+    "check_order": 100
+  }
+]
+```
+
+Load with: `--rules ./custom-rules.json`
+
+## CI Integration Patterns
+
+### GitHub Actions
+
+```yaml
+- name: Run Azure Functions Doctor
+  run: azure-functions-doctor --format sarif --output sarif.json
+
+- name: Upload SARIF
+  uses: github/codeql-action/upload-sarif@v2
+  with:
+    sarif_file: sarif.json
+```
+
+### GitHub Actions (Official Action)
+
+```yaml
+- name: Azure Functions Doctor
+  uses: yeongseon/azure-functions-doctor@v1
+  with:
+    path: ./my-app
+    profile: full
+```
+
+### GitLab CI
+
+```yaml
+azure-functions-doctor:
+  script:
+    - azure-functions-doctor --format json --output diagnostics.json
+  artifacts:
+    reports:
+      dotenv: summary.json
+```
+
+### Azure Pipelines
+
+```yaml
+- script: |
+    azure-functions-doctor --format junit --output test-results.xml
+  displayName: Run Azure Functions Doctor
+
+- task: PublishTestResults@2
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: 'test-results.xml'
+```
+
+## Exit Codes
+
+- **0** — All required checks passed
+- **1** — At least one required check failed
+
+Use exit code for CI gates: `azure-functions-doctor || exit 1`
+
+## Environment Variables
+
+Doctor uses standard Python and system environment variables:
+
+- `VIRTUAL_ENV` — Virtual environment path (if activated)
+- `CONDA_PREFIX` — Conda environment path (if activated)
+- `UV_PROJECT_ENVIRONMENT` — UV environment path (if using uv)
+- `APPINSIGHTS_INSTRUMENTATION_KEY` — Application Insights key (for telemetry checks)
+- `APPLICATIONINSIGHTS_CONNECTION_STRING` — Alt telemetry connection string
+- `AZURE_FUNCTIONS_ENVIRONMENT` — Deployment environment (local, staging, production)
+
+## Programming Model Detection
+
+Doctor automatically detects Azure Functions Python v2 projects by:
+
+1. **Decorator scan** — Looks for `@app.route()`, `@app.timer_trigger()`, `@bp.queue_trigger()` patterns
+2. **FunctionApp alias discovery** — Scans for `app = func.FunctionApp()` or `bp = Blueprint()` assignments
+3. **AST-based matching** — Uses Python AST parsing to accurately detect decorators across the project
+
+Projects without decorators still run all checks and report missing v2 signals as regular diagnostics.
+
+## Troubleshooting
+
+**"Path does not exist"**
+- Verify the path exists: `ls -la ./my-app`
+- Use absolute path: `--path /home/user/projects/my-app`
+
+**"No read permission for path"**
+- Check permissions: `ls -ld ./my-app`
+- Fix: `chmod +r ./my-app`
+
+**"Invalid format"**
+- Valid formats: table, json, sarif, junit
+- Example: `--format json`
+
+**"Rules path does not exist"**
+- Verify custom rules file: `ls -la custom-rules.json`
+- Use absolute or relative path from cwd
+
+**"Failed to write output"**
+- Check parent directory exists: `mkdir -p results/`
+- Check write permissions: `touch results/test.txt`
+
+**"Python version not supported"**
+- Check Python version: `python --version`
+- Upgrade Python: `pyenv install 3.12.0 && pyenv shell 3.12.0`
+
+## Related Packages
+
+- **azure-functions-validation** — Request/response validation with Pydantic
+- **azure-functions-openapi** — OpenAPI spec generation and Swagger UI
+- **azure-functions-langgraph** — LangGraph agent deployment adapter
+- **azure-functions-logging** — Structured logging and observability
+- **azure-functions-scaffold** — Project scaffolding from templates
+- **azure-functions-python-cookbook** — Recipes and example patterns
+
+## Performance
+
+Typical execution times (macOS M1, 5KB project):
+- Table format: 50–100ms
+- JSON format: 60–120ms
+- SARIF format: 80–150ms
+- JUnit format: 70–130ms
+
+With `--debug`: +20–50ms overhead for structured logging.
+
+## Support
+
+- Documentation: https://yeongseon.github.io/azure-functions-doctor/
+- GitHub Issues: https://github.com/yeongseon/azure-functions-doctor/issues
+- GitHub Discussions: https://github.com/yeongseon/azure-functions-doctor/discussions
