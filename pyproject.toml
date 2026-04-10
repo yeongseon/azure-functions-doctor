@@ -124,7 +124,7 @@ pretty = true
 [tool.pytest.ini_options]
 addopts = "--cov=src/azure_functions_doctor --cov-report=xml --cov-report=term-missing -ra -q -m 'not e2e'"
 testpaths = ["tests"]
-pythonpath = ["src", "examples"]
+pythonpath = ["src", ".", "examples"]
 markers = ["e2e: real Azure end-to-end tests (require E2E_BASE_URL)"]
 
 [tool.coverage.run]
