@@ -1,335 +1,78 @@
-﻿# Contributing to Azure Functions Doctor
+# Contributing Guide
 
-**Thank you for your interest in contributing to Azure Functions Doctor!**
+We welcome contributions to the `azure-functions-doctor` project.
 
-We welcome all kinds of contributions:
-- Bug reports and fixes
-- New features and enhancements  
-- Documentation improvements
-- Tests and quality improvements
-- Ideas and suggestions
-- Translations and accessibility
+## Branch Strategy
 
-This guide will help you get started as a contributor to our open source community.
+Use GitHub Flow and branch from `main`.
 
----
+Recommended branch prefixes:
 
-## Table of Contents
+- `feat/` for new features
+- `fix/` for bug fixes
+- `docs/` for documentation-only changes
+- `chore/` for tooling and maintenance
+- `ci/` for workflow updates
 
-- [Code of Conduct](#code-of-conduct)
-- [Getting Started](#getting-started)
-- [Development Setup](#development-setup)
-- [Contributing Guidelines](#contributing-guidelines)
-- [Adding New Features](#adding-new-features)
-- [Testing](#testing)
-- [Code Style](#code-style)
-- [Pull Request Process](#pull-request-process)
-- [Community](#community)
+## Development Workflow
 
----
-
-## Code of Conduct
-
-This project adheres to a [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you agree to uphold this code. Please report unacceptable behavior to the project maintainers.
-
----
-
-## Getting Started
-
-### First Time Contributors
-
-New to open source? Here are some good first issues to get started:
-- Look for issues labeled `good first issue` or `help wanted`
-- Check our [documentation](docs/) for areas that need improvement
-- Fix typos or improve code comments
-- Add tests for existing functionality
-
-### Ways to Contribute
-
-1. **Report Bugs**: Found a bug? [Create an issue](https://github.com/yeongseon/azure-functions-doctor/issues/new/choose)
-2. **Suggest Features**: Have an idea? [Start a discussion](https://github.com/yeongseon/azure-functions-doctor/discussions)
-3. **Improve Docs**: Documentation can always be better
-4. **Write Code**: Pick an issue and submit a PR
-5. **Review PRs**: Help review other contributors' work
-
----
-
-## Development Setup
-
-### Prerequisites
-
-- Python 3.10 or higher
-- Git
-- Virtual environment tool (venv, conda, etc.)
-
-### Setup Instructions
-
-1. **Fork the repository** on GitHub
-
-2. **Clone your fork**:
+1. Create a branch from `main`.
    ```bash
-   git clone https://github.com/YOUR-USERNAME/azure-functions-doctor.git
-   cd azure-functions-doctor
+   git checkout main
+   git pull origin main
+   git checkout -b feat/your-feature-name
    ```
-
-3. **Add upstream remote**:
-   ```bash
-   git remote add upstream https://github.com/yeongseon/azure-functions-doctor.git
-   ```
-
-4. **Create and activate a virtual environment**:
-   ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-   ```
-
-5. **Install development dependencies**:
-   ```bash
-   pip install -e ".[dev]"
-   ```
-
-6. **Install pre-commit hooks** (optional but recommended):
-   ```bash
-   pre-commit install
-   ```
-
-7. **Verify setup**:
+2. Write code and tests.
+3. Run the local quality gate.
    ```bash
    make check-all
-   python -m azure_functions_doctor.cli diagnose --help
+   ```
+4. Push and create a pull request.
+   ```bash
+   git push origin feat/your-feature-name
    ```
 
----
+## Project Commands
 
-## Code Style
-
-We maintain high code quality standards:
-
-### Tools We Use
-* **Formatter:** `ruff format` - Consistent code formatting (line-length 100)
-* **Linter:** `ruff` - Fast Python linter
-* **Type checker:** `mypy` - Static type checking
-* **Import sorting:** `ruff` - Consistent import ordering
-
-### Code Standards
-* Follow PEP 8 Python style guide
-* Use type hints for all function signatures
-* Write descriptive variable and function names
-* Add docstrings for public functions and classes
-* Keep functions focused and small
-* Use meaningful commit messages (Conventional Commits)
-
-### Before Submitting
 ```bash
-make format      # Format code with ruff format
+make format      # Format code with ruff
 make lint        # Lint with ruff
 make typecheck   # Type check with mypy
 make test        # Run tests
-make check-all   # Run all checks
+make cov         # Run tests with coverage
+make check-all   # Run the full local gate
 ```
 
----
+## Example Coverage Policy
 
-## Adding New Features
+Examples are part of the supported API experience and should stay verified.
 
-### Adding New Diagnostic Rules
-
-Our diagnostic system is designed to be easily extensible:
-
-1. **Define the rule** in `src/azure_functions_doctor/assets/rules/v2.json` (and/or `v1.json` for v1 projects):
-   ```json
-    {
-       "id": "check_my_feature",
-       "type": "my_check_type",
-       "label": "My Feature Check",
-       "description": "Checks if my feature is properly configured",
-       "section": "my_section",
-       "required": true,
-       "condition": {
-          "target": "my_target"
-       },
-       "hint": "How to fix this issue",
-       "hint_url": "https://docs.example.com/fix-guide"
-    }
-   ```
-
-2. **Implement the handler** in `src/azure_functions_doctor/handlers.py`:
-   ```python
-   def my_check_handler(rule: Rule, path: Path) -> dict[str, str]:
-       # Implementation here
-       return _create_result("pass", "Check passed")
-   ```
-
-3. **Add handler to dispatcher** in `generic_handler` function
-
-4. **Write tests** in `tests/test_handler.py`
-
-5. **Update documentation** if needed
-
-### Architecture Overview
-
-```
-src/azure_functions_doctor/
-â”œâ”€â”€ cli.py           # CLI interface and logging setup
-â”œâ”€â”€ doctor.py        # Core diagnostic engine
-â”œâ”€â”€ handlers.py      # Individual check implementations
-â”œâ”€â”€ logging_config.py # Centralized logging system
-â”œâ”€â”€ target_resolver.py # Version resolution utilities
-â””â”€â”€ assets/
-   â””â”€â”€ rules/
-      â”œâ”€â”€ v1.json
-      â””â”€â”€ v2.json
-```
-
-### Handler Guidelines
-
-- Always return `{"status": str, "detail": str}`
-- Use `_create_result()` for consistent responses
-- Handle exceptions with `_handle_exception()`
-- Add appropriate logging with `logger.debug()` or `logger.warning()`
-- Keep handlers focused on a single responsibility
-- Add comprehensive error handling
-
----
-
-## Pull Request Process
-
-### Before Creating a PR
-
-1. **Sync with upstream**:
-   ```bash
-   git checkout main
-   git pull upstream main
-   ```
-
-2. **Create a feature branch**:
-   ```bash
-   git checkout -b feature/my-awesome-feature
-   ```
-
-3. **Make your changes** and test thoroughly
-
-4. **Run all checks**:
-   ```bash
-   make check-all
-   ```
-
-5. **Commit with conventional commits**:
-   ```bash
-   git commit -m "feat(handlers): add new diagnostic rule for X"
-   ```
-
-### PR Requirements
-
-- Branch from `main`
-- Use [Conventional Commits](https://www.conventionalcommits.org/) format
-- Include tests for new functionality
-- Update documentation if needed
-- Keep PRs focused and atomic
-- Ensure all CI checks pass
-- Add screenshots for UI changes
-- Link related issues with `Fixes #123`
-
-### PR Template
-
-When creating a PR, please include:
-- **Description**: What does this PR do?
-- **Motivation**: Why is this change needed?
-- **Testing**: How was this tested?
-- **Screenshots**: For visual changes
-- **Checklist**: Confirm all requirements met
-
-### Review Process
-
-1. Automated CI checks must pass
-2. At least one maintainer review required
-3. Address review feedback promptly
-4. Keep discussions respectful and constructive
-5. PRs are typically reviewed within 2-3 business days
-
----
-
-## Testing Guidelines
-
-### Running Tests
-
-```bash
-# Run all tests
-make test
-
-# Run with coverage
-make cov
-
-# Run the full local gate
-make check-all
-
-# Run specific test file
-python -m pytest tests/test_handlers.py -v
-
-# Run tests with debugging
-python -m pytest tests/ -v -s
-```
-
-### Example Coverage Policy
-
-Examples are part of the supported contract and must stay runnable.
-
-- Keep one representative example for the smallest supported workflow.
-- Keep one complex example for a more realistic integration path.
+- Keep one representative example for the minimal diagnostic check workflow.
+- Keep one complex example for custom checks and environment-specific diagnostics.
 - Add or update smoke tests whenever an example changes.
 - Prefer lightweight smoke coverage over infrastructure-heavy end-to-end tests.
 
-### Writing Tests
+## Commit Message Guidelines
 
-- Write tests for all new functionality
-- Use descriptive test names: `test_handler_returns_fail_when_package_missing`
-- Mock external dependencies
-- Test both success and failure cases
-- Keep tests focused and independent
+We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification.
 
----
+### Examples
 
-## Community
+```bash
+git commit -m "feat: add OpenAPI 3.1 support"
+git commit -m "fix: handle empty request body gracefully"
+git commit -m "docs: improve quickstart documentation"
+git commit -m "refactor: extract schema builder logic"
+git commit -m "chore: update dev dependencies"
+```
 
-### Getting Help
+Use imperative present tense and keep the message concise.
 
-- [GitHub Discussions](https://github.com/yeongseon/azure-functions-doctor/discussions) - General questions and ideas
-- [GitHub Issues](https://github.com/yeongseon/azure-functions-doctor/issues) - Bug reports and feature requests
-- [Documentation](docs/) - Comprehensive guides and API reference
+## Deployment
 
-### Stay Connected
+- A merge to `main` triggers the production deployment workflow.
+- Deployment status can be tracked from the related GitHub Actions run.
 
-- Star the repository to show support
-- Watch for updates and releases
-- Fork to experiment with your own changes
-- Share the project with others who might find it useful
+## Code of Conduct
 
-### Recognition
-
-All contributors are recognized in our:
-- [Contributors section](https://github.com/yeongseon/azure-functions-doctor/graphs/contributors)
-- Release notes for significant contributions
-- Special thanks in documentation
-
----
-
-## Contribution Checklist
-
-Before submitting your contribution:
-
-- [ ] I have read and agree to the [Code of Conduct](CODE_OF_CONDUCT.md)
-- [ ] I have searched existing issues and PRs
-- [ ] I have tested my changes thoroughly
-- [ ] I have added/updated tests as needed
-- [ ] I have updated documentation as needed
-- [ ] My code follows the project's style guidelines
-- [ ] All CI checks pass
-- [ ] I have used descriptive commit messages
-
----
-
-## Thank You!
-
-Your contributions make this project better for everyone. Whether you're fixing a typo, adding a feature, or helping other users - every contribution matters!
-
-Welcome to the Azure Functions Doctor community!
+Be respectful and inclusive. See our [Code of Conduct](CODE_OF_CONDUCT.md) for details.
