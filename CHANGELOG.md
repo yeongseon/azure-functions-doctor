@@ -1,59 +1,222 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+- bump version to 0.16.3 (fe5f9f5390b2cc528bdb14e482b95dfbb3823e41)
 
-## [Unreleased]
+- align config and docs with canonical DX Toolkit template (ff6952897c7d00b2f3b79eefc854b4a4ebc5dfee)
 
-## [0.16.2] - 2026-03-29
+- add root to pytest pythonpath for DX Toolkit consistency (c7cb73461b344951d7c72110fde50bfd1bfe3c88)
 
-### Fixed
+- bump ruff from 0.15.9 to 0.15.10 (051d586d10b7d1ffbabc79952ce13883d2491c7b)
 
-- Resolve 6 confirmed bugs: #95, #96, #97, #98, #99, #100 (#101)
+- standardize ecosystem table in README (ec14e5e7406a786f0e2c63442398f43007803023)
 
-### Internal
+- add llms.txt for LLM-friendly documentation (#130) (#131) (74fc2995857c501302e854af42241223ee58cdfc)
 
-- Update README with Azure Functions Python DX Toolkit branding
-- Rename publish environment from production to release
-- Unify CI/CD workflow configurations
+- resolve MkDocs strict-mode failures for nav and links (#128) (#129) (56f097b755a06944cce3a693bd64405380b87ec4)
 
-## [0.16.1] - 2026-03-21
+- Merge pull request #108 from yeongseon/dependabot/github_actions/softprops/action-gh-release-2.6.1
 
-### Added
+chore(deps): bump softprops/action-gh-release from 2.2.2 to 2.6.1 (bce328bb361a4ca18d2c88154388df5a7d2bf71c)
 
-- Real Azure end-to-end test workflow (`e2e-azure.yml`) deploying to Consumption plan (`koreacentral`)
-- `docs/testing.md` — Real Azure E2E Tests section
-- Extended handler registry coverage tests
+- Merge pull request #109 from yeongseon/dependabot/pip/mypy-1.20.0
 
-### Changed
+chore(deps): bump mypy from 1.19.1 to 1.20.0 (8e8727c5310ce81cd50e6245b9237d379ab00699)
 
-- GitHub Actions versions upgraded to Node.js 24 compatible versions
-- Repository consistency fixes (AGENTS.md, .gitignore standardization)
+- Merge pull request #110 from yeongseon/dependabot/pip/ruff-0.15.9
 
-### Fixed
+chore(deps): bump ruff from 0.15.8 to 0.15.9 (637732b0c789e2d148990c6e5e05f99dce332a42)
 
-- Correct `AuthLevel.Anonymous` → `ANONYMOUS` and add restart step for function discovery
-- Post-deploy wait and status probe for Consumption cold-start diagnosis
+- Merge pull request #127 from yeongseon/docs/deployment-consistency-fix
 
-## [0.16.0] - 2026-03-15
+docs: normalize storage naming rule formatting (b046e62f1606d790b3065558b816d6f375f0817d)
 
-### Added
+- normalize storage naming rule to use en-dash (3–24) (79f0c5b47e515504e995975e48264a66ede8a02c)
 
-- Official GitHub Action, CI examples, and README repositioning
-- `local.settings.json` security check and extension bundle v4 validation
-- Harden diagnostics and expand rule coverage
-- v2 examples overhaul with complete project structure and expanded tests
-- Warning for `azure-functions-worker` dependency
-- Source metadata fields to core required rules
+- Merge pull request #126 from yeongseon/docs/deployment-rewrite
 
-### Fixed
+docs: rewrite deployment guide for developer-friendly experience (adf6f313f58b336493abf78b3eacb7c54d5c5b8e)
 
-- Map `warn` status to `<skipped>` instead of `<failure>` in JUnit output
-- Add `continue-on-error` to SARIF test and fix empty `helpUri` in SARIF driver rules
-- Use relative URI in SARIF locations and fix action integration test
-- Correct CLI invocation in preflight workflow
+- rewrite deployment guide for developer-friendly Azure Functions experience (62680345a4ff5c8ab2eb88b54e7237d5f5c173ba)
 
+- add sample CLI output excerpt to README (#124) (d0a480d5845a2fa4a4679bd501346937edaa9424)
 
-- bump version to 0.15.1 — tooling unification, documentation overhaul, translated READMEs
+- add deployment guide with diagnostics-first workflow (#122) (36a95b88a3c70176e33bc2d359278b40598cb847)
+
+- Merge pull request #121 from yeongseon/docs/issue-120-ecosystem-positioning
+
+docs: add ecosystem positioning and design principle (76f5f459ca24cfc08a87206197643956a0dd81c7)
+
+- align terminology with Oracle review (07aaeb0a578dcecd8ce364347459a3b486850722)
+
+- add ecosystem positioning and design principle (4c2d7a56d70f4afc87c86a48c6a61651c2f06939)
+
+- Merge pull request #119 from yeongseon/fix/mermaid-fence-div-format
+
+fix: switch Mermaid fence format to fence_div_format for rendering (939de1179f56c73ded198820a7028056f8422cc4)
+
+- switch Mermaid fence format to fence_div_format for rendering (0c3f4cc5262ea81051274693413ef459469e461e)
+
+- Merge pull request #117 from yeongseon/docs/fix-mermaid-rendering-116
+
+docs: enable Mermaid diagram rendering on GitHub Pages (2245e8eae3cf4d26985daff01e7f622321a77856)
+
+- enable Mermaid diagram rendering on GitHub Pages (9806343339ae377f44e73900f615224600773382)
+
+- standardize section order and fix factual inaccuracies (#115) (d2515966804e950e13dee19a35143c267e3991dd)
+
+- standardize architecture docs with Mermaid diagrams, Sources, and See Also (#113) (cb1fdd784ffdf779ebca00d65550037052938073)
+
+- use platform-aware candidate map for executable_exists (#107) (2dc2c2934e7f2c095290d15f1ef1f8e4505176aa)
+
+- fall back to python3 when python is not on PATH (#105) (ffa38d5becade5c983df051cec1be3059e42857e)
+
+- add automatic GitHub Release creation on tag push (#103) (09476576f1b7b37bb75b5c1caf3393850f7c8a9a)
+
+- add release process to AGENTS.md (dda2bfaa5d653168fb9e257f7539e316b1468967)
+
+- Merge pull request #102 from yeongseon/chore/release-v0.16.2
+
+chore: release v0.16.2 (2878efb29f2b80fe6bc512cd4e7aaa2546ad0601)
+
+- release v0.16.2 (f5bdf8ecba15b91d4eeba844c7837218d32a816d)
+
+- resolve 6 confirmed bugs (#95–#100) (#101) (e6d1957d0487c79d3dd956759a27beb5f792f19c)
+
+- use standard pypi environment name for Trusted Publisher (64f4af308b1f7646c9223d75dae40e7ac17a4c84)
+
+- update README with Azure Functions Python DX Toolkit branding (96c95bfb668fe4abc0abf21700e9eaf974df8026)
+
+- Merge pull request #92 from yeongseon/chore/rename-environment
+
+chore: rename publish environment from production to release (dccea9ee2cd495f47281397f53040cb348438693)
+
+- rename publish environment from production to release (a5fe2d1883d5fd022cf05780a4906017bf4e5331)
+
+- Merge pull request #91 from yeongseon/chore/unify-workflows
+
+chore: unify CI/CD workflow configurations (896994e7922b4912b810296a7327b0b41233170d)
+
+- unify CI/CD workflow configurations (91afa2412dc123dee0d95dacce1e24f8587408a0)
+
+- Merge pull request #82 from yeongseon/release/v0.16.1
+
+chore: release v0.16.1 (9cac09263d1faa0530bfacd46c67b03a601ae8e3)
+
+- release v0.16.1 (91855b3fb9b129c7274a81d3d9093baa827d5228)
+
+- add make build to AGENTS.md validation, standardize .gitignore (#81) (1b7a5b4c4c849a0e1622eaf523365674159e71cc)
+
+- fix ruff version, coverage threshold, Black→ruff in docs, pre-commit refs, mkdocstrings version (#80) (26946ec0e41b7725791cb170d09bda51f6e56a43)
+
+- trigger e2e only on release tag push (v*) (34cb1081f969d17fee3f8b6504dc24e1828fa542)
+
+- add real Azure e2e test section to testing.md and CHANGELOG (0693bd05502a8afdf489495133469ea8a96bdbc3)
+
+- upgrade GitHub Actions to Node.js 24 compatible versions (bce19f78048a46d3ce471142e48b91661700623c)
+
+- correct AuthLevel.Anonymous → ANONYMOUS and add restart step for function discovery (4c97b845210f39de6303f7536679d44d9d201374)
+
+- add post-deploy wait and status probe for Consumption cold-start diagnosis (ea5a4cf17bd40224037cebd5e69391f5c681132e)
+
+- extend warmup timeout to 300s for Consumption plan cold starts (3d933accd11eb84d2bdf2bd2b31c50cd53136e3d)
+
+- fix e2e warmup to wait for 200 instead of non-5xx (7c729188c3eacc272e08c5d31be7f00afefc992b)
+
+- add --no-cov and pytest-html artifact to e2e workflow (d87104a2e06b0621177d830f231cb6ce1ad64128)
+
+- add real Azure e2e tests and CI workflow (cc90f1ffa410a7f95773765969d9054b87420fee)
+
+- add extended handler registry coverage tests to reach 88% threshold (efaad96106b08bc57c08b71eac6fa15f6c0396d7)
+
+- enforce coverage fail_under = 88 (b037459f248e0fe3c4c081d748e85e9746469ea7)
+
+- add architecture.md and add to mkdocs nav (5e1ac7b3e678e579b95b817a59cd004cfdeccb81)
+
+- add keywords to pyproject.toml (1ca665e75067e11ee46150fb8a79d848ea67478a)
+
+- remove .venv-review from tracking, add to .gitignore (8832f9a2d5385f7176d60a2efc1e699660f20630)
+
+- add AGENTS.md, Typing classifier, test_public_api, Dev Status 4-Beta (799d240ba806212a4c04e3ed4a54a47315c3eaff)
+
+- bump version to 0.16.0 (06730c43cc48fbd32e9f616fc1a9032e74a6b35c)
+
+- add codebase and gap analysis documentation (bfc368a41fac64a434f62a5bb15f543bf9392687)
+
+- map warn status to <skipped> instead of <failure> (23d1305678b5de09fc55ee12385fa0b3cfaea364)
+
+- add scaffold integration guide (7bf9eec6f4796d68a0ab004db0ea956cd8f03d77)
+
+- sync minimal_profile.md with current 5-rule required set (bf10505f2b0d966dd7a50cd53113256741ac3df2)
+
+- add source metadata fields to core required rules (c4c32e591ea874ca78170c13b61193f07af85d53)
+
+- add warning for azure-functions-worker dependency (baeaff7994149ce5c503d48dd01000ec3352ce17)
+
+- sync diagnostics with current required flags (93c2655c58e2d1108d3fff05bf66b15cd6db352e)
+
+- apply conservative MS Learn-based policy to core rule set (c621a83e8b4a65b460699edb3e22ad368d69a94a)
+
+- overhaul v2 examples with complete project structure and expanded tests (9919e80c994c167d44485f05df3f3987d3089482)
+
+- add local.settings.json security check and extension bundle v4 validation (ca8ca6b9ddd08912636ba9aea54ea58916948030)
+
+- add continue-on-error to SARIF test and fix empty helpUri in SARIF driver rules (ab6db33228bb679b2daef1de6ec759de3e6e41d6)
+
+- use relative URI in SARIF locations and fix action integration test (5728dc4fcdd742aaf72bf6473771a3c47cf9795e)
+
+- add official GitHub Action, CI examples, and README repositioning (3191d8f0bd17b882cd5986c1c28b92e691bcd2ba)
+
+- change preflight workflow trigger to workflow_dispatch only (c9c1d63e86a9583750dd0903195658c178169e30)
+
+- correct CLI invocation in preflight workflow (doctor subcommand) (cdd7fc953d6d4a055dcc282f42842d22078eab4f)
+
+- harden diagnostics and expand rule coverage (1906b94e4ef48bc1088b0ba188ff6ab71b578e1e)
+
+- add codex agent guidance (98dee22e9402190b0cd6dbc4e9a263df95126184)
+
+- unify CI workflow patterns with canonical validation repo (e251581c7c9cfede3718cac45b977178fe394cb1)
+
+- bump version to 0.15.1 (bbe08e531792c28e6b1483a2256312240ce985fc)
+
+- overhaul documentation to production quality (094663d1919981d116ab348df89eff5e0fb882df)
+
+- sync translated READMEs (ko, ja, zh-CN) with English (b012ca6dbdf49a82fcea4b94ff848f8b9fefdc11)
+
+- add project.urls to pyproject.toml (0be7f204cab941f6396cffc51077d4c49a5d7204)
+
+- unify README — add Why Use It, rename Built-in checks to Features, rename Usage to Quick Start, add Ecosystem, remove Contributing, reorder sections (70184da2a8211a78fcd0bee10b89d436d7dd88ea)
+
+- add example-first design section to PRD (4aedd537bd7efed144d4f3786dcc8bf0aef8856c)
+
+- unify tooling — remove black, standardize pre-commit and Makefile (774bb984dd6deb9b81f4ee4e91026c04f399e798)
+
+- expand thin pages with working Python code examples (595bf5121b8afcd67f64d5682934d75f42b4885a)
+
+- elevate doctor documentation to production quality (ad7482ea3eae5ad96c396b6be0657b3a2708ed08)
+
+- remove emojis from documentation and cliff.toml (22f9d4b0dbe080100cb90a1c85e632d93c1c4b8c)
+
+- add badges and translated READMEs (ko, ja, zh-CN) (a1d49596e0cc7ca2832fc94b454105ffaf94c01f)
+
+- add documentation pages and expand example fixtures (#73-#77) (0fafa5bd6425732ef2d944d40c5f02d0616482aa)
+
+- update pre-commit hook versions and unify forbid-korean targets (a4ded23e3a8853ba7b2c9b9572d7439560269158)
+
+- move disclaimer before license section (3238017a2f6660f5c805524e5a26f6240659cc2c)
+
+- publish doctor releases from the production environment (5994bdcf7fe2dcda7e1e757581ecc304a7b96e71)
+
+- use trusted publishing for doctor releases (f855d1647f8090e661b946bfa8a8f5e7e122ba3d)
+
+- make codecov uploads non-blocking (0a65920b62c4c1108278dc27722415fb56799506)
+
+- stabilize func core tools resolution coverage (93fcaf045dbf73e5c062a9eb012231deb978cf15)
+
+- move codecov token gating to the job env (8a21c8e571a9743d5171de55bb3133c28f65f13f)
+
+- run the real doctor CLI in the demo (29dbfd4d0373c3ddfc299031e79ada9882c034c3)
+
+- update changelog (669a07c86f290869ca6f291b4627a0e71566ccde)
 
 - bump version to 0.15.0 (02cda2ae8437c80e537890cf44306a0bed906976)
 
@@ -702,3 +865,4 @@ Add SARIF and JUnit output (fe04a752bdfeeadaf08c22bf3dfa36ad6334fc17)
 - initial project setup with CLI, Makefile, docs, and packaging (a39efbd9a2d2b953905b6ce3925badab2b44c117)
 
 - Initial commit (457425ebde591e34042116d1e5f92ac7006a03cd)
+
