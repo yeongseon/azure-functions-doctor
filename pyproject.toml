@@ -47,7 +47,7 @@ dev = [
     "pre-commit",
     "pytest",
     "pytest-cov",
-    "ruff==0.15.9",
+    "ruff==0.15.10",
     "requests",
     "types-requests",
 ]
@@ -117,14 +117,17 @@ section-order = ["future", "standard-library", "third-party", "first-party", "lo
 python_version = "3.10"
 strict = true
 ignore_missing_imports = true
-exclude = "examples/"
 show_error_codes = true
 pretty = true
+
+[[tool.mypy.overrides]]
+module = "examples.*"
+follow_imports = "skip"
 
 [tool.pytest.ini_options]
 addopts = "--cov=src/azure_functions_doctor --cov-report=xml --cov-report=term-missing -ra -q -m 'not e2e'"
 testpaths = ["tests"]
-pythonpath = ["src", "examples"]
+pythonpath = ["src", ".", "examples"]
 markers = ["e2e: real Azure end-to-end tests (require E2E_BASE_URL)"]
 
 [tool.coverage.run]
