@@ -1,5 +1,5 @@
 [project]
-name = "azure-functions-doctor"
+name = "azure-functions-doctor-python"
 description = "Diagnostic tool for Azure Functions Python v2 programming model"
 keywords = ["azure-functions", "azure", "python", "v2", "diagnostics", "cli", "health-check", "serverless"]
 authors = [{ name = "Yeongseon Choe", email = "yeongseon.choe@gmail.com" }]
@@ -31,10 +31,10 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://yeongseon.github.io/azure-functions-doctor/"
-Documentation = "https://yeongseon.github.io/azure-functions-doctor/"
-Repository = "https://github.com/yeongseon/azure-functions-doctor"
-Issues = "https://github.com/yeongseon/azure-functions-doctor/issues"
+Homepage = "https://yeongseon.github.io/azure-functions-doctor-python/"
+Documentation = "https://yeongseon.github.io/azure-functions-doctor-python/"
+Repository = "https://github.com/yeongseon/azure-functions-doctor-python"
+Issues = "https://github.com/yeongseon/azure-functions-doctor-python/issues"
 
 [project.optional-dependencies]
 dev = [
@@ -59,7 +59,7 @@ docs = [
 
 [project.scripts]
 azure-functions = "azure_functions_doctor.cli:cli"
-azure-functions-doctor = "azure_functions_doctor.cli:cli"
+azure-functions-doctor-python = "azure_functions_doctor.cli:cli"
 fdoctor = "azure_functions_doctor.cli:cli"
 
 [build-system]

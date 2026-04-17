@@ -1,4 +1,4 @@
-"""Tests for the public API surface of azure-functions-doctor."""
+"""Tests for the public API surface of azure-functions-doctor-python."""
 
 import azure_functions_doctor  # pyright: ignore[reportMissingImports]
 

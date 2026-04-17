@@ -1,6 +1,6 @@
 # Configuration
 
-`azure-functions-doctor` configuration is primarily CLI-driven.
+`azure-functions-doctor-python` configuration is primarily CLI-driven.
 
 This page explains how runtime behavior changes with flags, profiles, formats, and custom rules.
 

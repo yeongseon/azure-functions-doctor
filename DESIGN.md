@@ -1,6 +1,6 @@
 # DESIGN.md
 
-Design Principles for `azure-functions-doctor`
+Design Principles for `azure-functions-doctor-python`
 
 ## Purpose
 
@@ -32,8 +32,8 @@ This project does not aim to:
 
 ## Integration Boundaries
 
-- Runtime validation belongs to `azure-functions-validation`.
-- OpenAPI generation belongs to `azure-functions-openapi`.
+- Runtime validation belongs to `azure-functions-validation-python`.
+- OpenAPI generation belongs to `azure-functions-openapi-python`.
 - This repository owns project inspection, rule execution, and diagnostic reporting.
 
 ## Compatibility Policy

@@ -7,7 +7,7 @@ This guide provides instructions for contributing to Azure Functions Doctor. Fol
 1. Fork the repository on GitHub and clone your fork locally.
 2. Add the upstream remote to stay synced with the main repository:
    ```bash
-   git remote add upstream https://github.com/yeongseonchoe/azure-functions-doctor.git
+   git remote add upstream https://github.com/yeongseonchoe/azure-functions-doctor-python.git
    ```
 3. Create and activate a virtual environment (using venv or your preferred tool).
 4. Install the package in editable mode with development dependencies:

@@ -264,9 +264,9 @@ def doctor(
                 {
                     "tool": {
                         "driver": {
-                            "name": "azure-functions-doctor",
+                            "name": "azure-functions-doctor-python",
                             "version": __version__,
-                            "informationUri": "https://github.com/yeongseon/azure-functions-doctor",
+                            "informationUri": "https://github.com/yeongseon/azure-functions-doctor-python",
                             "rules": driver_rules,
                         }
                     },

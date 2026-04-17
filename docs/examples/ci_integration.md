@@ -45,7 +45,7 @@ jobs:
       - name: Install package
         run: |
           python -m pip install --upgrade pip
-          python -m pip install azure-functions-doctor
+          python -m pip install azure-functions-doctor-python
 
       - name: Run doctor (required checks)
         run: |
@@ -201,8 +201,8 @@ steps:
 
   - script: |
       python -m pip install --upgrade pip
-      pip install azure-functions-doctor
-    displayName: Install azure-functions-doctor
+      pip install azure-functions-doctor-python
+    displayName: Install azure-functions-doctor-python
 
   - script: |
       set +e
@@ -211,7 +211,7 @@ steps:
         --format json \
         --output $(Build.ArtifactStagingDirectory)/doctor.json
       echo "##vso[task.setvariable variable=DOCTOR_EXIT_CODE]$?"
-    displayName: Run azure-functions-doctor
+    displayName: Run azure-functions-doctor-python
 
   - task: PublishBuildArtifacts@1
     condition: always()
@@ -222,7 +222,7 @@ steps:
 
   - script: |
       if [ "$(DOCTOR_EXIT_CODE)" != "0" ]; then
-        echo "##vso[task.logissue type=error]azure-functions-doctor found required failures"
+        echo "##vso[task.logissue type=error]azure-functions-doctor-python found required failures"
         exit 1
       fi
     displayName: Fail pipeline on required failures
@@ -239,7 +239,7 @@ Run doctor as a local pre-commit check to catch issues before push:
 repos:
   - repo: local
     hooks:
-      - id: azure-functions-doctor
+      - id: azure-functions-doctor-python
         name: Azure Functions Doctor
         language: system
         entry: azure-functions doctor --profile minimal
@@ -250,9 +250,9 @@ repos:
 Install and run:
 
 ```bash
-pip install pre-commit azure-functions-doctor
+pip install pre-commit azure-functions-doctor-python
 pre-commit install
-pre-commit run azure-functions-doctor
+pre-commit run azure-functions-doctor-python
 ```
 
 This runs the required-checks profile on every commit attempt. Use `--profile minimal` to keep the hook fast and focused on blocking issues only.
@@ -305,7 +305,7 @@ Upload doctor results as SARIF to surface findings in the GitHub Security tab:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: doctor.sarif
-          category: azure-functions-doctor
+          category: azure-functions-doctor-python
 
       - name: Fail job on required failures
         if: steps.doctor.outputs.exit_code != '0'

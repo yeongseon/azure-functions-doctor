@@ -2,7 +2,7 @@
 
 Validate Azure Functions Python v2 projects before they fail in local runtime or CI.
 
-`azure-functions-doctor` is a diagnostics CLI and API that checks required project health signals, reports optional operational guidance, and returns deterministic exit codes for automation.
+`azure-functions-doctor-python` is a diagnostics CLI and API that checks required project health signals, reports optional operational guidance, and returns deterministic exit codes for automation.
 
 ## Why teams use it
 
@@ -16,7 +16,7 @@ Validate Azure Functions Python v2 projects before they fail in local runtime or
 Install and run in the current project:
 
 ```bash
-python -m pip install azure-functions-doctor
+python -m pip install azure-functions-doctor-python
 azure-functions doctor
 ```
 

@@ -1,6 +1,6 @@
 # Architecture
 
-This document explains how `azure-functions-doctor` is structured internally and why key design choices support deterministic, actionable diagnostics.
+This document explains how `azure-functions-doctor-python` is structured internally and why key design choices support deterministic, actionable diagnostics.
 
 ## Design Objectives
 

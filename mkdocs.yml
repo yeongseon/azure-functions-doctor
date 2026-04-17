@@ -1,8 +1,8 @@
 site_name: Azure Functions Doctor
 site_description: A diagnostic tool for Python Azure Functions
 site_author: Yeongseon Choe
-repo_url: https://github.com/yeongseon/azure-functions-doctor
-site_url: https://yeongseon.github.io/azure-functions-doctor/
+repo_url: https://github.com/yeongseon/azure-functions-doctor-python
+site_url: https://yeongseon.github.io/azure-functions-doctor-python/
 
 theme:
   name: material
@@ -76,6 +76,6 @@ plugins:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/yeongseon/azure-functions-doctor
+      link: https://github.com/yeongseon/azure-functions-doctor-python
   copyright: |
     © 2026 Yeongseon Choe – MIT Licensed

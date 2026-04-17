@@ -1,7 +1,7 @@
 # AGENTS.md
 
 ## Purpose
-`azure-functions-doctor` is a Python CLI that diagnoses common Azure Functions project issues.
+`azure-functions-doctor-python` is a Python CLI that diagnoses common Azure Functions project issues.
 
 ## Read First
 - `README.md`

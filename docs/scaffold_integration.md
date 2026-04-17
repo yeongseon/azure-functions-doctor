@@ -1,6 +1,6 @@
 # Scaffold Integration Guide
 
-`azure-functions-doctor` is designed to run immediately after scaffolding a new Azure Functions Python project.
+`azure-functions-doctor-python` is designed to run immediately after scaffolding a new Azure Functions Python project.
 This guide explains where doctor fits in the development lifecycle and how to integrate it with common scaffolding tools and CI pipelines.
 
 ---
@@ -10,7 +10,7 @@ This guide explains where doctor fits in the development lifecycle and how to in
 Doctor is a static preflight checker, not a scaffold tool.
 The two tools are complementary and target different problems.
 
-| Concern | Scaffold tool | `azure-functions-doctor` |
+| Concern | Scaffold tool | `azure-functions-doctor-python` |
 | --- | --- | --- |
 | Create project files | ✅ | ❌ |
 | Verify project files are correct | ❌ | ✅ |
@@ -106,8 +106,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install azure-functions-doctor
-        run: pip install azure-functions-doctor
+      - name: Install azure-functions-doctor-python
+        run: pip install azure-functions-doctor-python
 
       - name: Run preflight check
         run: |
@@ -204,7 +204,7 @@ Surface doctor findings in the GitHub Security tab by emitting SARIF and uploadi
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: doctor.sarif
-          category: azure-functions-doctor
+          category: azure-functions-doctor-python
 
       - name: Fail job on required failures
         if: steps.doctor.outputs.exit_code != '0'
@@ -305,9 +305,9 @@ Doctor is intentionally narrow. Do not expect it to cover:
 | Concern | Appropriate tool |
 | --- | --- |
 | Generate project boilerplate | `func init`, Yeoman, cookiecutter |
-| OpenAPI/schema validation | `azure-functions-openapi` |
-| Structured logging setup | `azure-functions-logging` |
-| Input/output validation | `azure-functions-validation` |
+| OpenAPI/schema validation | `azure-functions-openapi-python` |
+| Structured logging setup | `azure-functions-logging-python` |
+| Input/output validation | `azure-functions-validation-python` |
 | Azure resource provisioning | Bicep, Terraform, Azure CLI |
 | Runtime diagnostics | Application Insights, Azure Monitor |
 | Dependency vulnerability scanning | `pip-audit`, Dependabot |

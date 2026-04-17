@@ -1,7 +1,7 @@
-"""E2E tests for azure-functions-doctor deployed against a real Azure Function App.
+"""E2E tests for azure-functions-doctor-python deployed against a real Azure Function App.
 
 Tests that:
-1. `azure-functions-doctor` passes on the deployed example project (static check).
+1. `azure-functions-doctor-python` passes on the deployed example project (static check).
 2. The deployed function app actually responds to HTTP (proving a "doctor-clean"
    project is also a deployable project).
 
@@ -47,10 +47,10 @@ def test_deployed_http_trigger_responds() -> None:
 
 @pytest.mark.skipif(not BASE_URL, reason=SKIP_REASON)
 def test_doctor_passes_on_example_project() -> None:
-    """Running azure-functions-doctor on the example project returns exit code 0."""
+    """Running azure-functions-doctor-python on the example project returns exit code 0."""
     result = subprocess.run(
         [
-            "azure-functions-doctor", "doctor",
+            "azure-functions-doctor-python", "doctor",
             "--path", "examples/v2/http-trigger",
             "--profile", "minimal",
         ],
@@ -58,5 +58,5 @@ def test_doctor_passes_on_example_project() -> None:
         text=True,
     )
     assert result.returncode == 0, (
-        f"azure-functions-doctor exited {result.returncode}:\n{result.stdout}\n{result.stderr}"
+        f"azure-functions-doctor-python exited {result.returncode}:\n{result.stdout}\n{result.stderr}"
     )

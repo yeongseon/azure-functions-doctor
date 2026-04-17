@@ -1,8 +1,8 @@
-# Rule Policy for `azure-functions-doctor`
+# Rule Policy for `azure-functions-doctor-python`
 
 ## Philosophy
 
-`azure-functions-doctor` is designed as a **conservative static preflight checker**
+`azure-functions-doctor-python` is designed as a **conservative static preflight checker**
 for Azure Functions Python projects.
 
 The goal is **not to enforce project style or preferences**, but to detect
@@ -232,7 +232,7 @@ The guiding principle for rule design is:
 
 > **Prefer fewer rules with high confidence over many rules with uncertainty.**
 
-`azure-functions-doctor` should remain:
+`azure-functions-doctor-python` should remain:
 
 - **Predictable** — the same project produces the same result on any machine
 - **Low-noise** — warnings should be meaningful, not routine

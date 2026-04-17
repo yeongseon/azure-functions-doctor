@@ -57,7 +57,7 @@ body:
       placeholder: |
         - OS: [e.g. Windows 11, macOS 14.0, Ubuntu 22.04]
         - Python version: [e.g. 3.10.16]
-        - azure-functions-doctor version: [e.g. 0.1.10]
+        - azure-functions-doctor-python version: [e.g. 0.1.10]
         - Azure Functions Core Tools version: [e.g. 4.0.5198]
         - Terminal/Shell: [e.g. PowerShell, bash, zsh]
     validations:
@@ -106,5 +106,5 @@ body:
           required: true
         - label: I have provided all the requested information above
           required: true
-        - label: I have tested this with the latest version of azure-functions-doctor
+        - label: I have tested this with the latest version of azure-functions-doctor-python
           required: false

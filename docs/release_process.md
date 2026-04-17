@@ -59,7 +59,7 @@ make publish-test
 To install from TestPyPI:
 
 ```bash
-pip install --index-url https://test.pypi.org/simple/ azure-functions-doctor
+pip install --index-url https://test.pypi.org/simple/ azure-functions-doctor-python
 ```
 
 ---
@@ -77,7 +77,7 @@ pip install --index-url https://test.pypi.org/simple/ azure-functions-doctor
 
 ## Related Documentation
 
-- [Changelog](https://github.com/yeongseon/azure-functions-doctor/blob/main/CHANGELOG.md)
+- [Changelog](https://github.com/yeongseon/azure-functions-doctor-python/blob/main/CHANGELOG.md)
 - [Development Guide](development.md)
-- [Makefile](https://github.com/yeongseon/azure-functions-doctor/blob/main/Makefile)
+- [Makefile](https://github.com/yeongseon/azure-functions-doctor-python/blob/main/Makefile)
 - [PyPI Publishing with Hatch](https://hatch.pypa.io/latest/publishing/)

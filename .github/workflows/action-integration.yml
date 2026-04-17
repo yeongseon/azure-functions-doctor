@@ -62,7 +62,7 @@ jobs:
           upload-artifact: "true"
           artifact-name: doctor-sarif-report
           upload-sarif: "true"
-          sarif-category: azure-functions-doctor-integration-test
+          sarif-category: azure-functions-doctor-python-integration-test
           version: local
       - name: Verify SARIF file
         run: |
@@ -74,7 +74,7 @@ jobs:
           runs = data.get('runs', [])
           assert len(runs) == 1, 'Expected exactly 1 run'
           driver = runs[0]['tool']['driver']
-          assert driver['name'] == 'azure-functions-doctor', 'Wrong driver name'
+          assert driver['name'] == 'azure-functions-doctor-python', 'Wrong driver name'
           assert 'rules' in driver, 'Missing driver.rules'
           print('SARIF validation passed')
           "

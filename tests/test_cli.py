@@ -78,7 +78,7 @@ def test_cli_sarif_output() -> None:
     assert isinstance(data.get("runs"), list)
     run = data["runs"][0]
     tool = run["tool"]["driver"]
-    assert tool["name"] == "azure-functions-doctor"
+    assert tool["name"] == "azure-functions-doctor-python"
     assert tool["version"]
 
     has_error = any(item.get("level") == "error" for item in run.get("results", []))

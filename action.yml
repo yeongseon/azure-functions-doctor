@@ -1,6 +1,6 @@
 name: Azure Functions Doctor
 description: >
-  Run azure-functions-doctor diagnostics on an Azure Functions Python v2 project.
+  Run azure-functions-doctor-python diagnostics on an Azure Functions Python v2 project.
   Checks project health, outputs structured reports, and optionally uploads SARIF
   to GitHub Code Scanning.
 
@@ -48,13 +48,13 @@ inputs:
   sarif-category:
     description: Category label for the SARIF upload
     required: false
-    default: "azure-functions-doctor"
+    default: "azure-functions-doctor-python"
   fail-on-warn:
     description: Exit with code 1 if any warnings are found (in addition to failures)
     required: false
     default: "false"
   version:
-    description: "Version of azure-functions-doctor to install (e.g. '0.15.1' or 'latest')"
+    description: "Version of azure-functions-doctor-python to install (e.g. '0.15.1' or 'latest')"
     required: false
     default: "latest"
 
@@ -83,16 +83,16 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
 
-    - name: Install azure-functions-doctor
+    - name: Install azure-functions-doctor-python
       shell: bash
       run: |
         python -m pip install --upgrade pip
         if [ "${{ inputs.version }}" = "latest" ]; then
-          pip install azure-functions-doctor
+          pip install azure-functions-doctor-python
         elif [ "${{ inputs.version }}" = "local" ]; then
           pip install -e .
         else
-          pip install "azure-functions-doctor==${{ inputs.version }}"
+          pip install "azure-functions-doctor-python==${{ inputs.version }}"
         fi
 
     - name: Install project dependencies
@@ -103,7 +103,7 @@ runs:
           pip install -r "${{ inputs.path }}/requirements.txt"
         fi
 
-    - name: Run azure-functions-doctor
+    - name: Run azure-functions-doctor-python
       id: run-doctor
       shell: bash
       run: |

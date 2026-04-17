@@ -1,13 +1,13 @@
 # Azure Functions Doctor
 
-[![PyPI](https://img.shields.io/pypi/v/azure-functions-doctor.svg)](https://pypi.org/project/azure-functions-doctor/)
-[![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](https://pypi.org/project/azure-functions-doctor/)
-[![CI](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/ci-test.yml/badge.svg)](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/ci-test.yml)
-[![Release](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/release.yml/badge.svg)](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/release.yml)
-[![Security Scans](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/security.yml/badge.svg)](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/security.yml)
-[![codecov](https://codecov.io/gh/yeongseon/azure-functions-doctor/branch/main/graph/badge.svg)](https://codecov.io/gh/yeongseon/azure-functions-doctor)
+[![PyPI](https://img.shields.io/pypi/v/azure-functions-doctor-python.svg)](https://pypi.org/project/azure-functions-doctor-python/)
+[![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](https://pypi.org/project/azure-functions-doctor-python/)
+[![CI](https://github.com/yeongseon/azure-functions-doctor-python/actions/workflows/ci-test.yml/badge.svg)](https://github.com/yeongseon/azure-functions-doctor-python/actions/workflows/ci-test.yml)
+[![Release](https://github.com/yeongseon/azure-functions-doctor-python/actions/workflows/release.yml/badge.svg)](https://github.com/yeongseon/azure-functions-doctor-python/actions/workflows/release.yml)
+[![Security Scans](https://github.com/yeongseon/azure-functions-doctor-python/actions/workflows/security.yml/badge.svg)](https://github.com/yeongseon/azure-functions-doctor-python/actions/workflows/security.yml)
+[![codecov](https://codecov.io/gh/yeongseon/azure-functions-doctor-python/branch/main/graph/badge.svg)](https://codecov.io/gh/yeongseon/azure-functions-doctor-python)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://pre-commit.com/)
-[![Docs](https://img.shields.io/badge/docs-gh--pages-blue)](https://yeongseon.github.io/azure-functions-doctor/)
+[![Docs](https://img.shields.io/badge/docs-gh--pages-blue)](https://yeongseon.github.io/azure-functions-doctor-python/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 其他语言: [English](README.md) | [한국어](README.ko.md) | [日本語](README.ja.md)
@@ -25,7 +25,7 @@ Azure Functions Doctor 是一个用于诊断基于 **Azure Functions Python v2 �
 
 ## Why Use It
 
-设置 Azure Functions Python 项目需要多个配置文件、依赖项和工具。缺少任何一个都会导致令人困惑的运行时错误。`azure-functions-doctor` 会根据精选的规则集检查项目，并在问题到达生产环境之前报告。
+设置 Azure Functions Python 项目需要多个配置文件、依赖项和工具。缺少任何一个都会导致令人困惑的运行时错误。`azure-functions-doctor-python` 会根据精选的规则集检查项目，并在问题到达生产环境之前报告。
 
 ## Scope
 
@@ -39,14 +39,14 @@ Azure Functions Doctor 是一个用于诊断基于 **Azure Functions Python v2 �
 从 PyPI 安装：
 
 ```bash
-pip install azure-functions-doctor
+pip install azure-functions-doctor-python
 ```
 
 从源码安装：
 
 ```bash
-git clone https://github.com/yeongseon/azure-functions-doctor.git
-cd azure-functions-doctor
+git clone https://github.com/yeongseon/azure-functions-doctor-python.git
+cd azure-functions-doctor-python
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .
@@ -129,11 +129,11 @@ azure-functions doctor --format json
 
 ## Ecosystem
 
-- [azure-functions-validation](https://github.com/yeongseon/azure-functions-validation) — 请求与响应校验
-- [azure-functions-openapi](https://github.com/yeongseon/azure-functions-openapi) — OpenAPI 与 Swagger UI
-- [azure-functions-logging](https://github.com/yeongseon/azure-functions-logging) — 结构化日志
-- [azure-functions-scaffold](https://github.com/yeongseon/azure-functions-scaffold) — 项目脚手架
-- [azure-functions-python-cookbook](https://github.com/yeongseon/azure-functions-python-cookbook) — 食谱与示例
+- [azure-functions-validation-python](https://github.com/yeongseon/azure-functions-validation-python) — 请求与响应校验
+- [azure-functions-openapi-python](https://github.com/yeongseon/azure-functions-openapi-python) — OpenAPI 与 Swagger UI
+- [azure-functions-logging-python](https://github.com/yeongseon/azure-functions-logging-python) — 结构化日志
+- [azure-functions-scaffold-python](https://github.com/yeongseon/azure-functions-scaffold-python) — 项目脚手架
+- [azure-functions-cookbook-python](https://github.com/yeongseon/azure-functions-cookbook-python) — 食谱与示例
 
 ## Disclaimer
 

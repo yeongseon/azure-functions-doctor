@@ -8,7 +8,7 @@
 ## 1. PROJECT OVERVIEW
 
 ### Identity
-- **Name:** azure-functions-doctor
+- **Name:** azure-functions-doctor-python
 - **Version:** 0.15.1
 - **Type:** Python CLI diagnostic tool
 - **Target:** Azure Functions Python v2 programming model (decorator-based)
@@ -19,7 +19,7 @@ Pre-deployment health gate that catches configuration issues, missing dependenci
 
 ### CLI Entry Points
 - `azure-functions doctor`
-- `azure-functions-doctor doctor`
+- `azure-functions-doctor-python doctor`
 - `fdoctor doctor`
 
 ### Key Dependencies

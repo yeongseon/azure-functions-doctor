@@ -1,6 +1,6 @@
 # Security
 
-The azure-functions-doctor project maintains a commitment to providing a secure tool for diagnosing Azure Functions local development environments. This document outlines the security policies, reporting processes, and the trust model for using and extending the tool.
+The azure-functions-doctor-python project maintains a commitment to providing a secure tool for diagnosing Azure Functions local development environments. This document outlines the security policies, reporting processes, and the trust model for using and extending the tool.
 
 ## Reporting Vulnerabilities
 
@@ -8,7 +8,7 @@ We take security issues seriously. If you discover a vulnerability, please repor
 
 ### Preferred: GitHub Security Advisory
 The most secure and efficient way to report a vulnerability is through the GitHub Security Advisory system at:
-https://github.com/yeongseon/azure-functions-doctor/security/advisories/new
+https://github.com/yeongseon/azure-functions-doctor-python/security/advisories/new
 
 ### Alternative: Email
 You can also report security concerns via email to:
@@ -77,7 +77,7 @@ To ensure the integrity of our codebase, we employ several automated security sc
 
 ## Security Best Practices for Users
 
-- **Update Frequently**: Keep your installation of `azure-functions-doctor` updated to benefit from the latest security patches and rule improvements.
+- **Update Frequently**: Keep your installation of `azure-functions-doctor-python` updated to benefit from the latest security patches and rule improvements.
 - **Review Custom Rules**: Always review the contents of a custom rules file before using it with the doctor.
 - **Automation**: Use the `--format json` output for integration into automated CI/CD pipelines for consistent security and environment checks.
 - **GitHub Integration**: Use the SARIF output format to integrate results directly with GitHub Code Scanning.

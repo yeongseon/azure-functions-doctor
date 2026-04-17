@@ -1,13 +1,13 @@
 # Azure Functions Doctor
 
-[![PyPI](https://img.shields.io/pypi/v/azure-functions-doctor.svg)](https://pypi.org/project/azure-functions-doctor/)
-[![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](https://pypi.org/project/azure-functions-doctor/)
-[![CI](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/ci-test.yml/badge.svg)](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/ci-test.yml)
-[![Release](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/publish-pypi.yml/badge.svg)](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/publish-pypi.yml)
-[![Security Scans](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/security.yml/badge.svg)](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/security.yml)
-[![codecov](https://codecov.io/gh/yeongseon/azure-functions-doctor/branch/main/graph/badge.svg)](https://codecov.io/gh/yeongseon/azure-functions-doctor)
+[![PyPI](https://img.shields.io/pypi/v/azure-functions-doctor-python.svg)](https://pypi.org/project/azure-functions-doctor-python/)
+[![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](https://pypi.org/project/azure-functions-doctor-python/)
+[![CI](https://github.com/yeongseon/azure-functions-doctor-python/actions/workflows/ci-test.yml/badge.svg)](https://github.com/yeongseon/azure-functions-doctor-python/actions/workflows/ci-test.yml)
+[![Release](https://github.com/yeongseon/azure-functions-doctor-python/actions/workflows/publish-pypi.yml/badge.svg)](https://github.com/yeongseon/azure-functions-doctor-python/actions/workflows/publish-pypi.yml)
+[![Security Scans](https://github.com/yeongseon/azure-functions-doctor-python/actions/workflows/security.yml/badge.svg)](https://github.com/yeongseon/azure-functions-doctor-python/actions/workflows/security.yml)
+[![codecov](https://codecov.io/gh/yeongseon/azure-functions-doctor-python/branch/main/graph/badge.svg)](https://codecov.io/gh/yeongseon/azure-functions-doctor-python)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://pre-commit.com/)
-[![Docs](https://img.shields.io/badge/docs-gh--pages-blue)](https://yeongseon.github.io/azure-functions-doctor/)
+[![Docs](https://img.shields.io/badge/docs-gh--pages-blue)](https://yeongseon.github.io/azure-functions-doctor-python/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Read this in: [한국어](README.ko.md) | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
@@ -28,14 +28,14 @@ Deploying a broken Azure Functions app is expensive — the worker starts, the h
 - **Runtime incompatibilities** — Python version mismatch with Azure Functions runtime
 - **Silent failures** — no virtual environment, Core Tools not installed, Application Insights key missing
 
-`azure-functions-doctor` moves that failure left — catch it locally or in CI, not in production.
+`azure-functions-doctor-python` moves that failure left — catch it locally or in CI, not in production.
 
 ## What it does
 
 - **14+ diagnostic checks** — Python version, dependencies, host.json, Core Tools, Durable Functions, and more
 - **Multiple output formats** — table, JSON, SARIF, JUnit for CI integration
 - **Profile support** — `minimal` or `full` rulesets depending on your needs
-- **Official GitHub Action** — `yeongseon/azure-functions-doctor@v1` for CI gates
+- **Official GitHub Action** — `yeongseon/azure-functions-doctor-python@v1` for CI gates
 
 ## Scope
 
@@ -44,21 +44,21 @@ This repository targets the decorator-based Azure Functions Python v2 programmin
 - Supported model: `func.FunctionApp()` with decorators such as `@app.route()`
 - Unsupported model: legacy `function.json`-based Python v1 projects
 
-Use `azure-functions-doctor` as part of a pre-deployment checklist alongside [azure-functions-logging](https://github.com/yeongseon/azure-functions-logging) for observability.
+Use `azure-functions-doctor-python` as part of a pre-deployment checklist alongside [azure-functions-logging-python](https://github.com/yeongseon/azure-functions-logging-python) for observability.
 
 ## Installation
 
 From PyPI:
 
 ```bash
-pip install azure-functions-doctor
+pip install azure-functions-doctor-python
 ```
 
 From source:
 
 ```bash
-git clone https://github.com/yeongseon/azure-functions-doctor.git
-cd azure-functions-doctor
+git clone https://github.com/yeongseon/azure-functions-doctor-python.git
+cd azure-functions-doctor-python
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .
@@ -92,14 +92,14 @@ azure-functions doctor --format json
 
 ## CI Integration
 
-Use `azure-functions-doctor` as a CI gate to block deployments on required failures.
+Use `azure-functions-doctor-python` as a CI gate to block deployments on required failures.
 
 ### GitHub Actions (CLI)
 
 ```yaml
-- name: Run azure-functions-doctor
+- name: Run azure-functions-doctor-python
   run: |
-    pip install azure-functions-doctor
+    pip install azure-functions-doctor-python
     azure-functions doctor --profile minimal --format json --output doctor.json
 
 - name: Upload report
@@ -113,7 +113,7 @@ Use `azure-functions-doctor` as a CI gate to block deployments on required failu
 ### Official GitHub Action
 
 ```yaml
-- uses: yeongseon/azure-functions-doctor@v1
+- uses: yeongseon/azure-functions-doctor-python@v1
   with:
     path: .
     profile: minimal
@@ -189,12 +189,12 @@ Part of the **Azure Functions Python DX Toolkit**:
 
 | Package | Role |
 |---------|------|
-| [azure-functions-validation](https://github.com/yeongseon/azure-functions-validation) | Request and response validation |
-| [azure-functions-openapi](https://github.com/yeongseon/azure-functions-openapi) | OpenAPI spec and Swagger UI |
-| [azure-functions-logging](https://github.com/yeongseon/azure-functions-logging) | Structured logging and observability |
-| **azure-functions-doctor** | Pre-deploy diagnostic CLI |
-| [azure-functions-scaffold](https://github.com/yeongseon/azure-functions-scaffold) | Project scaffolding |
-| [azure-functions-python-cookbook](https://github.com/yeongseon/azure-functions-python-cookbook) | Recipes and examples |
+| [azure-functions-validation-python](https://github.com/yeongseon/azure-functions-validation-python) | Request and response validation |
+| [azure-functions-openapi-python](https://github.com/yeongseon/azure-functions-openapi-python) | OpenAPI spec and Swagger UI |
+| [azure-functions-logging-python](https://github.com/yeongseon/azure-functions-logging-python) | Structured logging and observability |
+| **azure-functions-doctor-python** | Pre-deploy diagnostic CLI |
+| [azure-functions-scaffold-python](https://github.com/yeongseon/azure-functions-scaffold-python) | Project scaffolding |
+| [azure-functions-cookbook-python](https://github.com/yeongseon/azure-functions-cookbook-python) | Recipes and examples |
 
 ## Disclaimer
 

@@ -1,6 +1,6 @@
 # Installation
 
-This page covers supported environments and installation methods for `azure-functions-doctor`.
+This page covers supported environments and installation methods for `azure-functions-doctor-python`.
 
 ## Requirements
 
@@ -15,13 +15,13 @@ This page covers supported environments and installation methods for `azure-func
 ## Install from PyPI
 
 ```bash
-python -m pip install azure-functions-doctor
+python -m pip install azure-functions-doctor-python
 ```
 
 The package installs these equivalent entry points:
 
 - `azure-functions`
-- `azure-functions-doctor`
+- `azure-functions-doctor-python`
 - `fdoctor`
 
 All three run the same CLI (`azure_functions_doctor.cli:cli`).
@@ -29,7 +29,7 @@ All three run the same CLI (`azure_functions_doctor.cli:cli`).
 ## Upgrade to latest version
 
 ```bash
-python -m pip install --upgrade azure-functions-doctor
+python -m pip install --upgrade azure-functions-doctor-python
 ```
 
 ## Install from source
@@ -37,8 +37,8 @@ python -m pip install --upgrade azure-functions-doctor
 Use source install when you want to test local changes or contribute.
 
 ```bash
-git clone https://github.com/yeongseon/azure-functions-doctor.git
-cd azure-functions-doctor
+git clone https://github.com/yeongseon/azure-functions-doctor-python.git
+cd azure-functions-doctor-python
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install -e .
@@ -86,7 +86,7 @@ For predictable behavior, run inside a virtual environment:
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-python -m pip install azure-functions-doctor
+python -m pip install azure-functions-doctor-python
 ```
 
 ## Optional system dependencies
@@ -107,7 +107,7 @@ If `azure-functions` is not found after install:
 1. Confirm you installed into the active interpreter:
 
 ```bash
-python -m pip show azure-functions-doctor
+python -m pip show azure-functions-doctor-python
 ```
 
 2. Check whether your script directory is on `PATH`.

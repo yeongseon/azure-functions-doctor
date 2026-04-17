@@ -46,7 +46,7 @@ If `--output` is omitted, JSON is printed to stdout.
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `tool_version` | string | Installed `azure-functions-doctor` version. |
+| `tool_version` | string | Installed `azure-functions-doctor-python` version. |
 | `generated_at` | string | UTC timestamp in ISO 8601 format. |
 | `target_path` | string | Resolved absolute project path used for checks. |
 

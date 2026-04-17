@@ -1,2 +1,2 @@
 azure-functions
-azure-functions-doctor
+azure-functions-doctor-python

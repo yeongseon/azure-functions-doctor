@@ -2,7 +2,7 @@
 
 **Generated:** 2026-03-15  
 **Purpose:** Identify gaps between design principles and current implementation  
-**Baseline:** CODEBASE_ANALYSIS.md (azure-functions-doctor v0.15.1)  
+**Baseline:** CODEBASE_ANALYSIS.md (azure-functions-doctor-python v0.15.1)  
 **Specification:** DESIGN.md, PRD.md, docs/rule_inventory.md
 
 ---
@@ -13,7 +13,7 @@
 
 **Total Gaps Identified:** 0 critical, 3 minor documentation/consistency opportunities
 
-**Conclusion:** The azure-functions-doctor implementation is **fully compliant** with DESIGN.md principles. No code changes required. Minor documentation refinements recommended.
+**Conclusion:** The azure-functions-doctor-python implementation is **fully compliant** with DESIGN.md principles. No code changes required. Minor documentation refinements recommended.
 
 ---
 
@@ -58,8 +58,8 @@
 
 | Boundary | Status | Evidence |
 |---|---|---|
-| **Runtime validation → azure-functions-validation** | ✅ PASS | No runtime validation logic in doctor |
-| **OpenAPI generation → azure-functions-openapi** | ✅ PASS | No OpenAPI generation |
+| **Runtime validation → azure-functions-validation-python** | ✅ PASS | No runtime validation logic in doctor |
+| **OpenAPI generation → azure-functions-openapi-python** | ✅ PASS | No OpenAPI generation |
 | **This repo owns: inspection, rule execution, diagnostic reporting** | ✅ PASS | Scope limited to project inspection and reporting |
 
 **Result:** 3/3 boundaries respected ✅
@@ -339,9 +339,9 @@ examples/v2/
 
 | Boundary | Owner | Evidence in Codebase | Status |
 |---|---|---|---|
-| Runtime validation | azure-functions-validation | No runtime validation in doctor codebase | ✅ RESPECTED |
-| OpenAPI generation | azure-functions-openapi | No OpenAPI logic in doctor codebase | ✅ RESPECTED |
-| Project inspection, rule execution, diagnostic reporting | azure-functions-doctor | doctor.py, handlers.py, cli.py implement this scope | ✅ OWNED |
+| Runtime validation | azure-functions-validation-python | No runtime validation in doctor codebase | ✅ RESPECTED |
+| OpenAPI generation | azure-functions-openapi-python | No OpenAPI logic in doctor codebase | ✅ RESPECTED |
+| Project inspection, rule execution, diagnostic reporting | azure-functions-doctor-python | doctor.py, handlers.py, cli.py implement this scope | ✅ OWNED |
 
 **Conclusion:** ✅ Integration boundaries clearly respected.
 
@@ -397,7 +397,7 @@ examples/v2/
 
 **Overall Status:** ✅ **EXCELLENT ALIGNMENT**
 
-The azure-functions-doctor codebase demonstrates **exemplary adherence** to all design principles, non-goals, integration boundaries, and compatibility policies defined in DESIGN.md and PRD.md.
+The azure-functions-doctor-python codebase demonstrates **exemplary adherence** to all design principles, non-goals, integration boundaries, and compatibility policies defined in DESIGN.md and PRD.md.
 
 **Key Strengths:**
 1. Rule-driven architecture enables extensibility without framework bloat

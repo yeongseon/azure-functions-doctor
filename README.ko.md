@@ -1,13 +1,13 @@
 # Azure Functions Doctor
 
-[![PyPI](https://img.shields.io/pypi/v/azure-functions-doctor.svg)](https://pypi.org/project/azure-functions-doctor/)
-[![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](https://pypi.org/project/azure-functions-doctor/)
-[![CI](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/ci-test.yml/badge.svg)](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/ci-test.yml)
-[![Release](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/release.yml/badge.svg)](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/release.yml)
-[![Security Scans](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/security.yml/badge.svg)](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/security.yml)
-[![codecov](https://codecov.io/gh/yeongseon/azure-functions-doctor/branch/main/graph/badge.svg)](https://codecov.io/gh/yeongseon/azure-functions-doctor)
+[![PyPI](https://img.shields.io/pypi/v/azure-functions-doctor-python.svg)](https://pypi.org/project/azure-functions-doctor-python/)
+[![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](https://pypi.org/project/azure-functions-doctor-python/)
+[![CI](https://github.com/yeongseon/azure-functions-doctor-python/actions/workflows/ci-test.yml/badge.svg)](https://github.com/yeongseon/azure-functions-doctor-python/actions/workflows/ci-test.yml)
+[![Release](https://github.com/yeongseon/azure-functions-doctor-python/actions/workflows/release.yml/badge.svg)](https://github.com/yeongseon/azure-functions-doctor-python/actions/workflows/release.yml)
+[![Security Scans](https://github.com/yeongseon/azure-functions-doctor-python/actions/workflows/security.yml/badge.svg)](https://github.com/yeongseon/azure-functions-doctor-python/actions/workflows/security.yml)
+[![codecov](https://codecov.io/gh/yeongseon/azure-functions-doctor-python/branch/main/graph/badge.svg)](https://codecov.io/gh/yeongseon/azure-functions-doctor-python)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://pre-commit.com/)
-[![Docs](https://img.shields.io/badge/docs-gh--pages-blue)](https://yeongseon.github.io/azure-functions-doctor/)
+[![Docs](https://img.shields.io/badge/docs-gh--pages-blue)](https://yeongseon.github.io/azure-functions-doctor-python/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 다른 언어: [English](README.md) | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
@@ -25,7 +25,7 @@ Azure Functions Doctor는 **Azure Functions Python v2 프로그래밍 모델**�
 
 ## Why Use It
 
-Azure Functions Python 프로젝트를 설정하려면 여러 설정 파일, 의존성, 도구가 필요합니다. 그 중 하나라도 빠지면 이해하기 어려운 런타임 오류가 발생합니다. `azure-functions-doctor`는 엄선된 규칙 집합을 기반으로 프로젝트를 점검하고, 문제가 프로덕션에 도달하기 전에 보고합니다.
+Azure Functions Python 프로젝트를 설정하려면 여러 설정 파일, 의존성, 도구가 필요합니다. 그 중 하나라도 빠지면 이해하기 어려운 런타임 오류가 발생합니다. `azure-functions-doctor-python`는 엄선된 규칙 집합을 기반으로 프로젝트를 점검하고, 문제가 프로덕션에 도달하기 전에 보고합니다.
 
 ## Scope
 
@@ -39,14 +39,14 @@ Azure Functions Python 프로젝트를 설정하려면 여러 설정 파일, 의
 PyPI에서 설치:
 
 ```bash
-pip install azure-functions-doctor
+pip install azure-functions-doctor-python
 ```
 
 소스에서 설치:
 
 ```bash
-git clone https://github.com/yeongseon/azure-functions-doctor.git
-cd azure-functions-doctor
+git clone https://github.com/yeongseon/azure-functions-doctor-python.git
+cd azure-functions-doctor-python
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .
@@ -129,11 +129,11 @@ azure-functions doctor --format json
 
 ## Ecosystem
 
-- [azure-functions-validation](https://github.com/yeongseon/azure-functions-validation) — 요청 및 응답 검증
-- [azure-functions-openapi](https://github.com/yeongseon/azure-functions-openapi) — OpenAPI 및 Swagger UI
-- [azure-functions-logging](https://github.com/yeongseon/azure-functions-logging) — 구조화된 로깅
-- [azure-functions-scaffold](https://github.com/yeongseon/azure-functions-scaffold) — 프로젝트 스캐폴딩
-- [azure-functions-python-cookbook](https://github.com/yeongseon/azure-functions-python-cookbook) — 레시피 및 예제
+- [azure-functions-validation-python](https://github.com/yeongseon/azure-functions-validation-python) — 요청 및 응답 검증
+- [azure-functions-openapi-python](https://github.com/yeongseon/azure-functions-openapi-python) — OpenAPI 및 Swagger UI
+- [azure-functions-logging-python](https://github.com/yeongseon/azure-functions-logging-python) — 구조화된 로깅
+- [azure-functions-scaffold-python](https://github.com/yeongseon/azure-functions-scaffold-python) — 프로젝트 스캐폴딩
+- [azure-functions-cookbook-python](https://github.com/yeongseon/azure-functions-cookbook-python) — 레시피 및 예제
 
 ## Disclaimer
 

@@ -46,7 +46,7 @@ jobs:
 
       - name: Run static doctor check on example project (no Azure)
         run: |
-          azure-functions-doctor doctor \
+          azure-functions-doctor-python doctor \
             --path examples/v2/http-trigger \
             --profile minimal
 
@@ -62,7 +62,7 @@ jobs:
           az group create \
             --name "${{ steps.names.outputs.rg }}" \
             --location "$AZURE_LOCATION" \
-            --tags purpose=e2e repo=azure-functions-doctor run="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+            --tags purpose=e2e repo=azure-functions-doctor-python run="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
 
       - name: Deploy infra (Bicep)
         run: |

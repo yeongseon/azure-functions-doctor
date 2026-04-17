@@ -415,9 +415,9 @@ Add SARIF and JUnit output (fe04a752bdfeeadaf08c22bf3dfa36ad6334fc17)
 
 - implement centralized logging infrastructure (8b508c585e54b825fde4456fd53bc995c2e41652)
 
-- Merge branch 'main' of https://github.com/yeongseon/azure-functions-doctor-for-python (40194d23ffe4160319e0d8c428b366e1760c5274)
+- Merge branch 'main' of https://github.com/yeongseon/azure-functions-doctor-python-for-python (40194d23ffe4160319e0d8c428b366e1760c5274)
 
-- Merge branch 'main' of https://github.com/yeongseon/azure-functions-doctor-for-python (3459db77278e4d0a1a1a337b9e13e9fe804ad4aa)
+- Merge branch 'main' of https://github.com/yeongseon/azure-functions-doctor-python-for-python (3459db77278e4d0a1a1a337b9e13e9fe804ad4aa)
 
 - update changelog (01d9c94bc3adba61f4921df9aee69ef063623e4c)
 
@@ -553,7 +553,7 @@ Add SARIF and JUnit output (fe04a752bdfeeadaf08c22bf3dfa36ad6334fc17)
 
 - update PyPI classifiers to include Python 3.11 and 3.12 (7115bd5eb1783331d7becc723f15f92e962852f8)
 
-- fix project name to 'azure-functions-doctor' across all files (4559727181598a2aa2af8cc3f527eda237fd1501)
+- fix project name to 'azure-functions-doctor-python' across all files (4559727181598a2aa2af8cc3f527eda237fd1501)
 
 - add GitHub Actions release workflow (48a45485064bc599e58ab8be63eb25e0dcfc8ce0)
 
@@ -577,7 +577,7 @@ Add SARIF and JUnit output (fe04a752bdfeeadaf08c22bf3dfa36ad6334fc17)
 
 - enlarge logo in README and finalize CLI doc structure (fb7a695b14a1e592d7b8393960a4e4e879cac65b)
 
-- Merge branch 'main' of https://github.com/yeongseon/azure-functions-doctor (083cbe6af7cff4d559597eab35f4c8339c5f36f4)
+- Merge branch 'main' of https://github.com/yeongseon/azure-functions-doctor-python (083cbe6af7cff4d559597eab35f4c8339c5f36f4)
 
 - enlarge logo size in README for better visibility (fd9445c68b1d832420b0278389a61792d48970e1)
 

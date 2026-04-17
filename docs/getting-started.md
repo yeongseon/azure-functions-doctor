@@ -1,6 +1,6 @@
 # Getting Started
 
-This guide walks through your first successful run with `azure-functions-doctor`, explains the output model, and shows common fixes.
+This guide walks through your first successful run with `azure-functions-doctor-python`, explains the output model, and shows common fixes.
 
 ## 1) Prerequisites
 
@@ -8,7 +8,7 @@ Before running diagnostics, confirm:
 
 - Python `>=3.10,<3.15`
 - A local Azure Functions project (Python v2 decorators)
-- `azure-functions-doctor` installed
+- `azure-functions-doctor-python` installed
 
 If not installed yet, see [Installation](installation.md).
 

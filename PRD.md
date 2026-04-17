@@ -1,8 +1,8 @@
-# PRD - azure-functions-doctor
+# PRD - azure-functions-doctor-python
 
 ## Overview
 
-`azure-functions-doctor` is a diagnostic CLI for projects built on the Azure Functions Python v2
+`azure-functions-doctor-python` is a diagnostic CLI for projects built on the Azure Functions Python v2
 programming model.
 
 It inspects a local project and reports common configuration, dependency, and environment issues
@@ -57,7 +57,7 @@ These failures are often discovered late, through confusing runtime errors or de
 
 ### Philosophy
 
-A diagnostic CLI earns trust by showing exactly what it does. `azure-functions-doctor`
+A diagnostic CLI earns trust by showing exactly what it does. `azure-functions-doctor-python`
 ships runnable example projects — both healthy and intentionally broken — so developers
 can see real pass/fail output before pointing the tool at their own code.
 
@@ -66,7 +66,7 @@ can see real pass/fail output before pointing the tool at their own code.
 Run diagnostics against the representative example:
 
 ```bash
-pip install azure-functions-doctor
+pip install azure-functions-doctor-python
 azure-functions doctor --path examples/v2/http-trigger
 ```
 
@@ -96,7 +96,7 @@ azure-functions doctor --path examples/v2/broken-missing-host-json
    applying it to their own project. The pass/fail contrast builds confidence.
 2. **AI agent discoverability.** Tools like GitHub Copilot, Cursor, and Claude Code recommend
    libraries based on README, PRD, and example content. CLI output samples in documentation
-   help AI agents understand what `azure-functions-doctor` does and when to suggest it.
+   help AI agents understand what `azure-functions-doctor-python` does and when to suggest it.
 3. **Cookbook role.** For niche ecosystems, `examples/` and `docs/` often serve as the primary
    learning material. Both healthy and broken examples teach diagnostic patterns.
 4. **Proven approach.** FastAPI, LangChain, SQLAlchemy, and Pandas all achieved early adoption

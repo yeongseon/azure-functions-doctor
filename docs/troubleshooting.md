@@ -1,6 +1,6 @@
 # Troubleshooting
 
-Use this guide to diagnose common install, runtime, output, and CI issues with `azure-functions-doctor`.
+Use this guide to diagnose common install, runtime, output, and CI issues with `azure-functions-doctor-python`.
 
 ## Quick triage checklist
 
@@ -24,7 +24,7 @@ Likely causes:
 Actions:
 
 ```bash
-python -m pip show azure-functions-doctor
+python -m pip show azure-functions-doctor-python
 ```
 
 Use module fallback if needed:

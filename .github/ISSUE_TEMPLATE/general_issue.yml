@@ -10,7 +10,7 @@ body:
       value: |
         Thank you for opening an issue! This template is for general issues that don't fit into bug reports or feature requests.
         
-        **Note**: For questions or discussions, consider using [GitHub Discussions](https://github.com/yeongseon/azure-functions-doctor/discussions) instead.
+        **Note**: For questions or discussions, consider using [GitHub Discussions](https://github.com/yeongseon/azure-functions-doctor-python/discussions) instead.
 
   - type: dropdown
     id: issue-type
@@ -58,7 +58,7 @@ body:
       placeholder: |
         - OS: [e.g. Windows 11, macOS 14.0, Ubuntu 22.04]
         - Python version: [e.g. 3.10.16]
-        - azure-functions-doctor version: [e.g. 0.1.10]
+        - azure-functions-doctor-python version: [e.g. 0.1.10]
         - Any other relevant tools or versions
     validations:
       required: false
