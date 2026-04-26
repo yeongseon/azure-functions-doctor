@@ -81,10 +81,12 @@ def _collect_blueprint_aliases(source: str) -> set[str]:
 
 
 def _collect_register_functions_args(source: str) -> set[str]:
-    """Collect Blueprint aliases passed to registration calls.
+    """Collect Blueprint aliases passed to ``register_functions(...)`` calls.
 
-    Accepts both ``register_functions(...)`` and ``register_blueprint(...)``
-    forms to stay permissive across project layouts.
+    Only the official Azure Functions Python v2 API (``app.register_functions``)
+    is recognized. Flask/FastAPI-style ``register_blueprint`` is intentionally
+    not accepted because it is not a valid registration call for the Azure
+    Functions runtime.
     """
     try:
         tree = ast.parse(source)
@@ -92,19 +94,14 @@ def _collect_register_functions_args(source: str) -> set[str]:
         return set()
 
     names: set[str] = set()
-    registration_names = {"register_functions", "register_blueprint"}
     for node in ast.walk(tree):
         if not isinstance(node, ast.Call):
             continue
 
         func_node = node.func
-        call_name: str | None = None
-        if isinstance(func_node, ast.Attribute):
-            call_name = func_node.attr
-        elif isinstance(func_node, ast.Name) and func_node.id == "register_blueprint":
-            call_name = func_node.id
-
-        if call_name not in registration_names:
+        if not isinstance(func_node, ast.Attribute):
+            continue
+        if func_node.attr != "register_functions":
             continue
 
         for arg in node.args:
@@ -903,7 +900,8 @@ class HandlerRegistry:
                 "Missing:",
                 *[f"- app.register_functions({alias})" for alias in unregistered_aliases],
                 "",
-                "Fix: add `app.register_functions(bp)` in function_app.py.",
+                "Fix: add the missing `app.register_functions(<alias>)` call(s)"
+                " in function_app.py.",
             ]
         )
         return _create_result("fail", detail)

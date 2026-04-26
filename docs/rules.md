@@ -63,7 +63,7 @@ Keyword '@app.' not found in source code (AST)
 
 ## 2) `check_blueprint_registration`
 
-- **What it checks:** Blueprint aliases declared with `func.Blueprint()` and used in decorators are also registered via `app.register_functions(bp)` (or permissive `register_blueprint(bp)`) somewhere in the project.
+- **What it checks:** Blueprint aliases declared with `func.Blueprint()` and used in decorators are also registered via `app.register_functions(bp)` somewhere in the project. Only the official Azure Functions Python v2 API is recognized; Flask/FastAPI-style `register_blueprint(...)` calls are not treated as registration.
 - **Why it matters:** Unregistered Blueprints look valid in code but their routes never index at runtime.
 - **How to fix:** Register each Blueprint on your `FunctionApp`, typically from `function_app.py`.
 

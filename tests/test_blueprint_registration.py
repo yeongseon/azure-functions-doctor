@@ -25,18 +25,18 @@ app = func.FunctionApp()
     assert handlers._collect_blueprint_aliases(source) == {"bp", "other"}
 
 
-def test_collect_register_functions_args_accepts_both_registration_forms() -> None:
+def test_collect_register_functions_args_only_accepts_official_api() -> None:
     handlers = import_module("azure_functions_doctor.handlers")
     source = """
 app.register_functions(bp)
-loader.register_blueprint(other_bp)
-register_blueprint(third_bp)
+loader.register_functions(other_bp)
+loader.register_blueprint(flask_bp)
+register_blueprint(flask_bare)
 app.register_functions(factory())
 """
     assert handlers._collect_register_functions_args(source) == {
         "bp",
         "other_bp",
-        "third_bp",
     }
 
 
