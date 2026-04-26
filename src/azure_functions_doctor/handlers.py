@@ -56,6 +56,109 @@ def _discover_functionapp_aliases(source: str) -> set[str]:
     return names or {"app"}
 
 
+def _collect_blueprint_aliases(source: str) -> set[str]:
+    """Extract variable names assigned a ``Blueprint()`` call."""
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return set()
+
+    names: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign) and isinstance(node.value, ast.Call):
+            func_node = node.value.func
+            attr_name: str | None = None
+            if isinstance(func_node, ast.Attribute):
+                attr_name = func_node.attr
+            elif isinstance(func_node, ast.Name):
+                attr_name = func_node.id
+            if attr_name != "Blueprint":
+                continue
+            for target in node.targets:
+                if isinstance(target, ast.Name):
+                    names.add(target.id)
+    return names
+
+
+def _collect_register_functions_args(source: str) -> set[str]:
+    """Collect Blueprint aliases passed to ``register_functions(...)`` calls.
+
+    Only the official Azure Functions Python v2 API (``app.register_functions``)
+    is recognized. Flask/FastAPI-style ``register_blueprint`` is intentionally
+    not accepted because it is not a valid registration call for the Azure
+    Functions runtime.
+    """
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return set()
+
+    names: set[str] = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+
+        func_node = node.func
+        if not isinstance(func_node, ast.Attribute):
+            continue
+        if func_node.attr != "register_functions":
+            continue
+
+        for arg in node.args:
+            if isinstance(arg, ast.Name):
+                names.add(arg.id)
+    return names
+
+
+def _source_contains_blueprint_decorator(source: str, blueprint_aliases: set[str]) -> set[str]:
+    """Return Blueprint aliases used in decorators like ``@bp.route()``."""
+    if not blueprint_aliases:
+        return set()
+
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return set()
+
+    matched_aliases: set[str] = set()
+
+    def decorator_alias(dec: ast.expr) -> str | None:
+        node: ast.expr = dec.func if isinstance(dec, ast.Call) else dec
+        if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
+            alias = node.value.id
+            if alias in blueprint_aliases:
+                return alias
+        return None
+
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.ClassDef)) and node.decorator_list:
+            for dec in node.decorator_list:
+                alias = decorator_alias(dec)
+                if alias is not None:
+                    matched_aliases.add(alias)
+    return matched_aliases
+
+
+def _collect_unregistered_blueprint_aliases(path: Path) -> set[str]:
+    """Collect Blueprint aliases that are decorated but never registered."""
+    project_contents = list(_iter_project_py_contents(path))
+    blueprint_aliases: set[str] = set()
+
+    for _py_file, content in project_contents:
+        blueprint_aliases |= _collect_blueprint_aliases(content)
+
+    decorated_blueprint_aliases: set[str] = set()
+    registered_blueprint_aliases: set[str] = set()
+
+    for _py_file, content in project_contents:
+        decorated_blueprint_aliases |= _source_contains_blueprint_decorator(
+            content, blueprint_aliases
+        )
+        registered_blueprint_aliases |= _collect_register_functions_args(content)
+
+    return decorated_blueprint_aliases - registered_blueprint_aliases
+
+
 def _source_contains_ast(source: str, identifier: str) -> bool:
     """Return True when the source contains a decorator like ``@identifier.xxx``.
 
@@ -230,6 +333,7 @@ class Rule(TypedDict, total=False):
         "host_json_extension_bundle_version",
         "package_forbidden",
         "package_declared",
+        "blueprint_registration",
     ]
     label: str
     category: str
@@ -271,6 +375,7 @@ class HandlerRegistry:
             "local_settings_security": self._handle_local_settings_security,
             "host_json_extension_bundle_version": self._handle_host_json_extension_bundle_version,
             "package_forbidden": self._handle_package_forbidden,
+            "blueprint_registration": self._handle_blueprint_registration,
         }
 
     def handle(self, rule: Rule, path: Path) -> dict[str, str]:
@@ -779,6 +884,27 @@ class HandlerRegistry:
             f"extensionBundle version '{version_str}' does not match"
             " recommended v4 range [4.*, 5.0.0)",
         )
+
+    def _handle_blueprint_registration(self, rule: Rule, path: Path) -> dict[str, str]:
+        """Warn when decorated Blueprint aliases are never registered."""
+        unregistered_aliases = sorted(_collect_unregistered_blueprint_aliases(path))
+        if not unregistered_aliases:
+            return _create_result("pass", "All detected Blueprint aliases are registered")
+
+        detail = "\n".join(
+            [
+                "Detected:",
+                *[f"- {alias} = func.Blueprint()" for alias in unregistered_aliases],
+                *[f"- @{alias}.route(...)" for alias in unregistered_aliases],
+                "",
+                "Missing:",
+                *[f"- app.register_functions({alias})" for alias in unregistered_aliases],
+                "",
+                "Fix: add the missing `app.register_functions(<alias>)` call(s)"
+                " in function_app.py.",
+            ]
+        )
+        return _create_result("fail", detail)
 
 
 # Global registry instance

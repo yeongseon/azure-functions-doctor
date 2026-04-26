@@ -16,6 +16,19 @@
     "check_order": 0
   },
   {
+    "id": "check_blueprint_registration",
+    "category": "project_structure",
+    "section": "programming_model",
+    "label": "Blueprint registration",
+    "description": "Warns when a Blueprint has decorators but is never registered on the FunctionApp.",
+    "type": "blueprint_registration",
+    "required": false,
+    "condition": {},
+    "hint": "Register each Blueprint with app.register_functions(bp) so its decorators are indexed at runtime.",
+    "hint_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-reference-python?pivots=python-mode-decorators",
+    "check_order": 1
+  },
+  {
     "id": "check_python_version",
     "category": "environment",
     "section": "python_env",

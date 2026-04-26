@@ -45,6 +45,7 @@ Only required failures produce non-zero process exit code.
 - `any_of_exists`
 - `file_glob_check`
 - `host_json_property`
+- `blueprint_registration`
 
 ## Rule-by-rule reference
 
@@ -60,7 +61,26 @@ Example failing detail:
 Keyword '@app.' not found in source code (AST)
 ```
 
-## 2) `check_python_version`
+## 2) `check_blueprint_registration`
+
+- **What it checks:** Blueprint aliases declared with `func.Blueprint()` and used in decorators are also registered via `app.register_functions(bp)` somewhere in the project. Only the official Azure Functions Python v2 API is recognized; Flask/FastAPI-style `register_blueprint(...)` calls are not treated as registration.
+- **Why it matters:** Unregistered Blueprints look valid in code but their routes never index at runtime.
+- **How to fix:** Register each Blueprint on your `FunctionApp`, typically from `function_app.py`.
+
+Example warning detail:
+
+```text
+Detected:
+- bp = func.Blueprint()
+- @bp.route(...)
+
+Missing:
+- app.register_functions(bp)
+
+Fix: add `app.register_functions(bp)` in function_app.py.
+```
+
+## 3) `check_python_version`
 
 - **What it checks:** Current interpreter version is `>=3.10`.
 - **Why it matters:** Package and diagnostics support baseline starts at Python 3.10.
@@ -72,7 +92,7 @@ Example output:
 Python 3.9.18 (>=3.10)
 ```
 
-## 3) `check_venv`
+## 4) `check_venv`
 
 - **What it checks:** Environment variable `VIRTUAL_ENV` exists.
 - **Why it matters:** Virtual environments reduce dependency drift and environment pollution.
@@ -84,7 +104,7 @@ Example failing detail:
 VIRTUAL_ENV is not set
 ```
 
-## 4) `check_python_executable`
+## 5) `check_python_executable`
 
 - **What it checks:** `sys.executable` points to an existing path.
 - **Why it matters:** Broken interpreter paths indicate unstable runtime environment.
@@ -96,7 +116,7 @@ Example detail:
 /usr/bin/python3 exists
 ```
 
-## 5) `check_requirements_txt`
+## 6) `check_requirements_txt`
 
 - **What it checks:** `requirements.txt` exists at project root.
 - **Why it matters:** Deployability and reproducibility depend on declared dependencies.
@@ -108,7 +128,7 @@ Example failing detail:
 /workspace/app/requirements.txt not found
 ```
 
-## 6) `check_azure_functions_library`
+## 7) `check_azure_functions_library`
 
 - **What it checks:** `azure-functions` appears in `requirements.txt`.
 - **Why it matters:** Function app code depends on Azure Functions Python library.
@@ -120,7 +140,7 @@ Example failing detail:
 Package 'azure-functions' not declared in requirements.txt
 ```
 
-## 7) `check_host_json`
+## 8) `check_host_json`
 
 - **What it checks:** `host.json` exists at project root.
 - **Why it matters:** Azure Functions host configuration is required for valid app structure.
@@ -132,7 +152,7 @@ Example failing detail:
 /workspace/app/host.json not found
 ```
 
-## 8) `check_local_settings`
+## 9) `check_local_settings`
 
 - **What it checks:** `local.settings.json` exists.
 - **Why it matters:** Local development often needs this file for settings and connection values.
@@ -144,7 +164,7 @@ Example warning detail:
 /workspace/app/local.settings.json not found (optional)
 ```
 
-## 9) `check_func_cli`
+## 10) `check_func_cli`
 
 - **What it checks:** `func` executable is available on `PATH`.
 - **Why it matters:** Core Tools enable local hosting and rich runtime tooling.
@@ -156,7 +176,7 @@ Example warning detail:
 func not found
 ```
 
-## 10) `check_func_core_tools_version`
+## 11) `check_func_core_tools_version`
 
 - **What it checks:** Core Tools version is `>=4.0`.
 - **Why it matters:** Older versions can diverge from current host/runtime expectations.
@@ -168,7 +188,7 @@ Example warning detail:
 func 3.0.3904 (>=4.0)
 ```
 
-## 11) `check_durabletask_config`
+## 12) `check_durabletask_config`
 
 - **What it checks:** If durable usage is detected in source, `$.extensions.durableTask` exists in `host.json`.
 - **Why it matters:** Durable Functions need matching host configuration.
@@ -186,7 +206,7 @@ or
 Required host.json property '$.extensions.durableTask' not found
 ```
 
-## 12) `check_app_insights`
+## 13) `check_app_insights`
 
 - **What it checks:** At least one telemetry signal exists:
   - `APPLICATIONINSIGHTS_CONNECTION_STRING`
@@ -201,7 +221,7 @@ Example warning detail:
 Targets not found
 ```
 
-## 13) `check_extension_bundle`
+## 14) `check_extension_bundle`
 
 - **What it checks:** `$.extensionBundle` exists in `host.json`.
 - **Why it matters:** Extension bundles help ensure binding dependencies are available.
@@ -213,7 +233,7 @@ Example warning detail:
 host.json property '$.extensionBundle' not found
 ```
 
-## 14) `check_asgi_wsgi_exposure`
+## 15) `check_asgi_wsgi_exposure`
 
 - **What it checks:** Source has ASGI/WSGI exposure patterns.
 - **Why it matters:** Useful signal for framework-host integration readiness.
@@ -225,7 +245,7 @@ Example warning detail:
 No ASGI/WSGI callable detected in project source
 ```
 
-## 15) `check_unused_files`
+## 16) `check_unused_files`
 
 - **What it checks:** Presence of unwanted patterns (for example `**/*.pyc`, `**/__pycache__`, `.venv`, `tests/`).
 - **Why it matters:** Reduces deployment package clutter and risk.
