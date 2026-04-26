@@ -1,11 +1,28 @@
 # Changelog
 
-## Unreleased
+- bump version to 0.17.0 (fd3389cc1eec3810cb952dd0354c22c4082244d2)
 
-- fix programming-model detection to fail fast on Python v1, mixed-model, and unknown repositories instead of silently treating them as v2
-- add warning for decorated Blueprint aliases that are never registered with `app.register_functions(...)`
-- add `--target-python` override so Python version diagnostics can evaluate the Azure Functions target runtime separately from the local tool runtime (supports `3.10`–`3.14`; `3.14` is currently in Preview)
-- warn on native dependency packages that often need Azure Functions Linux-compatible builds
+- bump expected version to 0.17.0 (0af4c34086b032177bac27370bc1d33eeef3ec2e)
+
+- add Issue Conventions section to AGENTS.md (2dcf16a28192ce65fb63f808ddd28ad754b0bf43)
+
+- warn on native-extension dependencies in requirements.txt (#150) (4a651c48c5bd46c5518b3121d9571ff302ea4f92)
+
+- add --target-python to evaluate deployment runtime separately (#149) (c22df160356b5db17512361d1182ef8c22f2e725)
+
+- warn on declared but unregistered Blueprints (#148) (c77cef27944e0e2c5889897de56c0c4234199337)
+
+- classify non-v2 programming models as unsupported (#147) (949c4225f1b89e9d018a385aa26b5609eae7b5ea)
+
+- Merge pull request #136 from yeongseon/dependabot/github_actions/actions/github-script-9.0.0
+
+chore(deps): bump actions/github-script from 8.0.0 to 9.0.0 (eb04c418f15f56df9cd4b63a4db2ded2825caab3)
+
+- Merge pull request #137 from yeongseon/dependabot/github_actions/actions/upload-artifact-7.0.1
+
+chore(deps): bump actions/upload-artifact from 7.0.0 to 7.0.1 (43938a745b6773db92984fbcf1a7be64e51c3145)
+
+- update changelog (8766d76ff321c9eed851af79453c15404f829f69)
 
 - bump version to 0.16.3 (f3b801852d3833a2d86ef5e1177231a4d12e362f)
 
@@ -868,3 +885,4 @@ Add SARIF and JUnit output (fe04a752bdfeeadaf08c22bf3dfa36ad6334fc17)
 - initial project setup with CLI, Makefile, docs, and packaging (a39efbd9a2d2b953905b6ce3925badab2b44c117)
 
 - Initial commit (457425ebde591e34042116d1e5f92ac7006a03cd)
+
