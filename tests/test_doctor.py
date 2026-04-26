@@ -101,6 +101,20 @@ def test_profile_minimal_filters_optional_rules() -> None:
         assert "local.settings.json" not in item_labels
 
 
+def test_get_report_properties_includes_target_python(tmp_path: Path) -> None:
+    """Tests report properties expose programming model and target Python."""
+    (tmp_path / "function_app.py").write_text(
+        "import azure.functions as func\napp = func.FunctionApp()\n",
+        encoding="utf-8",
+    )
+    doctor = Doctor(str(tmp_path), target_python="3.12")
+
+    assert doctor.get_report_properties() == {
+        "programming_model": "v2",
+        "target_python": "3.12",
+    }
+
+
 def test_invalid_profile_raises() -> None:
     """Tests that an invalid profile raises a ValueError."""
     with tempfile.TemporaryDirectory() as tmp:

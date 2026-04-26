@@ -21,6 +21,7 @@ def test_compare_python_version_pass() -> None:
     }
     result = generic_handler(rule, Path("."))
     assert result["status"] == "pass"
+    assert "tool runtime" in result["detail"]
 
 
 def test_compare_python_version_fail() -> None:
@@ -35,6 +36,36 @@ def test_compare_python_version_fail() -> None:
     }
     result = generic_handler(rule, Path("."))
     assert result["status"] == "fail"
+
+
+def test_compare_python_version_override_pass() -> None:
+    """Test that target_python override is used for version comparison."""
+    rule: Rule = {
+        "type": "compare_version",
+        "condition": {
+            "target": "python",
+            "operator": "==",
+            "value": "3.12",
+        },
+    }
+    result = generic_handler(rule, Path("."), {"target_python": "3.12"})
+    assert result["status"] == "pass"
+    assert result["detail"].startswith("Target Python: 3.12 (override)")
+
+
+def test_compare_python_version_override_fail() -> None:
+    """Test that mismatched target_python override fails the rule."""
+    rule: Rule = {
+        "type": "compare_version",
+        "condition": {
+            "target": "python",
+            "operator": "==",
+            "value": "3.13",
+        },
+    }
+    result = generic_handler(rule, Path("."), {"target_python": "3.10"})
+    assert result["status"] == "fail"
+    assert "Tool runtime:" in result["detail"]
 
 
 def test_compare_func_core_tools_version_pass(monkeypatch: MonkeyPatch) -> None:

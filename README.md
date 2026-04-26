@@ -99,6 +99,15 @@ Output JSON for CI:
 azure-functions doctor --format json
 ```
 
+Pin the Azure Functions target runtime explicitly:
+
+```bash
+azure-functions doctor --target-python 3.12
+```
+
+Use `--target-python` when the Python running `azure-functions-doctor`
+is not the same as the Python version your Function App will run on Azure.
+
 ### Sample output (excerpt)
 
 ```bash
@@ -113,7 +122,7 @@ Programming Model
 [✓] Programming model v2: Keyword '@app.|@bp.' found in source code (AST)
 
 Python Env
-[✓] Python version: Python 3.10.12 (>=3.10)
+[✓] Python version: Python 3.10.12 (tool runtime, >=3.10)
 [✓] requirements.txt: requirements.txt exists
 [✓] azure-functions package: Package 'azure-functions' declared in requirements.txt
 

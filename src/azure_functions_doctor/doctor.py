@@ -11,6 +11,7 @@ from jsonschema import ValidationError, validate
 from azure_functions_doctor.handlers import (
     EXCLUDED_PROJECT_DIRS,
     Rule,
+    RuleContext,
     _discover_functionapp_aliases,
     _iter_project_py_contents,
     _source_contains_ast,
@@ -51,9 +52,11 @@ class Doctor:
         path: str = ".",
         profile: Optional[str] = None,
         rules_path: Optional[Path] = None,
+        target_python: Optional[str] = None,
     ) -> None:
         self.project_path: Path = Path(path).resolve()
         self.profile = profile
+        self.target_python: Optional[str] = target_python
         self.rules_path: Optional[Path] = None
         if rules_path is not None:
             resolved = rules_path.resolve()
@@ -61,6 +64,13 @@ class Doctor:
                 raise ValueError(f"rules_path must be an existing file: {resolved}")
             self.rules_path = resolved
         self.programming_model: ProgrammingModel = self._detect_programming_model()
+
+    def get_report_properties(self) -> dict[str, Optional[str]]:
+        """Return top-level report properties shared across output formats."""
+        return {
+            "programming_model": self.programming_model,
+            "target_python": self.target_python,
+        }
 
     def _detect_programming_model(self) -> ProgrammingModel:
         """Detect the Azure Functions programming model state for the project."""
@@ -245,6 +255,7 @@ class Doctor:
             grouped[rule.get("section", "unknown")].append(rule)
 
         results: list[SectionResult] = []
+        context: RuleContext = {"target_python": self.target_python}
 
         for section, checks in grouped.items():
             section_result: SectionResult = {
@@ -257,7 +268,7 @@ class Doctor:
             for rule in checks:
                 # Time rule execution for logging
                 rule_start = time.time()
-                result = generic_handler(rule, self.project_path)
+                result = generic_handler(rule, self.project_path, context)
                 rule_duration_ms = (time.time() - rule_start) * 1000
 
                 handler_status = result.get("status", "fail")

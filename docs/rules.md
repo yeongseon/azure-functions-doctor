@@ -82,14 +82,20 @@ Fix: add `app.register_functions(bp)` in function_app.py.
 
 ## 3) `check_python_version`
 
-- **What it checks:** Current interpreter version is `>=3.10`.
-- **Why it matters:** Package and diagnostics support baseline starts at Python 3.10.
-- **How to fix:** Use Python 3.10+ locally and in CI.
+- **What it checks:** Python version evaluated for the app target is `>=3.10`.
+- **Why it matters:** Azure Functions Python runtime compatibility depends on the deployed target version, not just the interpreter running the doctor.
+- **How to fix:** Use Python 3.10+ locally and in CI, or pass `--target-python <3.10|3.11|3.12|3.13|3.14>` when your deploy target differs from the tool runtime. Note that on the Linux Consumption plan the maximum supported runtime is Python 3.12.
 
 Example output:
 
 ```text
-Python 3.9.18 (>=3.10)
+Python 3.9.18 (tool runtime, >=3.10)
+```
+
+With override:
+
+```text
+Target Python: 3.12 (override) — Tool runtime: 3.13.0
 ```
 
 ## 4) `check_venv`

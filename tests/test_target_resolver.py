@@ -13,6 +13,12 @@ def test_resolve_python_version() -> None:
     assert result == sys.version.split()[0]
 
 
+def test_resolve_python_version_override() -> None:
+    """Test resolving an overridden Python target version."""
+    result = target_resolver.resolve_target_value("python", override="3.12")
+    assert result == "3.12"
+
+
 def test_resolve_func_core_tools_version(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test resolving func_core_tools version via subprocess."""
     monkeypatch.setattr(
