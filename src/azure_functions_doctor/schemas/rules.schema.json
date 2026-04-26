@@ -64,7 +64,8 @@
           "host_json_version",
           "local_settings_security",
           "host_json_extension_bundle_version",
-          "package_forbidden"
+          "package_forbidden",
+          "blueprint_registration"
         ]
       },
       "required": {

@@ -61,6 +61,7 @@ These checks run only after the repository has been classified as a supported `v
 | Check | Purpose |
 | --- | --- |
 | Programming model v2 | Detect decorator-based Azure Functions usage (heuristic). |
+| Blueprint registration | Warn when decorated Blueprints are declared but never registered on the FunctionApp. |
 | Virtual environment | Confirm local development is isolated. |
 | Python executable | Confirm Python is available and resolvable. |
 | azure-functions-worker not pinned | Warn if azure-functions-worker is declared in requirements.txt. |
@@ -78,6 +79,7 @@ These checks run only after the repository has been classified as a supported `v
 | Label | Rule ID | Handler Type | Warns When |
 | --- | --- | --- | --- |
 | Programming model v2 | `check_programming_model_v2` | `source_code_contains` | Project source does not expose `@app.` decorators in AST mode. |
+| Blueprint registration | `check_blueprint_registration` | `blueprint_registration` | A `func.Blueprint()` alias is used in decorators but never appears in `register_functions(...)` anywhere in the project. |
 | Virtual environment | `check_venv` | `env_var_exists` | `VIRTUAL_ENV` is not set. |
 | Python executable | `check_python_executable` | `path_exists` | `sys.executable` is empty or points to a missing path. |
 | azure-functions-worker not pinned | `check_azure_functions_worker` | `package_forbidden` | `azure-functions-worker` is declared in `requirements.txt`. |

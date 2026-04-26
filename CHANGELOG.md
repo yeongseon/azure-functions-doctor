@@ -3,6 +3,7 @@
 ## Unreleased
 
 - fix programming-model detection to fail fast on Python v1, mixed-model, and unknown repositories instead of silently treating them as v2
+- add warning for decorated Blueprint aliases that are never registered with `app.register_functions(...)`
 
 - bump version to 0.16.3 (f3b801852d3833a2d86ef5e1177231a4d12e362f)
 
