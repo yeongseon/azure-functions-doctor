@@ -49,6 +49,12 @@ Verbose fix hints:
 azure-functions doctor --verbose
 ```
 
+Target runtime override:
+
+```bash
+azure-functions doctor --target-python 3.12
+```
+
 ## Full option reference
 
 | Option | Type | Default | Description |
@@ -60,6 +66,7 @@ azure-functions doctor --verbose
 | `--debug` | flag | `false` | Enable debug logging for troubleshooting. |
 | `--profile` | enum | `full` behavior | Rule profile: `minimal` or `full`. |
 | `--rules` | path | unset | Custom rules file path. |
+| `--target-python` | string | unset | Override the Azure Functions target Python runtime: `3.10`, `3.11`, `3.12`, `3.13`, `3.14` (Preview). On the Linux Consumption plan, the maximum supported version is `3.12`. |
 
 !!! note
     Supported output formats are currently `table`, `json`, `sarif`, and `junit`.
@@ -108,7 +115,7 @@ azure-functions doctor --format json --output doctor.json
 
 JSON includes:
 
-- `metadata` (`tool_version`, `generated_at`, `target_path`)
+- `metadata` (`tool_version`, `generated_at`, `target_path`, `programming_model`, `target_python`)
 - `results` (section + item diagnostics)
 
 Contract details: [JSON Output Contract](json_output_contract.md)
@@ -150,6 +157,30 @@ azure-functions doctor --path ./services/payments-function
 Use explicit paths in CI to avoid accidental root-level checks.
 
 ## Profile behavior
+
+## Target Python override
+
+`--target-python` separates the deployed Function App runtime from the Python
+interpreter running the doctor locally or in CI.
+
+Supported values:
+
+- `3.10`
+- `3.11`
+- `3.12`
+- `3.13`
+
+When set, the Python version rule compares the override value instead of the
+tool runtime and table output adds `Target Python: X.Y (override)` near the header.
+
+Example:
+
+```bash
+azure-functions doctor --path ./apps/orders-function --target-python 3.12
+```
+
+When omitted, doctor keeps checking the current interpreter and labels it as the
+tool runtime in the report detail.
 
 ### Default/full behavior
 

@@ -1,13 +1,14 @@
 import shutil
 import subprocess  # nosec B404
 import sys
+from typing import Optional
 
 from azure_functions_doctor.logging_config import get_logger
 
 logger = get_logger(__name__)
 
 
-def resolve_target_value(target: str) -> str:
+def resolve_target_value(target: str, override: Optional[str] = None) -> str:
     """
     Resolve the current value of a target used in version comparison or diagnostics.
 
@@ -21,7 +22,7 @@ def resolve_target_value(target: str) -> str:
         ValueError: If the target is not recognized.
     """
     if target == "python":
-        return sys.version.split()[0]
+        return override if override is not None else sys.version.split()[0]
     if target == "func_core_tools":
         func_path = shutil.which("func")
         if not func_path:

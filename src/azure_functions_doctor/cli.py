@@ -23,8 +23,15 @@ cli = typer.Typer()
 console = Console()
 logger = get_logger(__name__)
 
+SUPPORTED_TARGET_PYTHON_VERSIONS = ("3.10", "3.11", "3.12", "3.13", "3.14")
 
-def _validate_inputs(path: str, format_type: str, output: Optional[Path]) -> None:
+
+def _validate_inputs(
+    path: str,
+    format_type: str,
+    output: Optional[Path],
+    target_python: Optional[str] = None,
+) -> None:
     """Validate CLI inputs before processing."""
     try:
         path_obj = Path(path).resolve()
@@ -68,6 +75,12 @@ def _validate_inputs(path: str, format_type: str, output: Optional[Path]) -> Non
             raise typer.BadParameter(
                 f"No write permission for output directory: {output_path.parent}"
             )
+
+    if target_python is not None and target_python not in SUPPORTED_TARGET_PYTHON_VERSIONS:
+        supported = ", ".join(SUPPORTED_TARGET_PYTHON_VERSIONS)
+        raise typer.BadParameter(
+            f"Invalid target Python: {target_python}. Supported values: {supported}"
+        )
 
 
 def _write_output(content: str, output: Optional[Path], label: str) -> None:
@@ -113,6 +126,9 @@ def doctor(
             help="Write a JSON summary of counts (passed/warned/failed) to this path",
         ),
     ] = None,
+    target_python: Annotated[
+        Optional[str], typer.Option("--target-python", help="Override target Python runtime")
+    ] = None,
 ) -> None:
     """
     Run diagnostics on an Azure Functions application.
@@ -126,9 +142,10 @@ def doctor(
         profile: Optional rule profile ('minimal' or 'full').
         rules: Optional path to a custom rules file.
         summary_json: Path to write a JSON summary with passed/warned/failed counts.
+        target_python: Optional target Python runtime override.
     """
     # Validate inputs before proceeding
-    _validate_inputs(path, format, output)
+    _validate_inputs(path, format, output, target_python)
 
     if rules is not None and not rules.exists():
         raise typer.BadParameter(f"Rules path does not exist: {rules}")
@@ -141,8 +158,9 @@ def doctor(
         setup_logging(level=None, format_style="simple")
 
     start_time = time.time()
-    doctor = Doctor(path, profile=profile, rules_path=rules)
+    doctor = Doctor(path, profile=profile, rules_path=rules, target_python=target_python)
     resolved_path = Path(path).resolve()
+    report_properties = doctor.get_report_properties()
 
     # Log diagnostic start
     loaded_rules = doctor.load_rules()
@@ -202,10 +220,10 @@ def doctor(
             "tool_version": __version__,
             "generated_at": generated_at,
             "target_path": str(Path(path).resolve()),
+            **report_properties,
         }
         json_output = {
             "metadata": metadata,
-            "programming_model": doctor.programming_model,
             "results": results,
         }
         _write_output(json.dumps(json_output, indent=2), output, "JSON")
@@ -268,6 +286,7 @@ def doctor(
             "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
             "runs": [
                 {
+                    "properties": report_properties,
                     "tool": {
                         "driver": {
                             "name": "azure-functions-doctor",
@@ -276,7 +295,6 @@ def doctor(
                             "rules": driver_rules,
                         }
                     },
-                    "properties": {"programming_model": doctor.programming_model},
                     "results": sarif_results,
                 }
             ],
@@ -330,6 +348,8 @@ def doctor(
     # Table-format user-facing output (requested design)
     console.print("Azure Functions Doctor   ")
     console.print(f"Path: {resolved_path}")
+    if target_python is not None:
+        console.print(f"Target Python: {target_python} (override)")
 
     # Print each section with simple title and items
     for section in results:

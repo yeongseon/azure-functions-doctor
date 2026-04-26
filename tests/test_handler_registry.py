@@ -64,10 +64,11 @@ def test_handler_registry_compare_version() -> None:
     result = registry.handle(rule, Path("."))
 
     assert result["status"] == "pass"
-    # Detail format was simplified to: "Python <version> (<operator><expected>)"
+    # Detail now clarifies that the local interpreter is the tool runtime.
     detail = result["detail"]
     assert detail.startswith("Python ")
-    assert f"({rule['condition']['operator']}{rule['condition']['value']})" in detail
+    assert "tool runtime" in detail
+    assert f"{rule['condition']['operator']}{rule['condition']['value']}" in detail
 
 
 def test_handler_registry_env_var_exists() -> None:

@@ -9,6 +9,7 @@ from azure_functions_doctor.cli import cli as app
 
 runner = CliRunner()
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
+V2_FIXTURE_PATH = "examples/v2/http-trigger"
 
 
 def _assert_exit_code_matches_fail_count_text(output: str, exit_code: int) -> None:
@@ -47,7 +48,7 @@ def test_cli_json_output() -> None:
         raise AssertionError("Output is not valid JSON") from err
     assert isinstance(data, dict)
     assert "metadata" in data
-    assert "programming_model" in data
+    assert "programming_model" in data["metadata"]
     assert "results" in data
     results = data["results"]
     assert isinstance(results, list)
@@ -64,6 +65,8 @@ def test_cli_json_output() -> None:
         f"Expected exit {expected_exit} with {fail_count} fails, "
         f"got {result.exit_code}. JSON: {output_text[:500]}"
     )
+    assert "programming_model" in data["metadata"]
+    assert "target_python" in data["metadata"]
 
 
 def test_cli_verbose_output() -> None:
@@ -126,7 +129,7 @@ def test_cli_json_output_includes_programming_model_for_unknown_fixture() -> Non
     data = json.loads(result.output)
 
     assert result.exit_code == 1
-    assert data["programming_model"] == "unknown"
+    assert data["metadata"]["programming_model"] == "unknown"
     assert data["results"][0]["category"] == "programming_model"
 
 
@@ -160,3 +163,70 @@ def test_cli_non_v2_projects_fail_with_actionable_message() -> None:
         assert result.exit_code == 1
         assert "Programming Model" in result.output
         assert expected_message in result.output
+
+
+def test_cli_target_python_override_end_to_end() -> None:
+    """Test target_python option in table output on a v2 fixture."""
+    result = runner.invoke(
+        app,
+        [
+            "doctor",
+            "--path",
+            V2_FIXTURE_PATH,
+            "--target-python",
+            "3.12",
+        ],
+    )
+    _assert_exit_code_matches_fail_count_text(result.output, result.exit_code)
+    assert "Target Python: 3.12 (override)" in result.output
+    assert "Target Python: 3.12 (override) — Tool runtime:" in result.output
+
+
+def test_cli_target_python_invalid_value() -> None:
+    """Test unsupported target_python values fail with supported versions listed."""
+    result = runner.invoke(app, ["doctor", "--target-python", "3.99"])
+    assert result.exit_code != 0
+    assert "Invalid target Python: 3.99" in result.output
+    assert "3.99" in result.output
+    for version in ("3.10", "3.11", "3.12", "3.13", "3.14"):
+        assert version in result.output
+
+
+def test_cli_json_output_includes_target_python_override() -> None:
+    """Test JSON metadata includes target_python override."""
+    result = runner.invoke(
+        app,
+        [
+            "doctor",
+            "--path",
+            V2_FIXTURE_PATH,
+            "--format",
+            "json",
+            "--target-python",
+            "3.11",
+        ],
+    )
+    data = json.loads(result.output)
+    assert data["metadata"]["programming_model"] == "v2"
+    assert data["metadata"]["target_python"] == "3.11"
+
+
+def test_cli_sarif_output_includes_target_python_override() -> None:
+    """Test SARIF run properties include target_python override."""
+    result = runner.invoke(
+        app,
+        [
+            "doctor",
+            "--path",
+            V2_FIXTURE_PATH,
+            "--format",
+            "sarif",
+            "--target-python",
+            "3.11",
+        ],
+    )
+    data = json.loads(result.output)
+    assert data["runs"][0]["properties"] == {
+        "programming_model": "v2",
+        "target_python": "3.11",
+    }
