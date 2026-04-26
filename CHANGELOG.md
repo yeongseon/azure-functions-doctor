@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- fix programming-model detection to fail fast on Python v1, mixed-model, and unknown repositories instead of silently treating them as v2
+
 - bump version to 0.16.3 (f3b801852d3833a2d86ef5e1177231a4d12e362f)
 
 - bump ruff from 0.15.9 to 0.15.10 (#135) (c882a09fab308a3dd156d88bbaa40de7fb7f1bf2)
@@ -861,4 +865,3 @@ Add SARIF and JUnit output (fe04a752bdfeeadaf08c22bf3dfa36ad6334fc17)
 - initial project setup with CLI, Makefile, docs, and packaging (a39efbd9a2d2b953905b6ce3925badab2b44c117)
 
 - Initial commit (457425ebde591e34042116d1e5f92ac7006a03cd)
-

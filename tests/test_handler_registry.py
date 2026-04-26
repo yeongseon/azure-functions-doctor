@@ -215,9 +215,9 @@ def test_handler_registry_optional_rules() -> None:
     # Optional marking now happens during aggregation, so handlers still return fail here.
     assert result["status"] == "fail"
     assert "optional" in result["detail"]
+
+
 """Extended tests for the handler registry pattern - covering missing code branches."""
-
-
 
 
 def test_handler_missing_type_none() -> None:
@@ -449,11 +449,14 @@ def test_package_declared_missing_package() -> None:
     registry = HandlerRegistry()
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
-        rule = cast(Rule, {
-            "id": "test_pkg_declared_missing",
-            "type": "package_declared",  # Invalid type, cast to bypass mypy
-            "condition": {},  # No package
-        })
+        rule = cast(
+            Rule,
+            {
+                "id": "test_pkg_declared_missing",
+                "type": "package_declared",  # Invalid type, cast to bypass mypy
+                "condition": {},  # No package
+            },
+        )
         result = registry.handle(rule, tmp_path)
         assert result["status"] == "fail"
         assert "Missing 'package'" in result["detail"]
@@ -464,14 +467,17 @@ def test_package_declared_req_file_not_found() -> None:
     registry = HandlerRegistry()
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
-        rule = cast(Rule, {
-            "id": "test_pkg_declared_no_req",
-            "type": "package_declared",  # Invalid type, cast to bypass mypy
-            "condition": {
-                "package": "requests",
-                "file": "requirements.txt",
+        rule = cast(
+            Rule,
+            {
+                "id": "test_pkg_declared_no_req",
+                "type": "package_declared",  # Invalid type, cast to bypass mypy
+                "condition": {
+                    "package": "requests",
+                    "file": "requirements.txt",
+                },
             },
-        })
+        )
         result = registry.handle(rule, tmp_path)
         assert result["status"] == "fail"
         assert "not found" in result["detail"]
@@ -516,7 +522,7 @@ def test_conditional_exists_durable_detection_exception() -> None:
         # Create a durable keyword to pass first check
         py_file = tmp_path / "test.py"
         py_file.write_text("import durable_functions")
-        
+
         rule: Rule = {
             "id": "test_cond_exists_exc",
             "type": "conditional_exists",
@@ -819,9 +825,7 @@ def test_host_json_extension_bundle_wrong_id() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
         host_file = tmp_path / "host.json"
-        host_file.write_text(
-            '{"extensionBundle": {"id": "WrongId", "version": "[4.0.0, 5.0.0)"}}'
-        )
+        host_file.write_text('{"extensionBundle": {"id": "WrongId", "version": "[4.0.0, 5.0.0)"}}')
 
         rule: Rule = {
             "id": "test_bundle_wrong_id",
@@ -1047,14 +1051,17 @@ def test_package_declared_success() -> None:
         req_file = tmp_path / "requirements.txt"
         req_file.write_text("requests==2.28.0\ndjango==4.1.0")
 
-        rule = cast(Rule, {
-            "id": "test_pkg_declared_found",
-            "type": "package_declared",  # Invalid type, cast to bypass mypy
-            "condition": {
-                "package": "requests",
-                "file": "requirements.txt",
+        rule = cast(
+            Rule,
+            {
+                "id": "test_pkg_declared_found",
+                "type": "package_declared",  # Invalid type, cast to bypass mypy
+                "condition": {
+                    "package": "requests",
+                    "file": "requirements.txt",
+                },
             },
-        })
+        )
         result = registry.handle(rule, tmp_path)
         assert result["status"] == "pass"
         assert "declared" in result["detail"]
@@ -1068,14 +1075,17 @@ def test_package_declared_not_found() -> None:
         req_file = tmp_path / "requirements.txt"
         req_file.write_text("django==4.1.0")
 
-        rule = cast(Rule, {
-            "id": "test_pkg_declared_not_found",
-            "type": "package_declared",  # Invalid type, cast to bypass mypy
-            "condition": {
-                "package": "requests",
-                "file": "requirements.txt",
+        rule = cast(
+            Rule,
+            {
+                "id": "test_pkg_declared_not_found",
+                "type": "package_declared",  # Invalid type, cast to bypass mypy
+                "condition": {
+                    "package": "requests",
+                    "file": "requirements.txt",
+                },
             },
-        })
+        )
         result = registry.handle(rule, tmp_path)
         assert result["status"] == "fail"
         assert "not declared" in result["detail"]
@@ -1244,6 +1254,7 @@ def test_executable_exists_non_python_no_fallback(monkeypatch: MonkeyPatch) -> N
     assert result["status"] == "fail"
     assert "not found" in result["detail"]
 
+
 def test_executable_exists_python3_tries_python(monkeypatch: MonkeyPatch) -> None:
     """Test python3 target falls back to python when python3 is not on PATH."""
     registry = HandlerRegistry()
@@ -1285,8 +1296,9 @@ def test_executable_exists_python_tries_py_on_windows(monkeypatch: MonkeyPatch) 
     # Force reimport/re-evaluation by reloading the module or accessing the dict directly
     # Note: Since _PYTHON_CANDIDATES is evaluated at module load time, we need to patch it directly
     from azure_functions_doctor.handlers import _PYTHON_CANDIDATES
+
     monkeypatch.setitem(_PYTHON_CANDIDATES, "python", ["python", "python3", "py"])
-    
+
     result = registry.handle(rule, Path("."))
     assert result["status"] == "pass"
     assert "python detected" in result["detail"]
@@ -1310,11 +1322,13 @@ def test_executable_exists_python3_tries_py_on_windows(monkeypatch: MonkeyPatch)
     monkeypatch.setattr("sys.platform", "win32")
     monkeypatch.setattr("shutil.which", fake_which)
     from azure_functions_doctor.handlers import _PYTHON_CANDIDATES
+
     monkeypatch.setitem(_PYTHON_CANDIDATES, "python3", ["python3", "python", "py"])
 
     result = registry.handle(rule, Path("."))
     assert result["status"] == "pass"
     assert "python3 detected" in result["detail"]
+
 
 def test_executable_exists_unknown_target_no_fallback(monkeypatch: MonkeyPatch) -> None:
     """Test unknown target (e.g., node) only tries itself, no fallback."""
@@ -1543,9 +1557,7 @@ def test_host_json_property_found() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
         host_file = tmp_path / "host.json"
-        host_file.write_text(
-            '{"version": "2.0", "extensions": {"http": {"enabled": true}}}'
-        )
+        host_file.write_text('{"version": "2.0", "extensions": {"http": {"enabled": true}}}')
 
         rule: Rule = {
             "id": "test_host_prop_found",
@@ -1823,14 +1835,17 @@ def test_package_declared_with_comments() -> None:
         req_file = tmp_path / "requirements.txt"
         req_file.write_text("# requests==1.0.0\ndjango==4.1.0\n# another comment")
 
-        rule = cast(Rule, {
-            "id": "test_pkg_declared_with_comments",
-            "type": "package_declared",  # Invalid type, cast to bypass mypy
-            "condition": {
-                "package": "requests",
-                "file": "requirements.txt",
+        rule = cast(
+            Rule,
+            {
+                "id": "test_pkg_declared_with_comments",
+                "type": "package_declared",  # Invalid type, cast to bypass mypy
+                "condition": {
+                    "package": "requests",
+                    "file": "requirements.txt",
+                },
             },
-        })
+        )
         result = registry.handle(rule, tmp_path)
         # Comments should be skipped, so requests not found
         assert result["status"] == "fail"
@@ -1844,14 +1859,17 @@ def test_package_declared_case_insensitive() -> None:
         req_file = tmp_path / "requirements.txt"
         req_file.write_text("Requests==2.28.0")
 
-        rule = cast(Rule, {
-            "id": "test_pkg_declared_case",
-            "type": "package_declared",  # Invalid type, cast to bypass mypy
-            "condition": {
-                "package": "requests",
-                "file": "requirements.txt",
+        rule = cast(
+            Rule,
+            {
+                "id": "test_pkg_declared_case",
+                "type": "package_declared",  # Invalid type, cast to bypass mypy
+                "condition": {
+                    "package": "requests",
+                    "file": "requirements.txt",
+                },
             },
-        })
+        )
         result = registry.handle(rule, tmp_path)
         # Should match despite case difference
         assert result["status"] == "pass"
@@ -1875,30 +1893,30 @@ def test_host_json_extension_bundle_missing_id() -> None:
         assert "not the recommended" in result["detail"]
 
 
-
 # Tests for uncovered exception branches and edge cases
+
 
 def test_read_python_file_permission_error() -> None:
     """Test _read_project_python_file with PermissionError in source_code_contains handler."""
     from unittest.mock import patch
-    
+
     registry = HandlerRegistry()
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
         py_file = tmp_path / "test.py"
         py_file.write_text("import requests")
-        
+
         # Mock Path.read_text to raise PermissionError on first call
         original_read_text = Path.read_text
         call_count = [0]
-        
+
         def mock_read_text(self: Path, *args: Any, **kwargs: Any) -> str:
             call_count[0] += 1
             if call_count[0] == 1 and "test.py" in str(self):
                 raise PermissionError("Access denied")
             return original_read_text(self, *args, **kwargs)
-        
-        with patch.object(Path, 'read_text', mock_read_text):
+
+        with patch.object(Path, "read_text", mock_read_text):
             rule: Rule = {
                 "id": "test_permission_error",
                 "type": "source_code_contains",
@@ -1915,27 +1933,27 @@ def test_read_python_file_permission_error() -> None:
 def test_read_python_file_unicode_decode_then_oserror() -> None:
     """Test _read_project_python_file with UnicodeDecodeError falling back to OSError."""
     from unittest.mock import patch
-    
+
     registry = HandlerRegistry()
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
         py_file = tmp_path / "test.py"
         py_file.write_text("import requests")
-        
+
         # Mock to raise UnicodeDecodeError, then OSError on retry
         original_read_text = Path.read_text
         call_count = [0]
-        
+
         def mock_read_text(self: Path, *args: Any, **kwargs: Any) -> str:
             call_count[0] += 1
             if "test.py" in str(self):
                 if call_count[0] == 1:
-                    raise UnicodeDecodeError('utf-8', b'', 0, 1, 'invalid start byte')
+                    raise UnicodeDecodeError("utf-8", b"", 0, 1, "invalid start byte")
                 elif call_count[0] == 2:
                     raise OSError("I/O error")
             return original_read_text(self, *args, **kwargs)
-        
-        with patch.object(Path, 'read_text', mock_read_text):
+
+        with patch.object(Path, "read_text", mock_read_text):
             rule: Rule = {
                 "id": "test_unicode_then_oserror",
                 "type": "source_code_contains",
@@ -1951,22 +1969,22 @@ def test_read_python_file_unicode_decode_then_oserror() -> None:
 def test_read_python_file_memory_error() -> None:
     """Test _read_project_python_file with MemoryError branch."""
     from unittest.mock import patch
-    
+
     registry = HandlerRegistry()
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
         py_file = tmp_path / "test.py"
         py_file.write_text("import requests")
-        
+
         # Mock to raise MemoryError
         original_read_text = Path.read_text
-        
+
         def mock_read_text(self: Path, *args: Any, **kwargs: Any) -> str:
             if "test.py" in str(self):
                 raise MemoryError("Out of memory")
             return original_read_text(self, *args, **kwargs)
-        
-        with patch.object(Path, 'read_text', mock_read_text):
+
+        with patch.object(Path, "read_text", mock_read_text):
             rule: Rule = {
                 "id": "test_memory_error",
                 "type": "source_code_contains",
@@ -1987,10 +2005,10 @@ def test_conditional_exists_missing_jsonpath_durable() -> None:
         # Create a Python file with durable keyword to trigger durable detection
         py_file = tmp_path / "durable_test.py"
         py_file.write_text("from durable_functions import orchestrator")
-        
+
         host_file = tmp_path / "host.json"
         host_file.write_text('{"extensions": {"durableTask": {}}}')
-        
+
         rule: Rule = {
             "id": "test_conditional_no_jsonpath",
             "type": "conditional_exists",
@@ -2009,7 +2027,7 @@ def test_any_of_exists_no_targets_provided() -> None:
     registry = HandlerRegistry()
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
-        
+
         rule: Rule = {
             "id": "test_any_of_empty",
             "type": "any_of_exists",
@@ -2026,7 +2044,7 @@ def test_file_glob_no_patterns() -> None:
     registry = HandlerRegistry()
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
-        
+
         rule: Rule = {
             "id": "test_glob_no_patterns",
             "type": "file_glob_check",
@@ -2045,7 +2063,7 @@ def test_host_json_version_invalid_json() -> None:
         tmp_path = Path(tmpdir)
         host_file = tmp_path / "host.json"
         host_file.write_text("not valid json{")
-        
+
         rule: Rule = {
             "id": "test_host_json_invalid",
             "type": "host_json_version",
@@ -2062,14 +2080,17 @@ def test_host_json_property_invalid_jsonpath_type() -> None:
         tmp_path = Path(tmpdir)
         host_file = tmp_path / "host.json"
         host_file.write_text('{"key": "value"}')
-        
-        rule = cast(Rule, {
-            "id": "test_host_prop_bad_jsonpath",
-            "type": "host_json_property",
-            "condition": {
-                "jsonpath": 123,  # Pass int to test type validation
+
+        rule = cast(
+            Rule,
+            {
+                "id": "test_host_prop_bad_jsonpath",
+                "type": "host_json_property",
+                "condition": {
+                    "jsonpath": 123,  # Pass int to test type validation
+                },
             },
-        })
+        )
         result = registry.handle(rule, tmp_path)
         assert result["status"] == "fail"
         assert "invalid" in result["detail"].lower()
@@ -2086,7 +2107,7 @@ def test_extension_bundle_id_mismatch() -> None:
             ' "version": "[4.0.0, 5.0.0)"}}'
         )
         host_file.write_text(bundle_custom)
-        
+
         rule: Rule = {
             "id": "test_bundle_wrong_id",
             "type": "host_json_extension_bundle_version",
@@ -2108,7 +2129,7 @@ def test_extension_bundle_version_old() -> None:
             ' "version": "[3.15.0, 4.0.0)"}}'
         )
         host_file.write_text(bundle_315)
-        
+
         rule: Rule = {
             "id": "test_bundle_old_version",
             "type": "host_json_extension_bundle_version",
@@ -2119,17 +2140,17 @@ def test_extension_bundle_version_old() -> None:
         assert "below" in result["detail"].lower() or "upgrade" in result["detail"].lower()
 
 
-
 # Tests for additional uncovered branches
+
 
 def test_path_exists_empty_sys_executable() -> None:
     """Test _handle_path_exists with sys.executable being empty."""
     import sys as sys_module
-    
+
     registry = HandlerRegistry()
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
-        
+
         # Temporarily mock sys.executable to be empty
         original_executable = sys_module.executable
         try:
@@ -2153,11 +2174,11 @@ def test_conditional_exists_durable_with_all_keywords() -> None:
     registry = HandlerRegistry()
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
-        
+
         # Create Python files with different durable keywords
         (tmp_path / "orchest.py").write_text("def orchestrator():")
         (tmp_path / "host.json").write_text('{"extensions": {"durableTask": {}}}')
-        
+
         rule: Rule = {
             "id": "test_durable_orchestrator",
             "type": "conditional_exists",
@@ -2176,10 +2197,10 @@ def test_conditional_exists_durable_context() -> None:
     registry = HandlerRegistry()
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
-        
+
         (tmp_path / "ctx.py").write_text("context: DurableOrchestrationContext")
         (tmp_path / "host.json").write_text('{"version": "2.0"}')
-        
+
         rule: Rule = {
             "id": "test_durable_context",
             "type": "conditional_exists",
@@ -2200,7 +2221,7 @@ def test_host_json_property_jsonpath_with_dollars() -> None:
         tmp_path = Path(tmpdir)
         host_file = tmp_path / "host.json"
         host_file.write_text('{"version": "2.0", "functionTimeout": "00:10:00"}')
-        
+
         rule: Rule = {
             "id": "test_jsonpath_dollar",
             "type": "host_json_property",
@@ -2219,7 +2240,7 @@ def test_host_json_property_nested_jsonpath() -> None:
         tmp_path = Path(tmpdir)
         host_file = tmp_path / "host.json"
         host_file.write_text('{"extensions": {"durableTask": {"tracing": {"enabled": true}}}}')
-        
+
         rule: Rule = {
             "id": "test_nested_jsonpath",
             "type": "host_json_property",
@@ -2238,7 +2259,7 @@ def test_host_json_property_nested_jsonpath_not_found() -> None:
         tmp_path = Path(tmpdir)
         host_file = tmp_path / "host.json"
         host_file.write_text('{"extensions": {"durableTask": {}}}')
-        
+
         rule: Rule = {
             "id": "test_nested_not_found",
             "type": "host_json_property",
@@ -2257,7 +2278,7 @@ def test_callable_detection_finds_fastapi() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
         (tmp_path / "main.py").write_text("from fastapi import FastAPI\napp = FastAPI()")
-        
+
         rule: Rule = {
             "id": "test_callable_fastapi",
             "type": "callable_detection",
@@ -2273,7 +2294,7 @@ def test_local_settings_json_exists() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
         (tmp_path / "local.settings.json").write_text('{"Values": {}}')
-        
+
         rule: Rule = {
             "id": "test_local_settings_exists",
             "type": "local_settings_security",
@@ -2289,7 +2310,7 @@ def test_executable_detection() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
         (tmp_path / "main.py").write_text("def my_func(): return 42")
-        
+
         rule: Rule = {
             "id": "test_no_callable",
             "type": "callable_detection",
@@ -2299,37 +2320,40 @@ def test_executable_detection() -> None:
         assert result["status"] == "fail"  # No callable found is bad
 
 
-
 # Tests for exception branches in package handlers
+
 
 def test_package_declared_read_exception() -> None:
     """Test _handle_package_declared with file read exception (line 372-373)."""
     from unittest.mock import patch
-    
+
     registry = HandlerRegistry()
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
         # Create the requirements file so it exists
         req_file = tmp_path / "requirements.txt"
         req_file.write_text("requests==2.28.0")
-        
+
         # Mock read_text to raise an exception after the file exists check
         original_read_text = Path.read_text
-        
+
         def mock_read_text(self: Path, *args: Any, **kwargs: Any) -> str:
             if "requirements.txt" in str(self):
                 raise PermissionError("Cannot read file")
             return original_read_text(self, *args, **kwargs)
-        
-        with patch.object(Path, 'read_text', mock_read_text):
-            rule = cast(Rule, {
-                "id": "test_pkg_declared_read_error",
-                "type": "package_declared",  # Invalid type, cast to bypass mypy
-                "condition": {
-                    "package": "requests",
-                    "file": "requirements.txt",
+
+        with patch.object(Path, "read_text", mock_read_text):
+            rule = cast(
+                Rule,
+                {
+                    "id": "test_pkg_declared_read_error",
+                    "type": "package_declared",  # Invalid type, cast to bypass mypy
+                    "condition": {
+                        "package": "requests",
+                        "file": "requirements.txt",
+                    },
                 },
-            })
+            )
             result = registry.handle(rule, tmp_path)
             assert result["status"] == "fail"
             # Should trigger _handle_specific_exceptions
@@ -2343,7 +2367,7 @@ def test_package_forbidden_missing_package() -> None:
         tmp_path = Path(tmpdir)
         req_file = tmp_path / "requirements.txt"
         req_file.write_text("requests==2.28.0")
-        
+
         rule: Rule = {
             "id": "test_pkg_forbidden_missing",
             "type": "package_forbidden",
@@ -2360,7 +2384,7 @@ def test_package_forbidden_file_not_found() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
         # Don't create requirements.txt
-        
+
         rule: Rule = {
             "id": "test_pkg_forbidden_no_req",
             "type": "package_forbidden",

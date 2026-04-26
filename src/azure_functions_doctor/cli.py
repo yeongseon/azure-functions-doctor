@@ -203,21 +203,27 @@ def doctor(
             "generated_at": generated_at,
             "target_path": str(Path(path).resolve()),
         }
-        json_output = {"metadata": metadata, "results": results}
+        json_output = {
+            "metadata": metadata,
+            "programming_model": doctor.programming_model,
+            "results": results,
+        }
         _write_output(json.dumps(json_output, indent=2), output, "JSON")
         raise typer.Exit(1 if fail_count > 0 else 0)
 
     if format == "sarif":
         # Build label → rule mapping for enriched ruleId and metadata
-        label_to_rule = {r["label"]: r for r in loaded_rules}
+        label_to_rule = {r.get("label", "unknown_rule"): r for r in loaded_rules}
 
         # Build driver.rules from the full loaded ruleset
         driver_rules = []
         for rule in loaded_rules:
             driver_rule: dict[str, object] = {
-                "id": rule["id"],
-                "name": rule["label"],
-                "shortDescription": {"text": rule.get("description", rule["label"])},
+                "id": rule.get("id", "unknown_rule"),
+                "name": rule.get("label", "unknown_rule"),
+                "shortDescription": {
+                    "text": rule.get("description", rule.get("label", "unknown_rule"))
+                },
                 "properties": {
                     "category": rule.get("category", ""),
                     "required": rule.get("required", False),
@@ -236,7 +242,7 @@ def doctor(
                     continue
                 label = item.get("label", "")
                 matched_rule = label_to_rule.get(label)
-                rule_id = matched_rule["id"] if matched_rule else label
+                rule_id = matched_rule.get("id", label) if matched_rule else label
                 level = "error" if status == "fail" else "warning"
                 sarif_result: dict[str, object] = {
                     "ruleId": rule_id,
@@ -254,7 +260,7 @@ def doctor(
                     ],
                 }
                 if item.get("hint"):
-                    sarif_result["properties"] = {"hint": item["hint"]}
+                    sarif_result["properties"] = {"hint": item.get("hint", "")}
                 sarif_results.append(sarif_result)
 
         sarif_output = {
@@ -270,6 +276,7 @@ def doctor(
                             "rules": driver_rules,
                         }
                     },
+                    "properties": {"programming_model": doctor.programming_model},
                     "results": sarif_results,
                 }
             ],

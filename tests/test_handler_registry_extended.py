@@ -238,11 +238,14 @@ def test_package_declared_missing_package() -> None:
     registry = HandlerRegistry()
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
-        rule = cast(Rule, {
-            "id": "test_pkg_declared_missing",
-            "type": "package_declared",  # Invalid type, cast to bypass mypy
-            "condition": {},  # No package
-        })
+        rule = cast(
+            Rule,
+            {
+                "id": "test_pkg_declared_missing",
+                "type": "package_declared",  # Invalid type, cast to bypass mypy
+                "condition": {},  # No package
+            },
+        )
         result = registry.handle(rule, tmp_path)
         assert result["status"] == "fail"
         assert "Missing 'package'" in result["detail"]
@@ -253,14 +256,17 @@ def test_package_declared_req_file_not_found() -> None:
     registry = HandlerRegistry()
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
-        rule = cast(Rule, {
-            "id": "test_pkg_declared_no_req",
-            "type": "package_declared",  # Invalid type, cast to bypass mypy
-            "condition": {
-                "package": "requests",
-                "file": "requirements.txt",
+        rule = cast(
+            Rule,
+            {
+                "id": "test_pkg_declared_no_req",
+                "type": "package_declared",  # Invalid type, cast to bypass mypy
+                "condition": {
+                    "package": "requests",
+                    "file": "requirements.txt",
+                },
             },
-        })
+        )
         result = registry.handle(rule, tmp_path)
         assert result["status"] == "fail"
         assert "not found" in result["detail"]
@@ -606,9 +612,7 @@ def test_host_json_extension_bundle_wrong_id() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
         host_file = tmp_path / "host.json"
-        host_file.write_text(
-            '{"extensionBundle": {"id": "WrongId", "version": "[4.0.0, 5.0.0)"}}'
-        )
+        host_file.write_text('{"extensionBundle": {"id": "WrongId", "version": "[4.0.0, 5.0.0)"}}')
 
         rule: Rule = {
             "id": "test_bundle_wrong_id",

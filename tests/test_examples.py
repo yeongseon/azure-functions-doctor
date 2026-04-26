@@ -3,6 +3,7 @@
 Each passing example must satisfy all *required* rule checks.
 Each broken example must fail on exactly the one rule it intentionally violates.
 """
+
 from pathlib import Path
 
 import pytest
@@ -114,9 +115,9 @@ class TestBrokenExamples:
             f"got {item_map.get('azure-functions package')!r}"
         )
 
-    def test_broken_no_v2_decorators_warns_programming_model_check(self) -> None:
+    def test_broken_no_v2_decorators_fails_programming_model_detection(self) -> None:
         _, item_map = _run_example("broken-no-v2-decorators")
-        assert item_map.get("Programming model v2") == "warn", (
-            "broken-no-v2-decorators: expected 'Programming model v2' == 'warn', "
-            f"got {item_map.get('Programming model v2')!r}"
+        assert item_map.get("Python v2 programming model was not detected") == "fail", (
+            "broken-no-v2-decorators: expected undetected v2 programming model failure, "
+            f"got {item_map!r}"
         )

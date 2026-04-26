@@ -28,7 +28,7 @@ Intentionally misconfigured projects that demonstrate specific rule failures.
 | Missing host.json | `examples/v2/broken-missing-host-json` | `check_host_json` |
 | Missing requirements.txt | `examples/v2/broken-missing-requirements` | `check_requirements_txt` |
 | Missing azure-functions | `examples/v2/broken-missing-azure-functions` | `check_azure_functions_library` |
-| No v2 decorators | `examples/v2/broken-no-v2-decorators` | `check_programming_model_v2` |
+| No v2 decorators | `examples/v2/broken-no-v2-decorators` | `programming_model` fail-fast detection |
 
 ## Run Diagnostics
 

@@ -11,9 +11,8 @@ from azure_functions_doctor.doctor import Doctor
 def test_doctor_checks_pass() -> None:
     """Tests that the Doctor class runs checks and returns results."""
     with tempfile.TemporaryDirectory() as tmp:
-        # Ensure v2 rules are available in package assets.
-
-        # Create required files
+        with open(os.path.join(tmp, "function_app.py"), "w") as f:
+            f.write("import azure.functions as func\napp = func.FunctionApp()\n")
         with open(os.path.join(tmp, "host.json"), "w") as f:
             json.dump({"version": "2.0"}, f)
         with open(os.path.join(tmp, "requirements.txt"), "w") as f:
@@ -37,23 +36,21 @@ def test_doctor_checks_pass() -> None:
 
 
 def test_missing_files() -> None:
-    """Tests that the Doctor class detects missing files."""
+    """Tests that empty projects fail fast as unknown programming models."""
     with tempfile.TemporaryDirectory() as tmp:
-        # Doctor should load v2 rules from package assets.
         doctor = Doctor(tmp)
         results = doctor.run_all_checks()
 
     item_map = {item["label"]: item["status"] for section in results for item in section["items"]}
 
-    assert item_map.get("host.json") == "fail"
-    assert item_map.get("requirements.txt") == "fail"
-    # local.settings.json is optional; warn when missing
-    assert item_map.get("local.settings.json") == "warn"
+    assert item_map == {"Python v2 programming model was not detected": "fail"}
 
 
 def test_custom_rules_path() -> None:
     """Tests that a custom rules file path is honored."""
     with tempfile.TemporaryDirectory() as tmp:
+        with open(os.path.join(tmp, "function_app.py"), "w") as f:
+            f.write("import azure.functions as func\napp = func.FunctionApp()\n")
         rules = [
             {
                 "id": "check_custom_env",
@@ -90,6 +87,8 @@ def test_custom_rules_path_invalid_raises() -> None:
 def test_profile_minimal_filters_optional_rules() -> None:
     """Tests that the minimal profile excludes optional rules."""
     with tempfile.TemporaryDirectory() as tmp:
+        with open(os.path.join(tmp, "function_app.py"), "w") as f:
+            f.write("import azure.functions as func\napp = func.FunctionApp()\n")
         with open(os.path.join(tmp, "host.json"), "w") as f:
             json.dump({"version": "2.0"}, f)
         with open(os.path.join(tmp, "requirements.txt"), "w") as f:
