@@ -38,6 +38,7 @@ Only required failures produce non-zero process exit code.
 - `file_exists`
 - `package_installed`
 - `package_declared`
+- `native_dependency_risk`
 - `source_code_contains`
 - `conditional_exists`
 - `callable_detection`
@@ -144,6 +145,25 @@ Example failing detail:
 
 ```text
 Package 'azure-functions' not declared in requirements.txt
+```
+
+## 7) `check_native_dependency_risk`
+
+- **What it checks:** `requirements.txt` for packages with common native-extension deployment risk.
+- **Why it matters:** These packages are valid, but Azure Functions Python deployments often fail when Linux wheels or system libraries do not match the build environment.
+- **How to fix:** Build against the Azure Functions Linux runtime. Prefer remote build with `func azure functionapp publish --build remote`.
+- **Current package list:** `pyodbc`, `cryptography`, `lxml`, `pillow`, `numpy`, `pandas`, `scipy`, `opencv-python`, `psycopg2`, `grpcio`, `ujson`, `orjson`.
+- **Severity:** Warning only (`required: false`). It never produces a hard failure.
+
+Example warning detail:
+
+```text
+Native dependencies detected: pyodbc, pillow
+These packages depend on platform-specific native libraries.
+Ensure your build environment matches the Azure Functions Linux runtime.
+Recommended: use remote build (`func azure functionapp publish --build remote`).
+- pyodbc: requires unixODBC and a matching wheel
+- pillow: ensure libjpeg/zlib-compatible wheels for Linux deployment
 ```
 
 ## 8) `check_host_json`
