@@ -129,6 +129,21 @@
     "check_order": 5
   },
   {
+    "id": "check_native_dependency_risk",
+    "category": "dependencies",
+    "section": "python_env",
+    "label": "Native dependency risk",
+    "description": "Warns when requirements.txt includes packages with native extensions that often require platform-matching Linux builds.",
+    "type": "native_dependency_risk",
+    "required": false,
+    "condition": {
+      "file": "requirements.txt"
+    },
+    "hint": "If you deploy native-extension packages, build against the Azure Functions Linux runtime. Prefer remote build with `func azure functionapp publish --build remote`.",
+    "hint_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-reference-python#remote-build",
+    "check_order": 6
+  },
+  {
     "id": "check_azure_functions_worker",
     "category": "dependencies",
     "section": "python_env",
@@ -142,7 +157,7 @@
     },
     "hint": "Remove azure-functions-worker from requirements.txt. The Azure Functions platform manages the worker runtime automatically.",
     "hint_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-reference-python#managing-dependencies",
-    "check_order": 6
+    "check_order": 7
   },
   {
     "id": "check_host_json",

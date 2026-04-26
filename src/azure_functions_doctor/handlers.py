@@ -31,6 +31,21 @@ _PYTHON_CANDIDATES: dict[str, list[str]] = {
     "python3": ["python3", "python"] + (["py"] if sys.platform == "win32" else []),
 }
 
+NATIVE_DEPENDENCY_PACKAGES: dict[str, str] = {
+    "pyodbc": "requires unixODBC and a matching wheel",
+    "cryptography": "verify OpenSSL-compatible wheels for the target runtime",
+    "lxml": "ensure libxml2/libxslt-compatible wheels for Linux deployment",
+    "pillow": "ensure libjpeg/zlib-compatible wheels for Linux deployment",
+    "numpy": "ensure compiled wheels match the Azure Functions Linux runtime",
+    "pandas": "ensure compiled wheels match the Azure Functions Linux runtime",
+    "scipy": "ensure compiled wheels match the Azure Functions Linux runtime",
+    "opencv-python": "ensure system-level native libraries match the target runtime",
+    "psycopg2": "consider psycopg2-binary on Azure Functions Consumption plans",
+    "grpcio": "ensure compiled wheels match the Azure Functions Linux runtime",
+    "ujson": "ensure compiled wheels match the Azure Functions Linux runtime",
+    "orjson": "ensure compiled wheels match the Azure Functions Linux runtime",
+}
+
 
 def _discover_functionapp_aliases(source: str) -> set[str]:
     """Extract variable names assigned a ``FunctionApp()`` or ``Blueprint()`` call.
@@ -265,6 +280,48 @@ def _parse_requirements_names(content: str) -> set[str]:
     return names
 
 
+def _detect_native_dependency_risks(content: str) -> list[tuple[str, str]]:
+    """Return matching native-dependency packages in requirements order."""
+    matches: list[tuple[str, str]] = []
+    seen: set[str] = set()
+    for raw_line in content.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith(("-r ", "-c ", "--requirement", "--constraint")):
+            continue
+        if line.startswith(("-e ", "--editable")):
+            egg_match = re.search(r"#egg=([^&\s]+)", line)
+            if egg_match:
+                normalized_egg = canonicalize_name(egg_match.group(1))
+                if normalized_egg in NATIVE_DEPENDENCY_PACKAGES and normalized_egg not in seen:
+                    matches.append((normalized_egg, NATIVE_DEPENDENCY_PACKAGES[normalized_egg]))
+                    seen.add(normalized_egg)
+            continue
+        if line.startswith("-"):
+            continue
+        line = line.split("#")[0].strip()
+        if not line:
+            continue
+
+        normalized_name: str | None = None
+        try:
+            req = Requirement(line)
+            normalized_name = canonicalize_name(req.name)
+        except InvalidRequirement:
+            fallback_name = re.split(r"[=<>!~;\[\]@]", line, maxsplit=1)[0].strip()
+            if fallback_name:
+                normalized_name = canonicalize_name(fallback_name)
+
+        if normalized_name is None or normalized_name in seen:
+            continue
+        if normalized_name in NATIVE_DEPENDENCY_PACKAGES:
+            matches.append((normalized_name, NATIVE_DEPENDENCY_PACKAGES[normalized_name]))
+            seen.add(normalized_name)
+
+    return matches
+
+
 def _create_result(status: str, detail: str, internal_error: bool = False) -> dict[str, str]:
     """Create a standardized result dictionary (status limited to 'pass'/'fail')."""
     res: dict[str, str] = {"status": status, "detail": detail}
@@ -339,6 +396,7 @@ class Rule(TypedDict, total=False):
         "package_forbidden",
         "package_declared",
         "blueprint_registration",
+        "native_dependency_risk",
     ]
     label: str
     category: str
@@ -381,6 +439,7 @@ class HandlerRegistry:
             "host_json_extension_bundle_version": self._handle_host_json_extension_bundle_version,
             "package_forbidden": self._handle_package_forbidden,
             "blueprint_registration": self._handle_blueprint_registration,
+            "native_dependency_risk": self._handle_native_dependency_risk,
         }
 
     def handle(
@@ -621,6 +680,37 @@ class HandlerRegistry:
                 "(managed by the platform)",
             )
         return _create_result("pass", f"Package '{package_name}' not declared in {req_file}")
+
+    def _handle_native_dependency_risk(
+        self, rule: Rule, path: Path, context: Optional[RuleContext] = None
+    ) -> dict[str, str]:
+        """Warn when requirements.txt includes packages with native extension risk."""
+        condition = rule.get("condition", {}) or {}
+        req_file_obj = condition.get("file", "requirements.txt")
+        req_file = str(req_file_obj)
+        req_path = path / Path(req_file)
+        if not req_path.exists():
+            return _create_result("pass", f"{req_file} not found; check skipped")
+        try:
+            content = req_path.read_text(encoding="utf-8")
+        except Exception as exc:
+            return _handle_specific_exceptions(f"reading {req_file}", exc)
+
+        matches = _detect_native_dependency_risks(content)
+        if not matches:
+            return _create_result("pass", "No native dependency risk packages declared")
+
+        matched_packages = ", ".join(package for package, _hint in matches)
+        detail_lines = [
+            f"Native dependencies detected: {matched_packages}",
+            "These packages depend on platform-specific native libraries.",
+            "Ensure your build environment matches the Azure Functions Linux runtime.",
+            "Recommended: use remote build (`func azure functionapp publish --build remote`).",
+        ]
+        for package, hint in matches:
+            if hint:
+                detail_lines.append(f"- {package}: {hint}")
+        return _create_result("fail", "\n".join(detail_lines))
 
     def _handle_conditional_exists(
         self, rule: Rule, path: Path, context: Optional[RuleContext] = None
