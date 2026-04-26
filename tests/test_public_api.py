@@ -10,7 +10,7 @@ class TestAPISurface:
         assert hasattr(azure_functions_doctor, "__version__")
 
     def test_version_is_0_16_3(self) -> None:
-        assert azure_functions_doctor.__version__ == "0.16.3"  # pyright: ignore[reportUnknownMemberType]
+        assert azure_functions_doctor.__version__ == "0.17.0"  # pyright: ignore[reportUnknownMemberType]
 
     def test_version_is_string(self) -> None:
         assert isinstance(azure_functions_doctor.__version__, str)  # pyright: ignore[reportUnknownMemberType]
