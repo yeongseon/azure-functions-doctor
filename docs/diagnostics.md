@@ -6,6 +6,19 @@ Diagnostics are grouped by section, then evaluated as required or optional check
 Required checks protect baseline correctness (runtime, project structure, and core dependencies),
 while optional checks provide operational guidance (tooling, telemetry, and hygiene).
 
+## Programming Model Detection
+
+Before running rule handlers, Doctor classifies the repository into one of four programming-model states:
+
+| State | Meaning | Doctor behavior |
+| --- | --- | --- |
+| `v2` | v2 signals were found (`function_app.py`, `FunctionApp()` / `Blueprint()`, or trigger decorators). | Continue with the normal v2 ruleset. |
+| `unsupported_v1` | Legacy `function.json` files were found without v2 signals. | Return a single failed `programming_model` section explaining that Python v1 is unsupported. |
+| `mixed` | Both v1 (`function.json`) and v2 (`FunctionApp` / decorators) signals were found. | Return a single failed `programming_model` section describing the mixed state. |
+| `unknown` | No v2 signals and no `function.json` files were found. | Return a single failed `programming_model` section explaining that v2 was not detected. |
+
+For `unsupported_v1`, `mixed`, and `unknown`, no v1-specific checks run and no other v2 rules execute.
+
 ## How Diagnostics Are Evaluated
 
 Each rule is executed by a handler and returns a raw handler status (`pass` or `fail`).
@@ -42,6 +55,8 @@ These checks run in both `full` and `minimal` profiles.
 | `host.json` version | `check_host_json_version` | `host_json_version` | `host.json` does not declare `"version": "2.0"`. |
 
 ## Optional Checks
+
+These checks run only after the repository has been classified as a supported `v2` project.
 
 | Check | Purpose |
 | --- | --- |

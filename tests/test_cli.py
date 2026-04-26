@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 import re
 import xml.etree.ElementTree as ET
 
@@ -7,6 +8,7 @@ from typer.testing import CliRunner
 from azure_functions_doctor.cli import cli as app
 
 runner = CliRunner()
+FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
 
 
 def _assert_exit_code_matches_fail_count_text(output: str, exit_code: int) -> None:
@@ -45,6 +47,7 @@ def test_cli_json_output() -> None:
         raise AssertionError("Output is not valid JSON") from err
     assert isinstance(data, dict)
     assert "metadata" in data
+    assert "programming_model" in data
     assert "results" in data
     results = data["results"]
     assert isinstance(results, list)
@@ -80,6 +83,7 @@ def test_cli_sarif_output() -> None:
     tool = run["tool"]["driver"]
     assert tool["name"] == "azure-functions-doctor"
     assert tool["version"]
+    assert run["properties"]["programming_model"]
 
     has_error = any(item.get("level") == "error" for item in run.get("results", []))
     expected_exit = 1 if has_error else 0
@@ -110,3 +114,49 @@ def test_cli_junit_output() -> None:
         assert len(failure_els) + len(skipped_els) <= 1, msg
     expected_exit = 1 if failures > 0 else 0
     assert result.exit_code == expected_exit
+
+
+def test_cli_json_output_includes_programming_model_for_unknown_fixture() -> None:
+    """Test JSON output exposes unknown programming model and short-circuit result."""
+    result = runner.invoke(
+        app,
+        ["doctor", "--path", str(FIXTURES_DIR / "unknown"), "--format", "json"],
+    )
+
+    data = json.loads(result.output)
+
+    assert result.exit_code == 1
+    assert data["programming_model"] == "unknown"
+    assert data["results"][0]["category"] == "programming_model"
+
+
+def test_cli_sarif_output_includes_programming_model_for_unknown_fixture() -> None:
+    """Test SARIF output exposes programming model metadata for short-circuit runs."""
+    result = runner.invoke(
+        app,
+        ["doctor", "--path", str(FIXTURES_DIR / "unknown"), "--format", "sarif"],
+    )
+
+    data = json.loads(result.output)
+
+    assert result.exit_code == 1
+    assert data["runs"][0]["properties"]["programming_model"] == "unknown"
+
+
+def test_cli_non_v2_projects_fail_with_actionable_message() -> None:
+    """Test non-v2 fixtures fail with the expected programming model message."""
+    cases = [
+        ("v1", "Unsupported programming model: Python v1"),
+        ("mixed", "Mixed programming model detected"),
+        ("unknown", "Python v2 programming model was not detected"),
+    ]
+
+    for fixture_name, expected_message in cases:
+        result = runner.invoke(
+            app,
+            ["doctor", "--path", str(FIXTURES_DIR / fixture_name), "--format", "table"],
+        )
+
+        assert result.exit_code == 1
+        assert "Programming Model" in result.output
+        assert expected_message in result.output

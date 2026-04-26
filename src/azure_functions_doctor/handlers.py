@@ -18,6 +18,8 @@ from azure_functions_doctor.target_resolver import resolve_target_value
 
 logger = get_logger(__name__)
 
+EXCLUDED_PROJECT_DIRS = {".venv", "node_modules", "build", "dist", ".pytest_cache", "__pycache__"}
+
 # Platform-aware candidates for executables (for symmetric fallback)
 _PYTHON_CANDIDATES: dict[str, list[str]] = {
     "python": ["python", "python3"] + (["py"] if sys.platform == "win32" else []),
@@ -90,9 +92,8 @@ def _source_contains_ast(source: str, identifier: str) -> bool:
 
 def _iter_project_py_contents(path: Path) -> Iterator[tuple[Path, str]]:
     """Yield (py_file, content) for each .py file under path, skipping excluded dirs."""
-    excluded_dirs = {".venv", "build", "dist", ".pytest_cache", "__pycache__"}
     for py_file in path.rglob("*.py"):
-        if any(part in excluded_dirs for part in py_file.parts):
+        if any(part in EXCLUDED_PROJECT_DIRS for part in py_file.parts):
             continue
         content = _read_project_python_file(py_file)
         if content is None:
@@ -154,7 +155,6 @@ def _parse_requirements_names(content: str) -> set[str]:
             if name:
                 names.add(canonicalize_name(name))
     return names
-
 
 
 def _create_result(status: str, detail: str, internal_error: bool = False) -> dict[str, str]:
@@ -241,7 +241,7 @@ class Rule(TypedDict, total=False):
     fix: str
     fix_command: str
     hint_url: str
-    source_type: Literal['ms_learn', 'derived', 'heuristic']
+    source_type: Literal["ms_learn", "derived", "heuristic"]
     source_title: str
     source_url: str
     why_it_matters: str
@@ -402,6 +402,7 @@ class HandlerRegistry:
         if spec is not None:
             return _create_result("pass", f"Module '{import_path_str}' is installed")
         return _create_result("fail", f"Module '{import_path_str}' is not installed")
+
     def _handle_source_code_contains(self, rule: Rule, path: Path) -> dict[str, str]:
         """Handle source code keyword search checks (string or AST mode)."""
         condition = rule.get("condition", {}) or {}
@@ -690,9 +691,6 @@ class HandlerRegistry:
             f'host.json version is {version!r}, expected "2.0"',
         )
 
-
-
-
     def _handle_local_settings_security(self, rule: Rule, path: Path) -> dict[str, str]:
         """Check that local.settings.json is not tracked by git (security risk)."""
         import subprocess  # nosec B404
@@ -765,6 +763,7 @@ class HandlerRegistry:
 
         # Detect older major versions
         import re as _re
+
         major_match = _re.search(r"\[(\d+)\.", version_str)
         if major_match:
             major = int(major_match.group(1))
@@ -780,6 +779,8 @@ class HandlerRegistry:
             f"extensionBundle version '{version_str}' does not match"
             " recommended v4 range [4.*, 5.0.0)",
         )
+
+
 # Global registry instance
 _registry = HandlerRegistry()
 

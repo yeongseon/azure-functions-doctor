@@ -8,6 +8,7 @@ Tests that:
 Usage:
     E2E_BASE_URL=https://<app>.azurewebsites.net pytest tests/e2e -v
 """
+
 from __future__ import annotations
 
 import os
@@ -50,9 +51,12 @@ def test_doctor_passes_on_example_project() -> None:
     """Running azure-functions-doctor on the example project returns exit code 0."""
     result = subprocess.run(
         [
-            "azure-functions-doctor", "doctor",
-            "--path", "examples/v2/http-trigger",
-            "--profile", "minimal",
+            "azure-functions-doctor",
+            "doctor",
+            "--path",
+            "examples/v2/http-trigger",
+            "--profile",
+            "minimal",
         ],
         capture_output=True,
         text=True,

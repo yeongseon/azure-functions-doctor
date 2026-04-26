@@ -6,6 +6,21 @@ from unittest.mock import patch
 
 from azure_functions_doctor.doctor import Doctor
 
+FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
+UNSUPPORTED_V1_VALUE = (
+    "Detected legacy function.json files. azure-functions-doctor supports the Python v2 "
+    "decorator model only."
+)
+UNSUPPORTED_V1_HINT = (
+    "Migrate to the Python v2 programming model (function_app.py + func.FunctionApp() "
+    "with decorators), or skip azure-functions-doctor for this repository."
+)
+UNKNOWN_VALUE = "No function_app.py, FunctionApp()/Blueprint() usage, or trigger decorators found."
+UNKNOWN_HINT = (
+    "Expected: function_app.py with func.FunctionApp() and trigger decorators "
+    "(@app.route, @app.timer_trigger, etc.). This tool supports v2 projects only."
+)
+
 
 class TestProgrammingModelDetection:
     """Test v2-only programming model detection logic."""
@@ -28,22 +43,31 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
             doctor = Doctor(str(temp_path))
             assert doctor.programming_model == "v2"
 
-    def test_detect_v2_default_when_no_indicators(self) -> None:
-        """Test v2 as the default when no decorators are found."""
+    def test_detect_unknown_when_no_signals(self) -> None:
+        """Test unknown detection when no v1 or v2 signals are found."""
+        doctor = Doctor(str(FIXTURES_DIR / "unknown"))
+        assert doctor.programming_model == "unknown"
+
+    def test_detect_unsupported_v1_when_only_function_json(self) -> None:
+        """Test v1-only projects are reported as unsupported."""
+        doctor = Doctor(str(FIXTURES_DIR / "v1"))
+        assert doctor.programming_model == "unsupported_v1"
+
+    def test_detect_mixed_when_both_present(self) -> None:
+        """Test mixed v1/v2 projects are detected explicitly."""
+        doctor = Doctor(str(FIXTURES_DIR / "mixed"))
+        assert doctor.programming_model == "mixed"
+
+    def test_detect_v2_with_functionapp_without_decorators(self) -> None:
+        """Test a scaffolded FunctionApp without decorators still counts as v2."""
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
-            python_file = temp_path / "main.py"
-            python_file.write_text("print('Hello World')")
+            python_file = temp_path / "function_app.py"
+            python_file.write_text("""
+import azure.functions as func
 
-            doctor = Doctor(str(temp_path))
-            assert doctor.programming_model == "v2"
-
-    def test_function_json_does_not_switch_to_v1(self) -> None:
-        """Test that function.json files no longer change the supported model."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            temp_path = Path(temp_dir)
-            function_json = temp_path / "function.json"
-            function_json.write_text('{"scriptFile": "main.py", "entryPoint": "main"}')
+app = func.FunctionApp()
+""")
 
             doctor = Doctor(str(temp_path))
             assert doctor.programming_model == "v2"
@@ -94,7 +118,7 @@ def some_function():
 """)
 
             doctor = Doctor(str(temp_path))
-            assert doctor.programming_model == "v2"
+            assert doctor.programming_model == "unknown"
 
     def test_has_v2_decorators_handles_file_read_errors(self) -> None:
         """Test that file read errors are handled gracefully."""
@@ -111,9 +135,9 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
     return func.HttpResponse("Hello")
 """)
 
-            with patch("pathlib.Path.open", side_effect=OSError("Permission denied")):
+            with patch("pathlib.Path.read_text", side_effect=OSError("Permission denied")):
                 doctor = Doctor(str(temp_path))
-                assert doctor.programming_model == "v2"
+                assert doctor.programming_model == "unknown"
 
     def test_detect_v2_with_nested_decorators(self) -> None:
         """Test v2 detection with @app decorators in subdirectories."""
@@ -137,7 +161,7 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
             assert doctor.programming_model == "v2"
 
     def test_has_v2_decorators_custom_variable_name(self) -> None:
-        """Test AST detection works even when FunctionApp is assigned to a non-'app' variable."""
+        """Test AST detection works with a non-'app' FunctionApp variable."""
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             python_file = temp_path / "function_app.py"
@@ -155,7 +179,7 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
             assert doctor._has_v2_decorators() is True
 
     def test_has_v2_decorators_comment_not_counted_ast(self) -> None:
-        """Test that @app. in a comment is NOT detected by AST mode."""
+        """Test that @app. in a comment is not detected by AST mode."""
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             python_file = temp_path / "main.py"
@@ -164,8 +188,8 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
 x = 1
 """)
             doctor = Doctor(str(temp_path))
-            # Should still return v2 (default), but _has_v2_decorators must be False
             assert doctor._has_v2_decorators() is False
+            assert doctor.programming_model == "unknown"
 
     def test_has_v2_decorators_syntax_error_file_skipped(self) -> None:
         """Test that files with SyntaxErrors are gracefully skipped."""
@@ -174,5 +198,53 @@ x = 1
             bad_file = temp_path / "broken.py"
             bad_file.write_text("def (invalid syntax!!!")
             doctor = Doctor(str(temp_path))
-            # No valid decorators found; should return False without crashing
             assert doctor._has_v2_decorators() is False
+            assert doctor.programming_model == "unknown"
+
+    def test_run_all_checks_short_circuits_on_unsupported_v1(self) -> None:
+        """Test unsupported v1 projects return a single programming_model failure."""
+        doctor = Doctor(str(FIXTURES_DIR / "v1"))
+
+        with patch("azure_functions_doctor.doctor.generic_handler") as mock_handler:
+            results = doctor.run_all_checks()
+
+        assert mock_handler.call_count == 0
+        assert results == [
+            {
+                "title": "Programming Model",
+                "category": "programming_model",
+                "status": "fail",
+                "items": [
+                    {
+                        "label": "Unsupported programming model: Python v1",
+                        "value": UNSUPPORTED_V1_VALUE,
+                        "status": "fail",
+                        "hint": UNSUPPORTED_V1_HINT,
+                    }
+                ],
+            }
+        ]
+
+    def test_run_all_checks_short_circuits_on_unknown(self) -> None:
+        """Test projects without v2 signals return a single programming_model failure."""
+        doctor = Doctor(str(FIXTURES_DIR / "unknown"))
+
+        with patch("azure_functions_doctor.doctor.generic_handler") as mock_handler:
+            results = doctor.run_all_checks()
+
+        assert mock_handler.call_count == 0
+        assert results == [
+            {
+                "title": "Programming Model",
+                "category": "programming_model",
+                "status": "fail",
+                "items": [
+                    {
+                        "label": "Python v2 programming model was not detected",
+                        "value": UNKNOWN_VALUE,
+                        "status": "fail",
+                        "hint": UNKNOWN_HINT,
+                    }
+                ],
+            }
+        ]

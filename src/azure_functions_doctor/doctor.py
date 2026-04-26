@@ -1,14 +1,17 @@
+import ast
 from collections import defaultdict
 import importlib.resources
 import json
 from pathlib import Path
 import time
-from typing import Optional, TypedDict
+from typing import Literal, Optional, TypedDict
 
 from jsonschema import ValidationError, validate
 
 from azure_functions_doctor.handlers import (
+    EXCLUDED_PROJECT_DIRS,
     Rule,
+    _discover_functionapp_aliases,
     _iter_project_py_contents,
     _source_contains_ast,
     generic_handler,
@@ -16,6 +19,8 @@ from azure_functions_doctor.handlers import (
 from azure_functions_doctor.logging_config import get_logger, log_rule_execution
 
 logger = get_logger(__name__)
+
+ProgrammingModel = Literal["v2", "unsupported_v1", "mixed", "unknown"]
 
 
 class CheckResult(TypedDict, total=False):
@@ -55,16 +60,68 @@ class Doctor:
             if not resolved.is_file():
                 raise ValueError(f"rules_path must be an existing file: {resolved}")
             self.rules_path = resolved
-        self.programming_model = self._detect_programming_model()
+        self.programming_model: ProgrammingModel = self._detect_programming_model()
 
-    def _detect_programming_model(self) -> str:
-        """Detect the Azure Functions programming model version.
+    def _detect_programming_model(self) -> ProgrammingModel:
+        """Detect the Azure Functions programming model state for the project."""
+        has_v1_signals = self._has_v1_signals()
+        has_v2_signals = self._has_v2_signals()
 
-        The doctor targets only the Azure Functions Python v2 programming
-        model.  Projects without decorators still default to "v2" so the
-        doctor can report missing v2 signals as regular diagnostics.
-        """
-        return "v2"
+        if has_v1_signals and has_v2_signals:
+            programming_model: ProgrammingModel = "mixed"
+        elif has_v1_signals:
+            programming_model = "unsupported_v1"
+        elif has_v2_signals:
+            programming_model = "v2"
+        else:
+            programming_model = "unknown"
+
+        logger.debug(
+            "Programming model detected: %s (v1=%s, v2=%s)",
+            programming_model,
+            has_v1_signals,
+            has_v2_signals,
+        )
+        return programming_model
+
+    def _has_v1_signals(self) -> bool:
+        """Check if the project contains legacy v1 function.json files."""
+        for function_json in self.project_path.rglob("function.json"):
+            if any(part in EXCLUDED_PROJECT_DIRS for part in function_json.parts):
+                continue
+            logger.debug("Detected v1 signal: %s", function_json)
+            return True
+        return False
+
+    def _has_v2_signals(self) -> bool:
+        """Check if the project contains v2 app objects or decorators."""
+        for py_file, content in _iter_project_py_contents(self.project_path):
+            if self._source_contains_v2_app_object(content):
+                logger.debug("Detected v2 FunctionApp/Blueprint signal: %s", py_file)
+                return True
+        return self._has_v2_decorators()
+
+    def _source_contains_v2_app_object(self, source: str) -> bool:
+        """Check for AST-level FunctionApp()/Blueprint() usage."""
+        try:
+            tree = ast.parse(source)
+        except SyntaxError:
+            return False
+
+        discovered_aliases = _discover_functionapp_aliases(source)
+        if discovered_aliases != {"app"}:
+            return True
+
+        target_names = {"FunctionApp", "Blueprint"}
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            func_node = node.func
+            if isinstance(func_node, ast.Attribute) and func_node.attr in target_names:
+                return True
+            if isinstance(func_node, ast.Name) and func_node.id in target_names:
+                return True
+        return False
 
     def _has_v2_decorators(self) -> bool:
         """Check if the project uses v2 decorators using AST-based detection.
@@ -77,6 +134,55 @@ class Doctor:
             if _source_contains_ast(content, "app"):
                 return True
         return False
+
+    def _build_programming_model_failure(self) -> SectionResult:
+        """Build the fail-fast section for unsupported or undetected models."""
+        messages: dict[ProgrammingModel, tuple[str, str, str]] = {
+            "unsupported_v1": (
+                "Unsupported programming model: Python v1",
+                (
+                    "Detected legacy function.json files. azure-functions-doctor supports "
+                    "the Python v2 decorator model only."
+                ),
+                (
+                    "Migrate to the Python v2 programming model "
+                    "(function_app.py + func.FunctionApp() with decorators), or skip "
+                    "azure-functions-doctor for this repository."
+                ),
+            ),
+            "mixed": (
+                "Mixed programming model detected",
+                "Both v1 (function.json) and v2 (FunctionApp/decorators) signals were found.",
+                (
+                    "Remove legacy function.json based functions, or migrate fully to the "
+                    "v2 programming model."
+                ),
+            ),
+            "unknown": (
+                "Python v2 programming model was not detected",
+                "No function_app.py, FunctionApp()/Blueprint() usage, or trigger decorators found.",
+                (
+                    "Expected: function_app.py with func.FunctionApp() and trigger "
+                    "decorators (@app.route, @app.timer_trigger, etc.). This tool "
+                    "supports v2 projects only."
+                ),
+            ),
+            "v2": ("", "", ""),
+        }
+        label, value, hint = messages[self.programming_model]
+        return {
+            "title": "Programming Model",
+            "category": "programming_model",
+            "status": "fail",
+            "items": [
+                {
+                    "label": label,
+                    "value": value,
+                    "status": "fail",
+                    "hint": hint,
+                }
+            ],
+        }
 
     def load_rules(self) -> list[Rule]:
         """Load and validate rules from a custom path or the built-in v2 ruleset."""
@@ -125,10 +231,18 @@ class Doctor:
             rules = [rule for rule in rules if rule.get("required", True)]
         elif self.profile not in (None, "full"):
             raise ValueError("Profile must be 'minimal' or 'full'")
+
+        if self.programming_model != "v2":
+            logger.info(
+                "Skipping rule execution for non-v2 project: programming_model=%s",
+                self.programming_model,
+            )
+            return [self._build_programming_model_failure()]
+
         grouped: dict[str, list[Rule]] = defaultdict(list)
 
         for rule in rules:
-            grouped[rule["section"]].append(rule)
+            grouped[rule.get("section", "unknown")].append(rule)
 
         results: list[SectionResult] = []
 
@@ -147,7 +261,12 @@ class Doctor:
                 rule_duration_ms = (time.time() - rule_start) * 1000
 
                 handler_status = result.get("status", "fail")
-                log_rule_execution(rule["id"], rule["type"], handler_status, rule_duration_ms)
+                log_rule_execution(
+                    rule.get("id", "unknown_rule"),
+                    rule.get("type", "unknown_type"),
+                    handler_status,
+                    rule_duration_ms,
+                )
 
                 # Simplified canonical mapping:
                 # pass stays pass, otherwise required -> fail and optional -> warn.
@@ -162,7 +281,7 @@ class Doctor:
                     detail += " (optional)"
 
                 item: CheckResult = {
-                    "label": rule.get("label", rule["id"]),
+                    "label": rule.get("label", rule.get("id", "unknown_rule")),
                     "value": detail,
                     "status": canonical,
                 }

@@ -466,6 +466,7 @@ def test_local_settings_security_not_tracked(tmp_path: Path, monkeypatch: Monkey
     def fake_run(cmd: list[str], **kwargs: object) -> object:
         class FakeResult:
             returncode = 1
+
         return FakeResult()
 
     monkeypatch.setattr(_subprocess, "run", fake_run)
@@ -486,6 +487,7 @@ def test_local_settings_security_tracked(tmp_path: Path, monkeypatch: MonkeyPatc
     def fake_run(cmd: list[str], **kwargs: object) -> object:
         class FakeResult:
             returncode = 0
+
         return FakeResult()
 
     monkeypatch.setattr(_subprocess, "run", fake_run)
@@ -586,9 +588,7 @@ def test_package_forbidden_fail(tmp_path: Path) -> None:
     """package_forbidden fails when the forbidden package IS in requirements.txt."""
     req = tmp_path / "requirements.txt"
     req.write_text("azure-functions\nazure-functions-worker==1.0\n")
-    condition = cast(
-        Condition, {"package": "azure-functions-worker", "file": "requirements.txt"}
-    )
+    condition = cast(Condition, {"package": "azure-functions-worker", "file": "requirements.txt"})
     rule = _make_rule("package_forbidden", condition)
     res = generic_handler(rule, tmp_path)
     assert res["status"] == "fail"
@@ -612,4 +612,3 @@ def test_package_forbidden_missing_package_field(tmp_path: Path) -> None:
     res = generic_handler(rule, tmp_path)
     assert res["status"] == "fail"
     assert "Missing" in res.get("detail", "")
-

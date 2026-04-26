@@ -8,7 +8,8 @@ from azure_functions_doctor.api import run_diagnostics
 def test_run_diagnostics_minimal() -> None:
     """Test running diagnostics with a minimal setup."""
     with tempfile.TemporaryDirectory() as tmpdir:
-        # Use packaged v2 rules.
+        with open(os.path.join(tmpdir, "function_app.py"), "w") as f:
+            f.write("import azure.functions as func\napp = func.FunctionApp()\n")
         with open(os.path.join(tmpdir, "host.json"), "w") as f:
             json.dump({"version": "2.0"}, f)
         with open(os.path.join(tmpdir, "requirements.txt"), "w") as f:
@@ -29,6 +30,8 @@ def test_run_diagnostics_minimal() -> None:
 def test_run_diagnostics_profile_minimal() -> None:
     """Test running diagnostics with the minimal profile."""
     with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "function_app.py"), "w") as f:
+            f.write("import azure.functions as func\napp = func.FunctionApp()\n")
         with open(os.path.join(tmpdir, "host.json"), "w") as f:
             json.dump({"version": "2.0"}, f)
         with open(os.path.join(tmpdir, "requirements.txt"), "w") as f:

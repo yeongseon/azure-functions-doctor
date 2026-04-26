@@ -40,6 +40,7 @@ Deploying a broken Azure Functions app is expensive — the worker starts, the h
 ## Scope
 
 This repository targets the decorator-based Azure Functions Python v2 programming model only.
+Non-v2 repositories are detected up front and reported as unsupported instead of running v2-only checks.
 
 - Supported model: `func.FunctionApp()` with decorators such as `@app.route()`
 - Unsupported model: legacy `function.json`-based Python v1 projects
