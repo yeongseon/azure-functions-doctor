@@ -1,5 +1,7 @@
 # Azure Functions Doctor
 
+> Part of the [Azure Functions Python DX Toolkit](https://github.com/yeongseon/azure-functions-python-dx) — a collection of small tools for improving Azure Functions Python developer experience.
+
 [![PyPI](https://img.shields.io/pypi/v/azure-functions-doctor.svg)](https://pypi.org/project/azure-functions-doctor/)
 [![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](https://pypi.org/project/azure-functions-doctor/)
 [![CI](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/ci-test.yml/badge.svg)](https://github.com/yeongseon/azure-functions-doctor/actions/workflows/ci-test.yml)
